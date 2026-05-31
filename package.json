@@ -1,0 +1,29 @@
+{
+  "name": "bucmarc",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write .",
+    "dev": "bun run src/index.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "drizzle-kit": "^0.31.10",
+    "prettier": "^3.8.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.4.14",
+    "@clerk/hono": "^0.1.32",
+    "@libsql/client": "^0.17.3",
+    "@t3-oss/env-core": "^0.13.11",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.23",
+    "zod": "^4.4.3"
+  }
+}

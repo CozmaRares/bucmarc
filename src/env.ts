@@ -1,0 +1,33 @@
+import { createEnv } from "@t3-oss/env-core";
+import * as z from "zod";
+
+export const env = createEnv({
+    server: {
+        PORT: z.string().min(1).default("3000"),
+        NODE_ENV: z.enum(["development", "production"]).default("development"),
+
+        DB_FILE_NAME: z.string().min(1),
+        APP_URL: z.url(),
+        SIGN_IN_PAGE: z.string().regex(/^\/.*$/),
+
+        CLERK_SECRET_KEY: z.string().min(1),
+        CLERK_PUBLISHABLE_KEY: z.string().min(1),
+        CLERK_PORTAL_SIGN_IN: z.url(),
+    },
+    runtimeEnv: process.env,
+
+    createFinalSchema: shape =>
+        z.object(shape).transform(env => {
+            const { SIGN_IN_PAGE, CLERK_PORTAL_SIGN_IN, ...rest } = env;
+
+            const signInUrl = new URL(SIGN_IN_PAGE, env.APP_URL);
+            const clerkUrl = new URL(CLERK_PORTAL_SIGN_IN);
+            clerkUrl.searchParams.set("redirect_url", env.APP_URL);
+
+            return {
+                ...rest,
+                SIGN_IN_URL: signInUrl.href,
+                CLERK_PORTAL_SIGN_IN: clerkUrl.href,
+            };
+        }),
+});
