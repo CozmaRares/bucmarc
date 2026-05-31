@@ -1,16 +1,25 @@
 import { Hono } from "hono";
+import { serveStatic } from "hono/bun";
 import { logger as honoLogger } from "hono/logger";
 import { createLogger } from "@/lib/logger";
 import { env } from "@/env";
 import apiRouter from "./routers/api";
 import pageRouter from "./routers/pages";
-import { clerkMiddleware } from "./middleware";
+import { clerkMiddleware, requireAuth } from "./middleware";
 
 const logger = createLogger("server");
 
 const app = new Hono();
-app.use("*", clerkMiddleware());
+
+app.use("*", clerkMiddleware(), requireAuth);
 app.use(honoLogger((...args) => logger.info(...args)));
+app.use(
+    "/public/*",
+    serveStatic({
+        root: "./public",
+        rewriteRequestPath: path => path.replace(/^\/public/, ""),
+    }),
+);
 
 app.use("*", async (ctx, next) => {
     try {
@@ -21,7 +30,7 @@ app.use("*", async (ctx, next) => {
     }
 });
 
-app.route("/mark", apiRouter);
+app.route("/api", apiRouter);
 app.route("/", pageRouter);
 
 app.get("*", c => {

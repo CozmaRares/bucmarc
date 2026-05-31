@@ -6,10 +6,10 @@ export enum LogLevel {
     Warn = 2,
     Info = 3,
     Debug = 4,
-    Trace = 5,
 }
 
-const currentLevel = env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug;
+const currentLevel =
+    env.NODE_ENV === "production" ? LogLevel.Info : LogLevel.Debug;
 
 const shouldLog = (level: LogLevel) => level <= currentLevel;
 
@@ -27,21 +27,14 @@ const formatValue = (value: unknown) => {
     return JSON.stringify(value);
 };
 
-const levelLabel: Record<LogLevel, string> = {
-    [LogLevel.Fatal]: "FATAL",
-    [LogLevel.Error]: "ERROR",
-    [LogLevel.Warn]: "WARN",
-    [LogLevel.Info]: "INFO",
-    [LogLevel.Debug]: "DEBUG",
-    [LogLevel.Trace]: "TRACE",
-};
-
 const write = (level: LogLevel, place: string, args: unknown[]) => {
     if (!shouldLog(level)) {
         return;
     }
 
-    const line = `${formatTimestamp()} [${levelLabel[level]}] [${place}] ${args
+    const label = LogLevel[level];
+
+    const line = `${formatTimestamp()} [${label}] [${place}] ${args
         .map(formatValue)
         .join(" ")}`;
 
@@ -59,7 +52,6 @@ export const createLogger = (place: string) => ({
     warn: (...args: unknown[]) => write(LogLevel.Warn, place, args),
     info: (...args: unknown[]) => write(LogLevel.Info, place, args),
     debug: (...args: unknown[]) => write(LogLevel.Debug, place, args),
-    trace: (...args: unknown[]) => write(LogLevel.Trace, place, args),
 });
 
 const logger = createLogger("app");

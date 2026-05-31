@@ -8,7 +8,6 @@ export const env = createEnv({
 
         DB_FILE_NAME: z.string().min(1),
         APP_URL: z.url(),
-        SIGN_IN_PAGE: z.string().regex(/^\/.*$/),
 
         CLERK_SECRET_KEY: z.string().min(1),
         CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -18,15 +17,11 @@ export const env = createEnv({
 
     createFinalSchema: shape =>
         z.object(shape).transform(env => {
-            const { SIGN_IN_PAGE, CLERK_PORTAL_SIGN_IN, ...rest } = env;
-
-            const signInUrl = new URL(SIGN_IN_PAGE, env.APP_URL);
-            const clerkUrl = new URL(CLERK_PORTAL_SIGN_IN);
+            const clerkUrl = new URL(env.CLERK_PORTAL_SIGN_IN);
             clerkUrl.searchParams.set("redirect_url", env.APP_URL);
 
             return {
-                ...rest,
-                SIGN_IN_URL: signInUrl.href,
+                ...env,
                 CLERK_PORTAL_SIGN_IN: clerkUrl.href,
             };
         }),
