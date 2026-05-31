@@ -8,6 +8,9 @@
         "dev": "bun run src/index.ts",
         "db:push": "drizzle-kit push",
         "db:studio": "drizzle-kit studio",
+        "db:migrate": "drizzle-kit migrate",
+        "db:generate": "drizzle-kit generate",
+        "start": "bun dist/index.js",
         "build": "bun build src/index.ts --outdir=dist --target=bun",
         "prepare": "husky"
     },

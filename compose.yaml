@@ -1,0 +1,35 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_FILE_NAME: file:/app/data/local.db
+    volumes:
+      - ./server-data:/app/data
+      - ./drizzle:/app/drizzle
+      - ./drizzle.config.ts:/app/drizzle.config.ts
+    command: ["bun", "run", "db:migrate"]
+
+  server:
+    build: .
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_FILE_NAME: file:/app/data/local.db
+    volumes:
+      - ./server-data:/app/data
+    ports:
+      - 3000:3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  server-data:
