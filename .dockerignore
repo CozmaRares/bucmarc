@@ -1,8 +1,11 @@
+.git
 .agents
 .codex
 node_modules
-.env
-local.db
 dist
+.env
+.env.*
+!.env.example
+local.db
 server-data
 letsencrypt

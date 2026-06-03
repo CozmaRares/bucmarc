@@ -1,35 +1,45 @@
+x-app-env: &app-env
+    NODE_ENV: production
+    APP_URL: https://bucmarc.raru.dev
+    DB_FILE_NAME: file:/app/data/local.db
+
 services:
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: builder
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: production
-      DB_FILE_NAME: file:/app/data/local.db
-    volumes:
-      - ./server-data:/app/data
-      - ./drizzle:/app/drizzle
-      - ./drizzle.config.ts:/app/drizzle.config.ts
-    command: ["bun", "run", "db:migrate"]
+    migrate:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: builder
+        env_file:
+            - .env
+        environment:
+            <<: *app-env
+        volumes:
+            - ./server-data:/app/data
+            - ./drizzle:/app/drizzle
+            - ./drizzle.config.ts:/app/drizzle.config.ts
+        command: ["bun", "run", "db:migrate"]
 
-  server:
-    build: .
-    env_file:
-      - .env
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DB_FILE_NAME: file:/app/data/local.db
-    volumes:
-      - ./server-data:/app/data
-    ports:
-      - 3000:3000
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
+    server:
+        build: .
+        env_file:
+            - .env
+        environment:
+            <<: *app-env
+            PORT: 3000
+        volumes:
+            - ./server-data:/app/data
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
 
-volumes:
-  server-data:
+    nginx:
+        image: nginx:1.30.2-alpine
+        depends_on:
+            server:
+                condition: service_started
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ${NGINX_CONFIG}:/etc/nginx/conf.d/default.conf:ro
+            - ./letsencrypt:/etc/letsencrypt

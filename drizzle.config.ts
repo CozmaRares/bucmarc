@@ -6,8 +6,12 @@ export default defineConfig({
     dialect: "sqlite",
     casing: "snake_case",
     dbCredentials: {
-        url: process.env.DB_FILE_NAME ?? (() => {
-            throw new Error("DB_FILE_NAME is required for Drizzle migrations");
-        })(),
+        url:
+            process.env.DB_FILE_NAME ??
+            (() => {
+                throw new Error(
+                    "DB_FILE_NAME is required for Drizzle migrations",
+                );
+            })(),
     },
 });

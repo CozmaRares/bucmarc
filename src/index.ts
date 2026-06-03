@@ -34,10 +34,6 @@ app.route("/api", apiRouter);
 app.route("/", pageRouter);
 
 app.get("*", c => {
-    return c.text("Hello Hono!");
-});
-
-app.get("*", c => {
     c.status(404);
     return c.text("Not Found");
 });
