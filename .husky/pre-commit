@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-bun run scripts/validate-pages.ts
-
-bun run db:generate
-git add drizzle

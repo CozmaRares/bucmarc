@@ -3,8 +3,8 @@ import * as z from "zod";
 
 export const env = createEnv({
     server: {
-        PORT: z.string().min(1).default("3000"),
-        NODE_ENV: z.enum(["development", "production"]).default("development"),
+        PORT: z.string().regex(/^\d+$/),
+        NODE_ENV: z.enum(["development", "production"]),
 
         DB_FILE_NAME: z.string().min(1),
         APP_URL: z.url(),

@@ -5,8 +5,8 @@
     "": {
       "name": "bucmarc",
       "dependencies": {
-        "@clerk/backend": "^3.4.14",
-        "@clerk/hono": "^0.1.32",
+        "@clerk/backend": "^3.5.0",
+        "@clerk/hono": "^0.1.33",
         "@libsql/client": "^0.17.3",
         "@t3-oss/env-core": "^0.13.11",
         "drizzle-orm": "^0.45.2",
@@ -16,7 +16,6 @@
       "devDependencies": {
         "@types/bun": "^1.3.14",
         "drizzle-kit": "^0.31.10",
-        "husky": "^9.1.7",
         "prettier": "^3.8.3",
       },
       "peerDependencies": {
@@ -25,11 +24,11 @@
     },
   },
   "packages": {
-    "@clerk/backend": ["@clerk/backend@3.4.14", "", { "dependencies": { "@clerk/shared": "^4.14.0", "standardwebhooks": "^1.0.0", "tslib": "2.8.1" } }, "sha512-0iaMT7k4wDk31QVC3HMaoeVFttblwsCECTHKNQpbRzIyD8j2gHdKEw/FNjffoyqyBqPw869IQlk1YokUlwVAqQ=="],
+    "@clerk/backend": ["@clerk/backend@3.5.0", "", { "dependencies": { "@clerk/shared": "^4.15.0", "standardwebhooks": "^1.0.0", "tslib": "2.8.1" } }, "sha512-g1bjzqj7/mb6rnrQ5zr+ybjpilTIWADaCoHE1HnEAjQfbcdfn3gb9PPX0wJ1KWw8OOQEQYSjzXPzvofEB1j+ww=="],
 
-    "@clerk/hono": ["@clerk/hono@0.1.32", "", { "dependencies": { "@clerk/backend": "^3.4.14", "@clerk/shared": "^4.14.0" }, "peerDependencies": { "hono": ">=4" } }, "sha512-mrRD8eqFyZ5iv6nZ937194lYsadeoazhTfzmAi9l2ACXwjMV5rER80OdrcCRzjnbCF3Wn+UAN+g0x1nHzxMvLg=="],
+    "@clerk/hono": ["@clerk/hono@0.1.33", "", { "dependencies": { "@clerk/backend": "^3.5.0", "@clerk/shared": "^4.15.0" }, "peerDependencies": { "hono": ">=4" } }, "sha512-mSp/5k/AprS+Y/PWlvuzWKTLvVkLprJ32in06+Xr/h3mBF0lrAY85vL9kMqO62icn4JxJo3G1hdc4SAtYEzyXA=="],
 
-    "@clerk/shared": ["@clerk/shared@4.14.0", "", { "dependencies": { "@tanstack/query-core": "^5.100.6", "dequal": "2.0.3", "glob-to-regexp": "0.4.1", "js-cookie": "3.0.7", "std-env": "^3.9.0" }, "peerDependencies": { "react": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0", "react-dom": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0" }, "optionalPeers": ["react", "react-dom"] }, "sha512-StZCFJ2rg0ITE3fYjIN9CKuKq8ZACW6l2+5qGCFPPYd4hZphA+VDselmh/lHPsF1ex/WRVUSHvquykAHR8cQbQ=="],
+    "@clerk/shared": ["@clerk/shared@4.15.0", "", { "dependencies": { "@tanstack/query-core": "^5.100.6", "dequal": "2.0.3", "glob-to-regexp": "0.4.1", "js-cookie": "3.0.7" }, "peerDependencies": { "react": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0", "react-dom": "^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0" }, "optionalPeers": ["react", "react-dom"] }, "sha512-uX8nfLb69m8mA6KWKWfuPSwoVNDRyUdufeCeTEZsdZxbRUsEYT/c0KWFN28IOQCtK09tpVtzrUHvW44v5Dc5OA=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
@@ -153,8 +152,6 @@
 
     "hono": ["hono@4.12.23", "", {}, "sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA=="],
 
-    "husky": ["husky@9.1.7", "", { "bin": { "husky": "bin.js" } }, "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="],
-
     "js-base64": ["js-base64@3.7.8", "", {}, "sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow=="],
 
     "js-cookie": ["js-cookie@3.0.7", "", {}, "sha512-z/wZZgDrkNV1eA0ULjM/F9/50Ya8fbzgKneSpoPsXSGd0KnpdtHfOZWK+GcwLk+EZbS4F9RBhU+K2RgzuDaItw=="],
@@ -174,8 +171,6 @@
     "source-map-support": ["source-map-support@0.5.21", "", { "dependencies": { "buffer-from": "^1.0.0", "source-map": "^0.6.0" } }, "sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w=="],
 
     "standardwebhooks": ["standardwebhooks@1.0.0", "", { "dependencies": { "@stablelib/base64": "^1.0.0", "fast-sha256": "^1.3.0" } }, "sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg=="],
-
-    "std-env": ["std-env@3.10.0", "", {}, "sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg=="],
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
