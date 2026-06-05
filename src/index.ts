@@ -38,7 +38,11 @@ app.get("*", c => {
     return c.text("Not Found");
 });
 
-export default {
-    fetch: app.fetch,
-    port: env.PORT,
-};
+const server = Bun.serve({
+  port: env.PORT,
+  fetch: app.fetch,
+});
+
+logger.info(`Server started on port ${env.PORT}`);
+
+export default server;
