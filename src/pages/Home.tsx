@@ -1,15 +1,27 @@
 import { getMarks } from "@/db";
+import type { Page } from "./types";
 
-export default async function Home() {
+async function Home() {
     const marks = await getMarks();
 
     return (
         <main>
             <h1>Marks</h1>
-            <ul>
+            <p data-status-message />
+            <ul data-mark-list>
                 {marks.map(mark => (
-                    <li key={mark.url}>
-                        <a href={mark.url}>{mark.url}</a>
+                    <li
+                        key={mark.url}
+                        data-mark-item={mark.url}
+                    >
+                        <a href={mark.url}>{mark.title || mark.url}</a>
+                        {mark.title ? <span>{` (${mark.url})`}</span> : null}
+                        <strong
+                            data-existing-mark
+                            hidden
+                        >
+                            Existing mark
+                        </strong>
                         <button
                             type="button"
                             data-edit
@@ -32,3 +44,8 @@ export default async function Home() {
         </main>
     );
 }
+
+export const HomePage: Page<void> = {
+    path: "/",
+    component: Home,
+};

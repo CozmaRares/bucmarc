@@ -13,7 +13,7 @@ Optional descriptive text for a mark.
 _Avoid_: Name, label, caption
 
 **Category**:
-A named group that can contain marks. A mark can belong to at most one category.
+A uniquely named group that can contain marks. A mark can belong to at most one category.
 _Avoid_: Folder, collection, tag
 
 **Uncategorized Mark**:
@@ -31,6 +31,10 @@ _Avoid_: Access token, password, invite
 **Private Management Area**:
 The authenticated part of Bucmarc where marks, categories, and sharing settings are managed.
 _Avoid_: Admin panel, dashboard, backend
+
+**Capture Flow**:
+The lightweight path where the App Owner saves a mark from outside Bucmarc and, when successful, continues to the saved URL.
+_Avoid_: Add flow, bookmarklet flow, import flow
 
 **Shared View**:
 The read-only view of a shared category available to someone with its share token.

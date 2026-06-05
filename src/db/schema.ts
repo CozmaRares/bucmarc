@@ -1,7 +1,9 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const helpers = {
     createdAt: () => integer({ mode: "timestamp" }).$default(() => new Date()),
+    updatedAt: () => helpers.createdAt().$onUpdate(() => new Date()),
 };
 
 export const categories = sqliteTable("categories", {
@@ -9,7 +11,9 @@ export const categories = sqliteTable("categories", {
     name: text().notNull(),
     shareTokenHash: text().unique(),
     createdAt: helpers.createdAt(),
+    updatedAt: helpers.updatedAt(),
 });
+export type Category = InferSelectModel<typeof categories>;
 
 export const marks = sqliteTable("marks", {
     url: text().primaryKey(),
@@ -19,3 +23,4 @@ export const marks = sqliteTable("marks", {
     }),
     createdAt: helpers.createdAt(),
 });
+export type Mark = InferSelectModel<typeof marks>;

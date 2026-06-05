@@ -21,16 +21,21 @@ const apiRouter = new Hono();
 export default apiRouter;
 
 apiRouter.get("/mark/save/:url", async c => {
-    const rawUrl = c.req.param("url");
-    const url = decodeUrl(rawUrl);
+    const url = decodeUrl(c.req.param("url"));
+    const title = c.req.query("title");
 
     if (!isSaveableUrl(url)) {
         return redirectWithState(c, "invalid", url);
     }
 
     try {
-        const result = await saveMark(url);
-        return redirectWithState(c, result, url);
+        const result = await saveMark(url, title);
+
+        if (result === "created") {
+            return c.redirect(url, 302);
+        }
+
+        return redirectWithState(c, "exists", url);
     } catch (error) {
         console.error(error);
         return redirectWithState(c, "error", url);
@@ -153,10 +158,16 @@ function isSaveableUrl(url: string) {
 
 function redirectWithState(
     c: Context,
-    state: "created" | "exists" | "invalid" | "error",
+    state: "exists" | "invalid" | "error",
     url: string,
 ) {
-    return c.redirect(`/?state=${state}&url=${encodeURIComponent(url)}`, 302);
+    const stateParam = `state=${state}`;
+    const urlParam = `url=${encodeURIComponent(url)}`;
+    const params = [stateParam, urlParam]
+        .filter(str => str.length > 0)
+        .join("&");
+
+    return c.redirect(`/?${params}`, 302);
 }
 
 function buildShareUrl(token: string) {
@@ -169,16 +180,16 @@ const saveUrlSchema = z.url().refine(url => {
 });
 
 const categoryNameSchema = z.object({
-    name: z.string().trim().min(1),
+    name: z.string().min(1),
 });
 
 const categoryRenameSchema = z.object({
     id: z.number().int().positive(),
-    name: z.string().trim().min(1),
+    name: z.string().min(1),
 });
 
 const markCategorySchema = z.object({
-    url: z.string().url(),
+    url: z.url(),
     categoryId: z.number().int().positive().nullable(),
 });
 

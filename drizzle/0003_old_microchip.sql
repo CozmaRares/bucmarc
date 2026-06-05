@@ -1,0 +1,1 @@
+ALTER TABLE `categories` ADD `updated_at` integer;

@@ -22,6 +22,13 @@
       "when": 1780659743528,
       "tag": "0002_dusty_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780685728764,
+      "tag": "0003_old_microchip",
+      "breakpoints": true
     }
   ]
 }

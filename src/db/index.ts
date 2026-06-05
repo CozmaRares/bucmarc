@@ -18,11 +18,17 @@ export function getCategoryById(id: number) {
         .where(eq(schema.categories.id, id));
 }
 
-export function getCategoryByShareToken(token: string) {
-    return db
+export async function getCategoryByShareToken(token: string | undefined) {
+    if (!token) {
+        return undefined;
+    }
+
+    const [category] = await db
         .select()
         .from(schema.categories)
         .where(eq(schema.categories.shareTokenHash, hashShareToken(token)));
+
+    return category;
 }
 
 export function getMarksByCategoryId(categoryId: number) {
@@ -32,9 +38,9 @@ export function getMarksByCategoryId(categoryId: number) {
         .where(eq(schema.marks.categoryId, categoryId));
 }
 
-export async function saveMark(url: string) {
+export async function saveMark(url: string, title?: string | null) {
     try {
-        await db.insert(schema.marks).values({ url });
+        await db.insert(schema.marks).values({ url, title });
         return "created" as const;
     } catch (error) {
         if (isDuplicateMarkError(error)) {
