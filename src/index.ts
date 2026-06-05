@@ -39,8 +39,8 @@ app.get("*", c => {
 });
 
 const server = Bun.serve({
-  port: env.PORT,
-  fetch: app.fetch,
+    port: env.PORT,
+    fetch: app.fetch,
 });
 
 logger.info(`Server started on port ${env.PORT}`);
