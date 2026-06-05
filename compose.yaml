@@ -44,5 +44,5 @@ networks:
     appnet:
         enable_ipv6: true
         ipam:
-          config:
-              - subnet: "fd00:cafe:babe:1::/64"
+            config:
+                - subnet: "fd00:cafe:babe:1::/64"

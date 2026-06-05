@@ -57,10 +57,10 @@ Categories will be separate records. Each mark may belong to one category or no 
 - Validate the decoded URL with Zod URL validation. The only accepted protocols are HTTP and HTTPS
 - The save endpoint redirects to the homepage with query parameters instead of returning JSON.
 - Use this redirect contract for save outcomes:
-  - Created: `/?state=created&url=<encoded-url>`
-  - Duplicate: `/?state=exists&url=<encoded-url>`
-  - Invalid: `/?state=invalid&url=<encoded-original>`
-  - Unexpected failure: `/?state=error&url=<encoded-original>`
+    - Created: `/?state=created&url=<encoded-url>`
+    - Duplicate: `/?state=exists&url=<encoded-url>`
+    - Invalid: `/?state=invalid&url=<encoded-original>`
+    - Unexpected failure: `/?state=error&url=<encoded-original>`
 - Duplicate marks must not create additional rows. This is already enforced at the database level. Treat duplicate saves as a distinct state, not as a new successful creation.
 - Add a title field on the marks.
 - Add a categories data model separate from marks.

@@ -5,4 +5,5 @@ export type Page<P> = {
     path: string;
     component: FC<P>;
     dataLoader?: (c: Context) => Promise<P | null>;
+    publicPage?: boolean;
 };

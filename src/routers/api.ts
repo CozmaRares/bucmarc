@@ -13,6 +13,7 @@ import {
     rotateCategorySharing,
     renameCategory,
     saveMark,
+    updateMark,
 } from "@/db";
 import { env } from "@/env";
 import { z } from "zod";
@@ -47,6 +48,32 @@ apiRouter.get("/mark/list", async c => {
     return c.json(marks);
 });
 
+apiRouter.post("/mark/update", async c => {
+    const body = await c.req.parseBody();
+    const parsedInput = markUpdateFormSchema.safeParse({
+        url: body.url,
+        title: body.title,
+        categoryId: parseCategoryId(body.categoryId),
+    });
+
+    if (!parsedInput.success) {
+        return redirectToHome(c, "mark-error", readUrlField(body.url));
+    }
+
+    const input = parsedInput.data;
+
+    try {
+        await updateMark(input.url, input.title, input.categoryId);
+        return redirectToHome(c, "mark-updated", input.url);
+    } catch (error) {
+        if (error instanceof Error && error.message.includes("not found")) {
+            return redirectToHome(c, "mark-error", input.url);
+        }
+
+        throw error;
+    }
+});
+
 apiRouter.post("/mark/category", async c => {
     const body = await c.req.json();
     const input = markCategorySchema.parse(body);
@@ -61,6 +88,22 @@ apiRouter.post("/mark/category", async c => {
 
         throw error;
     }
+});
+
+apiRouter.post("/mark/delete", async c => {
+    const body = await c.req.parseBody();
+    const parsedInput = markDeleteFormSchema.safeParse({
+        url: body.url,
+    });
+
+    if (!parsedInput.success) {
+        return redirectToHome(c, "mark-error", readUrlField(body.url));
+    }
+
+    const input = parsedInput.data;
+
+    await deleteMark(input.url);
+    return redirectToHome(c, "mark-deleted");
 });
 
 apiRouter.delete("/mark/delete/:url", async c => {
@@ -103,38 +146,44 @@ apiRouter.delete("/category/delete/:id", async c => {
 
 apiRouter.post("/category/share/enable", async c => {
     const input = categoryIdSchema.parse(await c.req.json());
-    const [category] = await getCategoryById(input.id);
+    const category = await getCategoryById(input.id);
 
     if (!category) {
         return c.json({ success: false, error: "Category not found" }, 404);
     }
 
-    if (category.shareTokenHash) {
+    const result = await enableCategorySharing(input.id);
+
+    if (result === null) {
         return c.json(
             { success: false, error: "Sharing already enabled" },
             409,
         );
     }
 
-    const { token } = await enableCategorySharing(input.id);
-    return c.json({ success: true, shareUrl: buildShareUrl(token) });
+    return c.json({ success: true, shareUrl: buildShareUrl(result.token) });
 });
 
 apiRouter.post("/category/share/rotate", async c => {
     const input = categoryIdSchema.parse(await c.req.json());
-    const [category] = await getCategoryById(input.id);
+    const category = await getCategoryById(input.id);
 
     if (!category) {
         return c.json({ success: false, error: "Category not found" }, 404);
     }
 
-    const { token } = await rotateCategorySharing(input.id);
-    return c.json({ success: true, shareUrl: buildShareUrl(token) });
+    const result = await rotateCategorySharing(input.id);
+
+    if (result === null) {
+        return c.json({ success: false, error: "Internal error" }, 500);
+    }
+
+    return c.json({ success: true, shareUrl: buildShareUrl(result.token) });
 });
 
 apiRouter.post("/category/share/disable", async c => {
     const input = categoryIdSchema.parse(await c.req.json());
-    const [category] = await getCategoryById(input.id);
+    const category = await getCategoryById(input.id);
 
     if (!category) {
         return c.json({ success: false, error: "Category not found" }, 404);
@@ -161,13 +210,27 @@ function redirectWithState(
     state: "exists" | "invalid" | "error",
     url: string,
 ) {
-    const stateParam = `state=${state}`;
-    const urlParam = `url=${encodeURIComponent(url)}`;
-    const params = [stateParam, urlParam]
-        .filter(str => str.length > 0)
-        .join("&");
+    return redirectToHome(c, state, url);
+}
 
-    return c.redirect(`/?${params}`, 302);
+function redirectToHome(
+    c: Context,
+    state:
+        | "exists"
+        | "invalid"
+        | "error"
+        | "mark-updated"
+        | "mark-deleted"
+        | "mark-error",
+    url?: string,
+) {
+    const params = new URLSearchParams({ state });
+
+    if (url) {
+        params.set("url", url);
+    }
+
+    return c.redirect(`/?${params.toString()}`, 302);
 }
 
 function buildShareUrl(token: string) {
@@ -193,6 +256,29 @@ const markCategorySchema = z.object({
     categoryId: z.number().int().positive().nullable(),
 });
 
+const markUpdateFormSchema = z.object({
+    url: z.url(),
+    title: z.string().optional(),
+    categoryId: z.number().int().positive().nullable(),
+});
+
+const markDeleteFormSchema = z.object({
+    url: z.url(),
+});
+
 const categoryIdSchema = z.object({
     id: z.number().int().positive(),
 });
+
+function parseCategoryId(input: unknown) {
+    if (typeof input !== "string" || input.length === 0) {
+        return null;
+    }
+
+    const categoryId = Number(input);
+    return Number.isInteger(categoryId) ? categoryId : input;
+}
+
+function readUrlField(input: unknown) {
+    return typeof input === "string" ? input : undefined;
+}

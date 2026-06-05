@@ -4,21 +4,16 @@ import { logger as honoLogger } from "hono/logger";
 import { createLogger } from "@/lib/logger";
 import { env } from "@/env";
 import apiRouter from "./routers/api";
-import pageRouter from "./routers/pages";
+import pageRouter, { setPublicPageRoute } from "./routers/pages";
 import { clerkMiddleware, requireAuth } from "./middleware";
+import { SharePage } from "./pages/Share";
 
 const logger = createLogger("server");
 
 const app = new Hono();
+setPublicPageRoute(app, SharePage);
 
-app.use("*", clerkMiddleware());
-app.use("*", async (c, next) => {
-    if (isPublicSharePath(c.req.path)) {
-        return next();
-    }
-
-    return requireAuth(c, next);
-});
+app.use("*", clerkMiddleware(), requireAuth);
 app.use(honoLogger((...args) => logger.info(...args)));
 app.use(
     "/public/*",
@@ -53,7 +48,3 @@ const server = Bun.serve({
 logger.info(`Server started on port ${env.PORT}`);
 
 export default server;
-
-function isPublicSharePath(path: string) {
-    return /^\/share(\/|$)/.test(path);
-}

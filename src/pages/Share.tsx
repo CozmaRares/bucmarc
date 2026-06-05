@@ -1,10 +1,11 @@
 import { getCategoryByShareToken, getMarksByCategoryId } from "@/db";
-import type { Category } from "@/db/schema";
+import type { Mark } from "@/db/schema";
 import type { Context } from "hono";
 import type { Page } from "./types";
 
 type Props = {
-    category: Category;
+    categoryName: string;
+    marks: Mark[];
 };
 
 async function dataLoader(c: Context): Promise<Props | null> {
@@ -15,18 +16,18 @@ async function dataLoader(c: Context): Promise<Props | null> {
         return null;
     }
 
-    return { category };
-}
-
-async function Share({ category }: Props) {
     const marks = await getMarksByCategoryId(category.id);
 
+    return { marks, categoryName: category.name };
+}
+
+function Share({ marks, categoryName }: Props) {
     return (
         <main>
-            <h1>{category.name}</h1>
+            <h1>{categoryName}</h1>
             <ul>
                 {marks.map(mark => (
-                    <li key={mark.url}>
+                    <li>
                         <a href={mark.url}>{mark.url}</a>
                     </li>
                 ))}
@@ -35,8 +36,9 @@ async function Share({ category }: Props) {
     );
 }
 
-export const SharePage: Page<Props> = {
+export const SharePage = {
     path: "/share/:token",
     component: Share,
     dataLoader: dataLoader,
-};
+    publicPage: true,
+} as const satisfies Page<Props>;

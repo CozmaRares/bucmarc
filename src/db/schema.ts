@@ -13,7 +13,10 @@ export const categories = sqliteTable("categories", {
     createdAt: helpers.createdAt(),
     updatedAt: helpers.updatedAt(),
 });
-export type Category = InferSelectModel<typeof categories>;
+export type Category = Omit<
+    InferSelectModel<typeof categories>,
+    "shareTokenHash"
+>;
 
 export const marks = sqliteTable("marks", {
     url: text().primaryKey(),

@@ -1,21 +1,35 @@
 import { db } from "./connection";
-import { eq } from "drizzle-orm";
+import { eq, isNotNull, and } from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash, randomBytes } from "node:crypto";
 
 export function getMarks() {
-    return db.select().from(schema.marks);
+    return db
+        .select({
+            url: schema.marks.url,
+            title: schema.marks.title,
+            categoryId: schema.marks.categoryId,
+            createdAt: schema.marks.createdAt,
+        })
+        .from(schema.marks);
 }
 
 export function getCategories() {
-    return db.select().from(schema.categories);
+    return db
+        .select({
+            id: schema.categories.id,
+            name: schema.categories.name,
+            createdAt: schema.categories.createdAt,
+            updatedAt: schema.categories.updatedAt,
+        })
+        .from(schema.categories);
 }
 
-export function getCategoryById(id: number) {
-    return db
-        .select()
-        .from(schema.categories)
-        .where(eq(schema.categories.id, id));
+export async function getCategoryById(id: number) {
+    const [category] = await getCategories().where(
+        eq(schema.categories.id, id),
+    );
+    return category;
 }
 
 export async function getCategoryByShareToken(token: string | undefined) {
@@ -23,19 +37,15 @@ export async function getCategoryByShareToken(token: string | undefined) {
         return undefined;
     }
 
-    const [category] = await db
-        .select()
-        .from(schema.categories)
-        .where(eq(schema.categories.shareTokenHash, hashShareToken(token)));
+    const [category] = await getCategories().where(
+        eq(schema.categories.shareTokenHash, hashShareToken(token)),
+    );
 
     return category;
 }
 
 export function getMarksByCategoryId(categoryId: number) {
-    return db
-        .select()
-        .from(schema.marks)
-        .where(eq(schema.marks.categoryId, categoryId));
+    return getMarks().where(eq(schema.marks.categoryId, categoryId));
 }
 
 export async function saveMark(url: string, title?: string | null) {
@@ -90,7 +100,7 @@ export async function assignMarkCategory(
     categoryId: number | null,
 ) {
     if (categoryId !== null) {
-        const [category] = await getCategoryById(categoryId);
+        const category = await getCategoryById(categoryId);
 
         if (!category) {
             throw new Error(`Category ${categoryId} not found`);
@@ -106,16 +116,56 @@ export async function assignMarkCategory(
     return mark;
 }
 
-export async function enableCategorySharing(categoryId: number) {
-    const token = generateShareToken();
+export async function updateMark(
+    url: string,
+    title: string | null | undefined,
+    categoryId: number | null,
+) {
+    if (categoryId !== null) {
+        const category = await getCategoryById(categoryId);
 
-    const [category] = await db
-        .update(schema.categories)
-        .set({ shareTokenHash: hashShareToken(token) })
-        .where(eq(schema.categories.id, categoryId))
+        if (!category) {
+            throw new Error(`Category ${categoryId} not found`);
+        }
+    }
+
+    const [mark] = await db
+        .update(schema.marks)
+        .set({
+            title,
+            categoryId,
+        })
+        .where(eq(schema.marks.url, url))
         .returning();
 
-    return { category, token };
+    return mark;
+}
+
+export async function enableCategorySharing(
+    categoryId: number,
+    rotate = false,
+) {
+    if (!rotate) {
+        const existing = await getCategories().where(
+            and(
+                eq(schema.categories.id, categoryId),
+                isNotNull(schema.categories.shareTokenHash),
+            ),
+        );
+
+        if (existing.length > 0) {
+            return null;
+        }
+    }
+
+    const token = generateShareToken();
+
+    await db
+        .update(schema.categories)
+        .set({ shareTokenHash: hashShareToken(token) })
+        .where(eq(schema.categories.id, categoryId));
+
+    return { token };
 }
 
 export async function disableCategorySharing(categoryId: number) {
@@ -129,7 +179,7 @@ export async function disableCategorySharing(categoryId: number) {
 }
 
 export async function rotateCategorySharing(categoryId: number) {
-    return enableCategorySharing(categoryId);
+    return enableCategorySharing(categoryId, true);
 }
 
 function generateShareToken() {
