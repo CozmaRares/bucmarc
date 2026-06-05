@@ -1,6 +1,7 @@
 import { db } from "./connection";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema";
+import { createHash, randomBytes } from "node:crypto";
 
 export function getMarks() {
     return db.select().from(schema.marks);
@@ -15,6 +16,20 @@ export function getCategoryById(id: number) {
         .select()
         .from(schema.categories)
         .where(eq(schema.categories.id, id));
+}
+
+export function getCategoryByShareToken(token: string) {
+    return db
+        .select()
+        .from(schema.categories)
+        .where(eq(schema.categories.shareTokenHash, hashShareToken(token)));
+}
+
+export function getMarksByCategoryId(categoryId: number) {
+    return db
+        .select()
+        .from(schema.marks)
+        .where(eq(schema.marks.categoryId, categoryId));
 }
 
 export async function saveMark(url: string) {
@@ -83,6 +98,40 @@ export async function assignMarkCategory(
         .returning();
 
     return mark;
+}
+
+export async function enableCategorySharing(categoryId: number) {
+    const token = generateShareToken();
+
+    const [category] = await db
+        .update(schema.categories)
+        .set({ shareTokenHash: hashShareToken(token) })
+        .where(eq(schema.categories.id, categoryId))
+        .returning();
+
+    return { category, token };
+}
+
+export async function disableCategorySharing(categoryId: number) {
+    const [category] = await db
+        .update(schema.categories)
+        .set({ shareTokenHash: null })
+        .where(eq(schema.categories.id, categoryId))
+        .returning();
+
+    return category;
+}
+
+export async function rotateCategorySharing(categoryId: number) {
+    return enableCategorySharing(categoryId);
+}
+
+function generateShareToken() {
+    return randomBytes(32).toString("base64url");
+}
+
+function hashShareToken(token: string) {
+    return createHash("sha256").update(token).digest("base64url");
 }
 
 function isDuplicateMarkError(error: unknown) {

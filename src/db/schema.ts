@@ -7,6 +7,7 @@ const helpers = {
 export const categories = sqliteTable("categories", {
     id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
     name: text().notNull(),
+    shareTokenHash: text().unique(),
     createdAt: helpers.createdAt(),
 });
 

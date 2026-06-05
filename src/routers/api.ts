@@ -3,13 +3,18 @@ import type { Context } from "hono";
 import {
     assignMarkCategory,
     createCategory,
+    disableCategorySharing,
     deleteCategory,
     deleteMark,
+    enableCategorySharing,
     getCategories,
+    getCategoryById,
     getMarks,
+    rotateCategorySharing,
     renameCategory,
     saveMark,
 } from "@/db";
+import { env } from "@/env";
 import { z } from "zod";
 
 const apiRouter = new Hono();
@@ -91,6 +96,49 @@ apiRouter.delete("/category/delete/:id", async c => {
     return c.json({ success: true });
 });
 
+apiRouter.post("/category/share/enable", async c => {
+    const input = categoryIdSchema.parse(await c.req.json());
+    const [category] = await getCategoryById(input.id);
+
+    if (!category) {
+        return c.json({ success: false, error: "Category not found" }, 404);
+    }
+
+    if (category.shareTokenHash) {
+        return c.json(
+            { success: false, error: "Sharing already enabled" },
+            409,
+        );
+    }
+
+    const { token } = await enableCategorySharing(input.id);
+    return c.json({ success: true, shareUrl: buildShareUrl(token) });
+});
+
+apiRouter.post("/category/share/rotate", async c => {
+    const input = categoryIdSchema.parse(await c.req.json());
+    const [category] = await getCategoryById(input.id);
+
+    if (!category) {
+        return c.json({ success: false, error: "Category not found" }, 404);
+    }
+
+    const { token } = await rotateCategorySharing(input.id);
+    return c.json({ success: true, shareUrl: buildShareUrl(token) });
+});
+
+apiRouter.post("/category/share/disable", async c => {
+    const input = categoryIdSchema.parse(await c.req.json());
+    const [category] = await getCategoryById(input.id);
+
+    if (!category) {
+        return c.json({ success: false, error: "Category not found" }, 404);
+    }
+
+    await disableCategorySharing(input.id);
+    return c.json({ success: true });
+});
+
 function decodeUrl(url: string) {
     try {
         return decodeURIComponent(url);
@@ -111,6 +159,10 @@ function redirectWithState(
     return c.redirect(`/?state=${state}&url=${encodeURIComponent(url)}`, 302);
 }
 
+function buildShareUrl(token: string) {
+    return new URL(`/share/${token}`, env.APP_URL).href;
+}
+
 const saveUrlSchema = z.url().refine(url => {
     const protocol = new URL(url).protocol;
     return protocol === "http:" || protocol === "https:";
@@ -128,4 +180,8 @@ const categoryRenameSchema = z.object({
 const markCategorySchema = z.object({
     url: z.string().url(),
     categoryId: z.number().int().positive().nullable(),
+});
+
+const categoryIdSchema = z.object({
+    id: z.number().int().positive(),
 });
