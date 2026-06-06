@@ -10,7 +10,7 @@ services:
             - ./server-data:/app/data
             - ./drizzle:/app/drizzle
             - ./drizzle.config.ts:/app/drizzle.config.ts
-        command: ["bun", "run", "${DB_UPDATE_COMMAND}"]
+        command: ["bun", "run", "db:push"]
 
     server:
         build: .
