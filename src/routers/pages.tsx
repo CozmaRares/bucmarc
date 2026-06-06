@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { jsxRenderer } from "hono/jsx-renderer";
 import { pageRegistry } from "@/pages";
 import type { FC } from "hono/jsx";
-import type { Page } from "@/pages/types";
 
 const pageRouter = new Hono();
 export default pageRouter;
@@ -18,38 +17,34 @@ pageRouter.get(
     jsxRenderer(({ children }) => <Layout>{children}</Layout>),
 );
 
-for (const {
-    path,
-    component: Component,
-    dataLoader,
-    publicPage,
-} of pageRegistry) {
-    if (publicPage) {
-        throw new Error("public pages not supported in the pages router");
-    }
+pageRegistry
+    .filter(page => !page.publicPage)
+    .forEach(page => {
+        const { path, component: Component, dataLoader } = page;
 
-    pageRouter.get(path, async c => {
-        const data = await dataLoader?.(c);
-        if (data === null) {
-            return c.text("Not found", 404);
-        }
+        pageRouter.get(path, async c => {
+            const data = await dataLoader?.(c);
+            if (data === null) {
+                return c.text("Not found", 404);
+            }
 
-        return c.render(<Component {...data} />);
+            return c.render(<Component {...data} />);
+        });
     });
-}
 
-export function setPublicPageRoute(router: Hono, page: Page<any>) {
-    const { path, component: Component, dataLoader, publicPage } = page;
-    if (!publicPage) {
-        throw new Error("non-public pages not supported in setPublicPageRoute");
-    }
+export function registerPublicPages(router: Hono) {
+    pageRegistry
+        .filter(page => page.publicPage)
+        .forEach(page => {
+            const { path, component: Component, dataLoader } = page;
 
-    router.get(path, async c => {
-        const data = await dataLoader?.(c);
-        if (data === null) {
-            return c.text("Not found", 404);
-        }
+            router.get(path, async c => {
+                const data = await dataLoader?.(c);
+                if (data === null) {
+                    return c.text("Not found", 404);
+                }
 
-        return c.html(<Component {...data} />);
-    });
+                return c.html(<Component {...data} />);
+            });
+        });
 }

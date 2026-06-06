@@ -19,6 +19,7 @@ WORKDIR /app
 # FIX: can't start production server without node_modules
 # needs @libsql/linux-x64-gnu
 COPY --from=builder /app/node_modules ./node_modules
-
 COPY --from=builder /app/dist .
+COPY --from=builder /app/public ./public
+
 CMD ["bun", "index.js"]

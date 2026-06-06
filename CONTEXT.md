@@ -33,7 +33,7 @@ The authenticated part of Bucmarc where marks, categories, and sharing settings 
 _Avoid_: Admin panel, dashboard, backend
 
 **Capture Flow**:
-The lightweight path where the App Owner saves a mark from outside Bucmarc and, when successful, continues to the saved URL.
+The lightweight path where the App Owner saves a mark from outside Bucmarc and, when successful, continues to the saved URL. This flow is defined only for the `/api/mark/save/:url` endpoint.
 _Avoid_: Add flow, bookmarklet flow, import flow
 
 **Shared View**:

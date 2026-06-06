@@ -1,28 +1,82 @@
 import { db } from "./connection";
-import { eq, isNotNull, and } from "drizzle-orm";
+import {
+    eq,
+    isNotNull,
+    and,
+    sql,
+    type SelectedFields,
+    desc,
+    isNull,
+} from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash, randomBytes } from "node:crypto";
+import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
 
-export function getMarks() {
-    return db
-        .select({
-            url: schema.marks.url,
-            title: schema.marks.title,
-            categoryId: schema.marks.categoryId,
-            createdAt: schema.marks.createdAt,
-        })
-        .from(schema.marks);
+type Fields = SelectedFields<SQLiteColumn, SQLiteTable>;
+
+function getDefaultMarksFields() {
+    return {
+        url: schema.marks.url,
+        title: schema.marks.title,
+        categoryId: schema.marks.categoryId,
+    } satisfies Fields;
 }
 
-export function getCategories() {
+function getMarksGeneric<TSelection extends Fields>(fields?: TSelection) {
     return db
-        .select({
-            id: schema.categories.id,
-            name: schema.categories.name,
-            createdAt: schema.categories.createdAt,
-            updatedAt: schema.categories.updatedAt,
-        })
-        .from(schema.categories);
+        .select(fields ?? getDefaultMarksFields())
+        .from(schema.marks)
+        .orderBy(desc(schema.marks.updatedAt));
+}
+
+// explicit return to infer type Mark
+export function getMarks() {
+    return getMarksGeneric(getDefaultMarksFields());
+}
+export type Mark = Awaited<ReturnType<typeof getMarks>>[number];
+
+function getDefaultCategoriesFields() {
+    // kept separate cause syntax highlighting breaks if included in the select
+    const sharingEnabled = sql<boolean>`${schema.categories.shareTokenHash} is not null`;
+    return {
+        id: schema.categories.id,
+        name: schema.categories.name,
+        sharingEnabled,
+    };
+}
+
+function getCategorizedMarksGeneric<TSelection extends Fields>(
+    fields?: TSelection,
+) {
+    return db
+        .select(fields ?? getDefaultCategoriesFields())
+        .from(schema.categories)
+        .orderBy(desc(schema.categories.updatedAt));
+}
+
+// explicit return to infer type Category
+export function getCategories() {
+    return getCategorizedMarksGeneric(getDefaultCategoriesFields());
+}
+export type Category = Awaited<ReturnType<typeof getCategories>>[number];
+
+export function getCategorizedMarks() {
+    return db.query.categories.findMany({
+        with: {
+            marks: {
+                orderBy: [desc(schema.marks.updatedAt)],
+            },
+        },
+        columns: {
+            id: true,
+            name: true,
+        },
+        orderBy: [desc(schema.categories.updatedAt)],
+    });
+}
+
+export function getUncategorizedMarks() {
+    return getMarks().where(isNull(schema.marks.categoryId));
 }
 
 export async function getCategoryById(id: number) {
@@ -95,27 +149,6 @@ export async function deleteCategory(id: number) {
     });
 }
 
-export async function assignMarkCategory(
-    url: string,
-    categoryId: number | null,
-) {
-    if (categoryId !== null) {
-        const category = await getCategoryById(categoryId);
-
-        if (!category) {
-            throw new Error(`Category ${categoryId} not found`);
-        }
-    }
-
-    const [mark] = await db
-        .update(schema.marks)
-        .set({ categoryId })
-        .where(eq(schema.marks.url, url))
-        .returning();
-
-    return mark;
-}
-
 export async function updateMark(
     url: string,
     title: string | null | undefined,
@@ -165,20 +198,18 @@ export async function enableCategorySharing(
         .set({ shareTokenHash: hashShareToken(token) })
         .where(eq(schema.categories.id, categoryId));
 
-    return { token };
+    return token;
 }
 
-export async function disableCategorySharing(categoryId: number) {
-    const [category] = await db
+export function disableCategorySharing(categoryId: number) {
+    return db
         .update(schema.categories)
         .set({ shareTokenHash: null })
         .where(eq(schema.categories.id, categoryId))
         .returning();
-
-    return category;
 }
 
-export async function rotateCategorySharing(categoryId: number) {
+export function rotateCategorySharing(categoryId: number) {
     return enableCategorySharing(categoryId, true);
 }
 

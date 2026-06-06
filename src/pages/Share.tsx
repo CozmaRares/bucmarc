@@ -1,5 +1,5 @@
 import { getCategoryByShareToken, getMarksByCategoryId } from "@/db";
-import type { Mark } from "@/db/schema";
+import type { Mark } from "@/db";
 import type { Context } from "hono";
 import type { Page } from "./types";
 

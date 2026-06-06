@@ -14,18 +14,18 @@ The management experience should work without client-side JavaScript and should 
 
 ## Acceptance criteria
 
-- [ ] The Private Management Area is authenticated.
-- [ ] The Private Management Area renders Uncategorized Marks.
-- [ ] The Private Management Area renders Categorized Marks under or alongside their Categories.
-- [ ] Each Mark can have its Title added, changed, and cleared through a form.
-- [ ] Clearing a Title stores and displays the Mark as having no Title.
-- [ ] A Mark with no Title displays its URL as fallback.
-- [ ] Each Mark can be assigned to a Category through a form.
-- [ ] Each Mark can be returned to Uncategorized Marks through a form.
-- [ ] Mark Title and Category are saved together in one submission.
-- [ ] Mark deletion is available as a separate form action.
-- [ ] Form submissions redirect back to the Private Management Area.
-- [ ] The UI avoids raw implementation details such as table fields and token hashes.
+- [x] The Private Management Area is authenticated.
+- [x] The Private Management Area renders Uncategorized Marks.
+- [x] The Private Management Area renders Categorized Marks under or alongside their Categories.
+- [x] Each Mark can have its Title added, changed, and cleared through a form.
+- [x] Clearing a Title stores and displays the Mark as having no Title.
+- [x] A Mark with no Title displays its URL as fallback.
+- [x] Each Mark can be assigned to a Category through a form.
+- [x] Each Mark can be returned to Uncategorized Marks through a form.
+- [x] Mark Title and Category are saved together in one submission.
+- [x] Mark deletion is available as a separate form action.
+- [x] Form submissions redirect back to the Private Management Area.
+- [x] The UI avoids raw implementation details such as table fields and token hashes.
 
 ## Blocked by
 

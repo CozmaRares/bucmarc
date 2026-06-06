@@ -4,17 +4,19 @@ import { logger as honoLogger } from "hono/logger";
 import { createLogger } from "@/lib/logger";
 import { env } from "@/env";
 import apiRouter from "./routers/api";
-import pageRouter, { setPublicPageRoute } from "./routers/pages";
 import { clerkMiddleware, requireAuth } from "./middleware";
-import { SharePage } from "./pages/Share";
+import { HTTPStatusCode } from "./honoHelpers";
+import pageRouter, { registerPublicPages } from "./routers/pages";
 
 const logger = createLogger("server");
 
 const app = new Hono();
-setPublicPageRoute(app, SharePage);
 
-app.use("*", clerkMiddleware(), requireAuth);
+app.use("*", clerkMiddleware());
 app.use(honoLogger((...args) => logger.info(...args)));
+registerPublicPages(app);
+app.use(requireAuth);
+
 app.use(
     "/public/*",
     serveStatic({
@@ -28,7 +30,7 @@ app.use("*", async (ctx, next) => {
         await next();
     } catch (e) {
         logger.error(e);
-        return ctx.text("Internal server error", 500);
+        return ctx.text("Internal server error", HTTPStatusCode.ServerError);
     }
 });
 
@@ -36,8 +38,7 @@ app.route("/api", apiRouter);
 app.route("/", pageRouter);
 
 app.get("*", c => {
-    c.status(404);
-    return c.text("Not Found");
+    return c.text("Not Found", HTTPStatusCode.NotFound);
 });
 
 const server = Bun.serve({

@@ -1,34 +1,41 @@
 {
-    "version": "7",
-    "dialect": "sqlite",
-    "entries": [
-        {
-            "idx": 0,
-            "version": "6",
-            "when": 1780221669473,
-            "tag": "0000_lively_vin_gonzales",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "6",
-            "when": 1780659228737,
-            "tag": "0001_jittery_ultimates",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "6",
-            "when": 1780659743528,
-            "tag": "0002_dusty_sir_ram",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "6",
-            "when": 1780685728764,
-            "tag": "0003_old_microchip",
-            "breakpoints": true
-        }
-    ]
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1780221669473,
+      "tag": "0000_lively_vin_gonzales",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1780659228737,
+      "tag": "0001_jittery_ultimates",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1780659743528,
+      "tag": "0002_dusty_sir_ram",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1780685728764,
+      "tag": "0003_old_microchip",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1780765581723,
+      "tag": "0004_fair_iron_fist",
+      "breakpoints": true
+    }
+  ]
 }
