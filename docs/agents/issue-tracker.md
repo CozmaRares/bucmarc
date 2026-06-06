@@ -11,6 +11,12 @@ Issues and PRDs for this repo live as markdown files in `.scratch/`.
 - Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
+## Reporting
+
+Run `bun run issues:report` to print a Markdown report of implementation issues in `.scratch/**/issues/*.md`.
+
+The report groups issues by `Status:` using the order from `docs/agents/triage-labels.md`, then lists any non-canonical statuses after the canonical triage states. This keeps completed statuses such as `done` visible without changing the canonical triage labels.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).

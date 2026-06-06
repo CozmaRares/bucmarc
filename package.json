@@ -5,6 +5,7 @@
     "private": true,
     "scripts": {
         "format": "prettier --write .",
+        "issues:report": "bun run scripts/issue-report.ts",
         "dev": "bun run src/index.ts",
         "db:push": "drizzle-kit push",
         "db:studio": "drizzle-kit studio",
