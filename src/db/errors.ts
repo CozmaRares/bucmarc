@@ -2,21 +2,29 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("db");
 
-type DbError = { type: string };
+type _DbError = { type: string };
 export type DuplicateMarkUrlError = { type: "duplicate_mark_url" };
 export type DuplicateCategoryNameError = { type: "duplicate_category_name" };
 export type UnknownDbError = { type: "unknown_db_error"; error: unknown };
+export type NotFoundMarkError = { type: "not_found_mark" };
 export type NotFoundCategoryError = { type: "not_found_category" };
 export type CategoryFKError = { type: "category_fk" };
-export type SharingAlreadyEnabledError = { type: "sharing_already_enabled" };
+export type DbError =
+    | DuplicateMarkUrlError
+    | DuplicateCategoryNameError
+    | UnknownDbError
+    | NotFoundMarkError
+    | NotFoundCategoryError
+    | CategoryFKError;
 
-function logErrorAndCreate<Args extends any[], E extends DbError>(
+function logErrorAndCreate<Args extends any[], E extends _DbError>(
     cb: (...args: Args) => E,
 ): (...args: Args) => E {
     return (...args) => {
         const result = cb(...args);
         let logMethod;
-        if (result.type === "unknown_db_error") {
+        // @ts-expect-error
+        if (isUnknownDbError(result)) {
             logMethod = logger.error;
         } else {
             logMethod = logger.debug;
@@ -46,6 +54,11 @@ export const maybeDuplicateMarkUrlError = logErrorAndCreate(
             ? { type: "duplicate_mark_url" }
             : { type: "unknown_db_error", error },
 );
+export function isDuplicateMarkUrlError(
+    error: DbError,
+): error is DuplicateMarkUrlError {
+    return error.type === "duplicate_mark_url";
+}
 
 export const maybeDuplicateCategoryNameError = logErrorAndCreate(
     (error: unknown): DuplicateCategoryNameError | UnknownDbError =>
@@ -53,10 +66,18 @@ export const maybeDuplicateCategoryNameError = logErrorAndCreate(
             ? { type: "duplicate_category_name" }
             : { type: "unknown_db_error", error },
 );
+export function isDuplicateCategoryNameError(
+    error: DbError,
+): error is DuplicateCategoryNameError {
+    return error.type === "duplicate_category_name";
+}
 
 export const unknownDbError = logErrorAndCreate(
     (error: unknown): UnknownDbError => ({ type: "unknown_db_error", error }),
 );
+export function isUnknownDbError(error: DbError): error is UnknownDbError {
+    return error.type === "unknown_db_error";
+}
 
 export const maybeCategoryFKError = logErrorAndCreate(
     (error: unknown): CategoryFKError | UnknownDbError =>
@@ -64,11 +85,24 @@ export const maybeCategoryFKError = logErrorAndCreate(
             ? { type: "category_fk" }
             : { type: "unknown_db_error", error },
 );
-
-export const sharingAlreadyEnabledError = (): SharingAlreadyEnabledError => ({
-    type: "sharing_already_enabled",
-});
+export function isCategoryFKError(error: DbError): error is CategoryFKError {
+    return error.type === "category_fk";
+}
 
 export const notFoundCategoryError = (): NotFoundCategoryError => ({
     type: "not_found_category",
 });
+export function isNotFoundCategoryError(
+    error: DbError,
+): error is NotFoundCategoryError {
+    return error.type === "not_found_category";
+}
+
+export const notFoundMarkError = (): NotFoundMarkError => ({
+    type: "not_found_mark",
+});
+export function isNotFoundMarkError(
+    error: DbError,
+): error is NotFoundMarkError {
+    return error.type === "not_found_mark";
+}

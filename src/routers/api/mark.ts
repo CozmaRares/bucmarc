@@ -3,7 +3,11 @@ import { zValidator } from "@hono/zod-validator";
 import { Context, Hono } from "hono";
 import z from "zod";
 import { HTTPStatus, successResponse, errorResponse } from "@/honoHelpers";
-import { isDuplicateMarkUrlError } from "@/db/errors";
+import {
+    isCategoryFKError,
+    isDuplicateMarkUrlError,
+    isNotFoundMarkError,
+} from "@/db/errors";
 
 export const markRouter = new Hono();
 
@@ -20,7 +24,7 @@ const markFieldsValidators = {
     ),
 };
 
-markRouter.get("/save/:url", async c => {
+markRouter.get("/save/:url", c => {
     const redirectWithState = (
         c: Context,
         state: "exists" | "invalid" | "error",
@@ -57,30 +61,44 @@ const markUpdateSchema = z.object({
     categoryId: markFieldsValidators.categoryId,
 });
 
-markRouter.post("/update", zValidator("form", markUpdateSchema), async c => {
+markRouter.post("/update", zValidator("form", markUpdateSchema), c => {
     const input = c.req.valid("form");
 
-    try {
-        await updateMark(input.url, input.title, input.categoryId);
-        return c.redirect("/", HTTPStatus.Found);
-    } catch {
-        return errorResponse(c);
-    }
+    return updateMark(input.url, input.title, input.categoryId).match(
+        () => c.redirect("/", HTTPStatus.Found),
+        error => {
+            if (isNotFoundMarkError(error)) {
+                return errorResponse(c, "Mark not found", HTTPStatus.NotFound);
+            }
+
+            if (isCategoryFKError(error)) {
+                return errorResponse(
+                    c,
+                    "Category not found",
+                    HTTPStatus.NotFound,
+                );
+            }
+
+            return errorResponse(c);
+        },
+    );
 });
 
 const markDeleteSchema = z.object({
     url: markFieldsValidators.url,
 });
 
-markRouter.delete("/delete", zValidator("json", markDeleteSchema), async c => {
+markRouter.delete("/delete", zValidator("json", markDeleteSchema), c => {
     const input = c.req.valid("json");
-
-    try {
-        await deleteMark(input.url);
-        return successResponse(c);
-    } catch {
-        return errorResponse(c);
-    }
+    return deleteMark(input.url).match(
+        () => successResponse(c),
+        error => {
+            if (isNotFoundMarkError(error)) {
+                return errorResponse(c, "Mark not found", HTTPStatus.NotFound);
+            }
+            return errorResponse(c);
+        },
+    );
 });
 
 function decodeUrl(url: string) {

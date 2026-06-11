@@ -6,12 +6,14 @@ import {
     deleteCategory,
     disableCategorySharing,
     enableCategorySharing,
-    getCategoryById,
     renameCategory,
-    rotateCategorySharing,
 } from "@/db";
 import { errorResponse, HTTPStatus, successResponse } from "@/honoHelpers";
 import { env } from "@/env";
+import {
+    isDuplicateCategoryNameError,
+    isNotFoundCategoryError,
+} from "@/db/errors";
 
 export const categoryRouter = new Hono();
 
@@ -24,16 +26,12 @@ const categoryCreateSchema = z.object({
     name: categoryFieldsValidators.name,
 });
 
-categoryRouter.post(
-    "/create",
-    zValidator("json", categoryCreateSchema),
-    async c => {
-        const input = c.req.valid("json");
-
-        try {
-            const category = await createCategory(input.name);
-
-            if (category === null) {
+categoryRouter.post("/create", zValidator("json", categoryCreateSchema), c => {
+    const input = c.req.valid("json");
+    return createCategory(input.name).match(
+        () => successResponse(c),
+        error => {
+            if (isDuplicateCategoryNameError(error)) {
                 return errorResponse(
                     c,
                     "Category name already exists",
@@ -41,27 +39,22 @@ categoryRouter.post(
                 );
             }
 
-            return successResponse(c, { category });
-        } catch {
             return errorResponse(c);
-        }
-    },
-);
+        },
+    );
+});
 
 const categoryRenameSchema = z.object({
     id: categoryFieldsValidators.id,
     name: categoryFieldsValidators.name,
 });
 
-categoryRouter.post(
-    "/rename",
-    zValidator("json", categoryRenameSchema),
-    async c => {
-        const input = c.req.valid("json");
-
-        try {
-            const category = await renameCategory(input.id, input.name);
-            if (category === null) {
+categoryRouter.post("/rename", zValidator("json", categoryRenameSchema), c => {
+    const input = c.req.valid("json");
+    return renameCategory(input.id, input.name).match(
+        category => successResponse(c, { category }),
+        error => {
+            if (isDuplicateCategoryNameError(error)) {
                 return errorResponse(
                     c,
                     "Category name already exists",
@@ -69,12 +62,10 @@ categoryRouter.post(
                 );
             }
 
-            return successResponse(c, { category });
-        } catch {
             return errorResponse(c);
-        }
-    },
-);
+        },
+    );
+});
 
 const categoryDeleteSchema = z.object({
     id: categoryFieldsValidators.id,
@@ -83,15 +74,12 @@ const categoryDeleteSchema = z.object({
 categoryRouter.delete(
     "/delete",
     zValidator("json", categoryDeleteSchema),
-    async c => {
+    c => {
         const input = c.req.valid("json");
-
-        try {
-            await deleteCategory(input.id);
-            return successResponse(c);
-        } catch {
-            return errorResponse(c);
-        }
+        return deleteCategory(input.id).match(
+            () => successResponse(c),
+            () => errorResponse(c),
+        );
     },
 );
 
@@ -102,89 +90,43 @@ const categoryIdSchema = z.object({
 categoryRouter.post(
     "/share/enable",
     zValidator("json", categoryIdSchema),
-    async c => {
+    c => {
         const input = c.req.valid("json");
+        return enableCategorySharing(input.id).match(
+            token => successResponse(c, buildShareUrl(token)),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorResponse(
+                        c,
+                        "Category not found",
+                        HTTPStatus.NotFound,
+                    );
+                }
 
-        try {
-            const category = await getCategoryById(input.id);
-
-            if (!category) {
-                return errorResponse(
-                    c,
-                    "Category not found",
-                    HTTPStatus.NotFound,
-                );
-            }
-
-            const result = await enableCategorySharing(input.id);
-
-            if (result === null) {
-                return errorResponse(
-                    c,
-                    "Sharing already enabled",
-                    HTTPStatus.Conflict,
-                );
-            }
-
-            return successResponse(c, buildShareUrl(result));
-        } catch {
-            return errorResponse(c);
-        }
-    },
-);
-
-categoryRouter.post(
-    "/share/rotate",
-    zValidator("json", categoryIdSchema),
-    async c => {
-        const input = c.req.valid("json");
-
-        try {
-            const category = await getCategoryById(input.id);
-
-            if (!category) {
-                return errorResponse(
-                    c,
-                    "Category not found",
-                    HTTPStatus.NotFound,
-                );
-            }
-
-            const result = await rotateCategorySharing(input.id);
-
-            if (result === null) {
-                return errorResponse(
-                    c,
-                    "Internal error",
-                    HTTPStatus.ServerError,
-                );
-            }
-
-            return successResponse(c, buildShareUrl(result));
-        } catch {
-            return errorResponse(c);
-        }
+                return errorResponse(c);
+            },
+        );
     },
 );
 
 categoryRouter.post(
     "/share/disable",
     zValidator("json", categoryIdSchema),
-    async c => {
+    c => {
         const input = c.req.valid("json");
-
-        try {
-            const category = await getCategoryById(input.id);
-
-            if (!category) {
-                return errorResponse(c, "Category not found", 404);
-            }
-
-            await disableCategorySharing(input.id);
-            return successResponse(c);
-        } catch {
-            return errorResponse(c);
-        }
+        return disableCategorySharing(input.id).match(
+            () => successResponse(c),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorResponse(
+                        c,
+                        "Category not found",
+                        HTTPStatus.NotFound,
+                    );
+                }
+                return errorResponse(c);
+            },
+        );
     },
 );
 
