@@ -1,62 +1,34 @@
 import { db } from "./connection";
-import {
-    eq,
-    isNotNull,
-    and,
-    sql,
-    type SelectedFields,
-    desc,
-    isNull,
-} from "drizzle-orm";
+import { eq, isNotNull, and, sql, desc, isNull } from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash, randomBytes } from "node:crypto";
-import type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
+import { ResultAsync } from "neverthrow";
+import { classifyDbError, type DbError } from "./errors";
 
-type Fields = SelectedFields<SQLiteColumn, SQLiteTable>;
+function _selectMarks() {
+    return db.select().from(schema.marks).orderBy(desc(schema.marks.updatedAt));
+}
+export type Mark = Awaited<ReturnType<typeof _selectMarks>>[number];
 
-function getDefaultMarksFields() {
-    return {
-        url: schema.marks.url,
-        title: schema.marks.title,
-        categoryId: schema.marks.categoryId,
-    } satisfies Fields;
+export async function getMarks() {
+    return await _selectMarks();
 }
 
-function getMarksGeneric<TSelection extends Fields>(fields?: TSelection) {
-    return db
-        .select(fields ?? getDefaultMarksFields())
-        .from(schema.marks)
-        .orderBy(desc(schema.marks.updatedAt));
-}
-
-// explicit return to infer type Mark
-export function getMarks() {
-    return getMarksGeneric(getDefaultMarksFields());
-}
-export type Mark = Awaited<ReturnType<typeof getMarks>>[number];
-
-function getDefaultCategoriesFields() {
-    // kept separate cause syntax highlighting breaks if included in the select
+function _selectCategories() {
     const sharingEnabled = sql<boolean>`${schema.categories.shareTokenHash} is not null`;
-    return {
-        id: schema.categories.id,
-        name: schema.categories.name,
-        sharingEnabled,
-    };
-}
 
-function getCategorizedMarksGeneric<TSelection extends Fields>(
-    fields?: TSelection,
-) {
     return db
-        .select(fields ?? getDefaultCategoriesFields())
+        .select({
+            id: schema.categories.id,
+            name: schema.categories.name,
+            sharingEnabled,
+        })
         .from(schema.categories)
         .orderBy(desc(schema.categories.updatedAt));
 }
 
-// explicit return to infer type Category
-export function getCategories() {
-    return getCategorizedMarksGeneric(getDefaultCategoriesFields());
+export async function getCategories() {
+    return await _selectCategories();
 }
 export type Category = Awaited<ReturnType<typeof getCategories>>[number];
 
@@ -75,12 +47,12 @@ export function getCategorizedMarks() {
     });
 }
 
-export function getUncategorizedMarks() {
-    return getMarks().where(isNull(schema.marks.categoryId));
+export async function getUncategorizedMarks() {
+    return await _selectMarks().where(isNull(schema.marks.categoryId));
 }
 
 export async function getCategoryById(id: number) {
-    const [category] = await getCategories().where(
+    const [category] = await _selectCategories().where(
         eq(schema.categories.id, id),
     );
     return category;
@@ -91,7 +63,7 @@ export async function getCategoryByShareToken(token: string | undefined) {
         return undefined;
     }
 
-    const [category] = await getCategories().where(
+    const [category] = await _selectCategories().where(
         eq(schema.categories.shareTokenHash, hashShareToken(token)),
     );
 
@@ -99,20 +71,17 @@ export async function getCategoryByShareToken(token: string | undefined) {
 }
 
 export function getMarksByCategoryId(categoryId: number) {
-    return getMarks().where(eq(schema.marks.categoryId, categoryId));
+    return _selectMarks().where(eq(schema.marks.categoryId, categoryId));
 }
 
-export async function saveMark(url: string, title?: string | null) {
-    try {
-        await db.insert(schema.marks).values({ url, title });
-        return "created" as const;
-    } catch (error) {
-        if (isDuplicateMarkError(error)) {
-            return "exists" as const;
-        }
-
-        throw error;
-    }
+export function saveMark(
+    url: string,
+    title?: string | null,
+): ResultAsync<"created", DbError> {
+    return ResultAsync.fromPromise(
+        db.insert(schema.marks).values({ url, title }),
+        error => classifyDbError(error, { expectDuplicate: "mark_url" }),
+    ).map(() => "created" as const);
 }
 
 export async function deleteMark(url: string) {
@@ -179,7 +148,7 @@ export async function enableCategorySharing(
     rotate = false,
 ) {
     if (!rotate) {
-        const existing = await getCategories().where(
+        const existing = await _selectCategories().where(
             and(
                 eq(schema.categories.id, categoryId),
                 isNotNull(schema.categories.shareTokenHash),
@@ -219,13 +188,4 @@ function generateShareToken() {
 
 function hashShareToken(token: string) {
     return createHash("sha256").update(token).digest("base64url");
-}
-
-function isDuplicateMarkError(error: unknown) {
-    return (
-        error instanceof Error &&
-        /UNIQUE constraint failed|PRIMARY KEY constraint failed/i.test(
-            error.message,
-        )
-    );
 }
