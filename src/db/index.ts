@@ -2,21 +2,39 @@ import { db } from "./connection";
 import { eq, isNotNull, and, sql, desc, isNull } from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash, randomBytes } from "node:crypto";
-import { ResultAsync } from "neverthrow";
-import { classifyDbError, type DbError } from "./errors";
+import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import {
+    maybeDuplicateMarkUrlError,
+    unknownDbError,
+    type DuplicateMarkUrlError,
+    type DuplicateCategoryNameError,
+    type UnknownDbError,
+    maybeDuplicateCategoryNameError,
+    type NotFoundCategoryError,
+    notFoundCategoryError,
+    maybeCategoryFKError,
+    type SharingAlreadyEnabledError,
+    sharingAlreadyEnabledError,
+    type CategoryFKError,
+} from "./errors";
 
-function _selectMarks() {
-    return db.select().from(schema.marks).orderBy(desc(schema.marks.updatedAt));
+function _getMarks() {
+    return db
+        .select({
+            url: schema.marks.url,
+            title: schema.marks.title,
+            categoryId: schema.marks.categoryId,
+        })
+        .from(schema.marks)
+        .orderBy(desc(schema.marks.updatedAt));
 }
-export type Mark = Awaited<ReturnType<typeof _selectMarks>>[number];
-
-export async function getMarks() {
-    return await _selectMarks();
+export function getMarks(): ResultAsync<Mark[], UnknownDbError> {
+    return ResultAsync.fromPromise(_getMarks(), unknownDbError);
 }
+export type Mark = Awaited<ReturnType<typeof _getMarks>>[number];
 
-function _selectCategories() {
+function _getCategories() {
     const sharingEnabled = sql<boolean>`${schema.categories.shareTokenHash} is not null`;
-
     return db
         .select({
             id: schema.categories.id,
@@ -26,16 +44,20 @@ function _selectCategories() {
         .from(schema.categories)
         .orderBy(desc(schema.categories.updatedAt));
 }
-
-export async function getCategories() {
-    return await _selectCategories();
+export function getCategories(): ResultAsync<Category[], UnknownDbError> {
+    return ResultAsync.fromPromise(_getCategories(), unknownDbError);
 }
-export type Category = Awaited<ReturnType<typeof getCategories>>[number];
+export type Category = Awaited<ReturnType<typeof _getCategories>>[number];
 
-export function getCategorizedMarks() {
+function _getCategorizedMarks() {
     return db.query.categories.findMany({
         with: {
             marks: {
+                columns: {
+                    url: true,
+                    title: true,
+                    categoryId: true,
+                },
                 orderBy: [desc(schema.marks.updatedAt)],
             },
         },
@@ -43,71 +65,138 @@ export function getCategorizedMarks() {
             id: true,
             name: true,
         },
+        extras: {
+            sharingEnabled:
+                sql<boolean>`${schema.categories.shareTokenHash} is not null`.as(
+                    "sharing_enabled",
+                ),
+        },
         orderBy: [desc(schema.categories.updatedAt)],
     });
 }
-
-export async function getUncategorizedMarks() {
-    return await _selectMarks().where(isNull(schema.marks.categoryId));
+export function getCategorizedMarks(): ResultAsync<
+    Array<Category & { marks: Mark[] }>,
+    UnknownDbError
+> {
+    return ResultAsync.fromPromise(_getCategorizedMarks(), unknownDbError);
 }
 
-export async function getCategoryById(id: number) {
-    const [category] = await _selectCategories().where(
+function _getUncategorizedMarks() {
+    return _getMarks().where(isNull(schema.marks.categoryId));
+}
+export function getUncategorizedMarks(): ResultAsync<Mark[], UnknownDbError> {
+    return ResultAsync.fromPromise(_getUncategorizedMarks(), unknownDbError);
+}
+
+async function _getCategoryById(id: number) {
+    const categories = await _getCategories().where(
         eq(schema.categories.id, id),
     );
-    return category;
-}
 
-export async function getCategoryByShareToken(token: string | undefined) {
-    if (!token) {
-        return undefined;
+    if (categories.length === 0) {
+        return null;
     }
 
-    const [category] = await _selectCategories().where(
+    return categories[0]!;
+}
+export function getCategoryById(
+    id: number,
+): ResultAsync<Category, UnknownDbError | NotFoundCategoryError> {
+    return ResultAsync.fromPromise(
+        _getCategoryById(id),
+        unknownDbError,
+    ).andThen(category =>
+        category ? okAsync(category) : errAsync(notFoundCategoryError()),
+    );
+}
+
+async function _getCategoryByShareToken(token: string | undefined) {
+    if (!token) {
+        return null;
+    }
+
+    const categories = await _getCategories().where(
         eq(schema.categories.shareTokenHash, hashShareToken(token)),
     );
 
-    return category;
+    if (categories.length === 0) {
+        return null;
+    }
+
+    return categories[0]!;
+}
+export function getCategoryByShareToken(
+    token: string | undefined,
+): ResultAsync<Category, UnknownDbError | NotFoundCategoryError> {
+    return ResultAsync.fromPromise(
+        _getCategoryByShareToken(token),
+        unknownDbError,
+    ).andThen(category =>
+        category ? okAsync(category) : errAsync(notFoundCategoryError()),
+    );
 }
 
-export function getMarksByCategoryId(categoryId: number) {
-    return _selectMarks().where(eq(schema.marks.categoryId, categoryId));
+function _getMarksByCategoryId(categoryId: number) {
+    return _getMarks().where(eq(schema.marks.categoryId, categoryId));
+}
+export function getMarksByCategoryId(
+    categoryId: number,
+): ResultAsync<Mark[], UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _getMarksByCategoryId(categoryId),
+        unknownDbError,
+    );
 }
 
+async function _saveMark(url: string, title?: string | null) {
+    await db.insert(schema.marks).values({ url, title });
+}
 export function saveMark(
     url: string,
     title?: string | null,
-): ResultAsync<"created", DbError> {
+): ResultAsync<void, DuplicateMarkUrlError | UnknownDbError> {
     return ResultAsync.fromPromise(
-        db.insert(schema.marks).values({ url, title }),
-        error => classifyDbError(error, { expectDuplicate: "mark_url" }),
-    ).map(() => "created" as const);
+        _saveMark(url, title),
+        maybeDuplicateMarkUrlError,
+    );
 }
 
-export async function deleteMark(url: string) {
+async function _deleteMark(url: string) {
     await db.delete(schema.marks).where(eq(schema.marks.url, url));
 }
-
-export async function createCategory(name: string) {
-    const [category] = await db
-        .insert(schema.categories)
-        .values({ name })
-        .returning();
-
-    return category;
+export function deleteMark(url: string): ResultAsync<void, UnknownDbError> {
+    return ResultAsync.fromPromise(_deleteMark(url), unknownDbError);
 }
 
-export async function renameCategory(id: number, name: string) {
-    const [category] = await db
+async function _createCategory(name: string) {
+    await db.insert(schema.categories).values({ name });
+}
+export function createCategory(
+    name: string,
+): ResultAsync<void, DuplicateCategoryNameError | UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _createCategory(name),
+        maybeDuplicateCategoryNameError,
+    );
+}
+
+async function _renameCategory(id: number, name: string) {
+    await db
         .update(schema.categories)
         .set({ name })
-        .where(eq(schema.categories.id, id))
-        .returning();
-
-    return category;
+        .where(eq(schema.categories.id, id));
+}
+export function renameCategory(
+    id: number,
+    name: string,
+): ResultAsync<void, DuplicateCategoryNameError | UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _renameCategory(id, name),
+        maybeDuplicateCategoryNameError,
+    );
 }
 
-export async function deleteCategory(id: number) {
+async function _deleteCategory(id: number) {
     await db.transaction(async tx => {
         await tx
             .update(schema.marks)
@@ -117,38 +206,44 @@ export async function deleteCategory(id: number) {
         await tx.delete(schema.categories).where(eq(schema.categories.id, id));
     });
 }
+export function deleteCategory(id: number): ResultAsync<void, UnknownDbError> {
+    return ResultAsync.fromPromise(_deleteCategory(id), unknownDbError);
+}
 
-export async function updateMark(
+async function _updateMark(
     url: string,
     title: string | null | undefined,
     categoryId: number | null,
-) {
-    if (categoryId !== null) {
-        const category = await getCategoryById(categoryId);
-
-        if (!category) {
-            throw new Error(`Category ${categoryId} not found`);
-        }
-    }
-
-    const [mark] = await db
+): Promise<void> {
+    await db
         .update(schema.marks)
         .set({
             title,
             categoryId,
         })
-        .where(eq(schema.marks.url, url))
-        .returning();
-
-    return mark;
+        .where(eq(schema.marks.url, url));
+}
+export function updateMark(
+    url: string,
+    title: string | null | undefined,
+    categoryId: number | null,
+): ResultAsync<void, UnknownDbError | CategoryFKError> {
+    return ResultAsync.fromPromise(
+        _updateMark(url, title, categoryId),
+        maybeCategoryFKError,
+    );
 }
 
-export async function enableCategorySharing(
+async function _enableCategorySharing(
     categoryId: number,
-    rotate = false,
-) {
+): Promise<string | null>;
+async function _enableCategorySharing(
+    categoryId: number,
+    rotate: true,
+): Promise<string>;
+async function _enableCategorySharing(categoryId: number, rotate = false) {
     if (!rotate) {
-        const existing = await _selectCategories().where(
+        const existing = await _getCategories().where(
             and(
                 eq(schema.categories.id, categoryId),
                 isNotNull(schema.categories.shareTokenHash),
@@ -169,17 +264,42 @@ export async function enableCategorySharing(
 
     return token;
 }
-
-export function disableCategorySharing(categoryId: number) {
-    return db
-        .update(schema.categories)
-        .set({ shareTokenHash: null })
-        .where(eq(schema.categories.id, categoryId))
-        .returning();
+export function enableCategorySharing(
+    categoryId: number,
+): ResultAsync<string, UnknownDbError | SharingAlreadyEnabledError> {
+    return ResultAsync.fromPromise(
+        _enableCategorySharing(categoryId),
+        unknownDbError,
+    ).andThen(token =>
+        token ? okAsync(token) : errAsync(sharingAlreadyEnabledError()),
+    );
 }
 
-export function rotateCategorySharing(categoryId: number) {
-    return enableCategorySharing(categoryId, true);
+async function _disableCategorySharing(categoryId: number) {
+    await db
+        .update(schema.categories)
+        .set({ shareTokenHash: null })
+        .where(eq(schema.categories.id, categoryId));
+}
+export function disableCategorySharing(
+    categoryId: number,
+): ResultAsync<void, UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _disableCategorySharing(categoryId),
+        unknownDbError,
+    );
+}
+
+function _rotateCategorySharing(categoryId: number) {
+    return _enableCategorySharing(categoryId, true);
+}
+export function rotateCategorySharing(
+    categoryId: number,
+): ResultAsync<string, UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _rotateCategorySharing(categoryId),
+        unknownDbError,
+    );
 }
 
 function generateShareToken() {
