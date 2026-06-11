@@ -17,6 +17,8 @@ Run `bun run issues:report` to print a Markdown report of implementation issues 
 
 The report groups issues by `Status:` using the order from `docs/agents/triage-labels.md`, then lists any non-canonical statuses after the canonical triage states. This keeps completed statuses such as `done` visible without changing the canonical triage labels.
 
+Run `bun run qa:report` to print a Markdown list of QA reports under `.scratch/qa/**/REPORT.md` marked with the canonical `needs-triage` status.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
