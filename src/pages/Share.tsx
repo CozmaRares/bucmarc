@@ -37,8 +37,6 @@ function Share({ marks, categoryName }: Props) {
 }
 
 export const SharePage = {
-    path: "/share/:token",
     component: Share,
     dataLoader: dataLoader,
-    publicPage: true,
 } as const satisfies Page<Props>;

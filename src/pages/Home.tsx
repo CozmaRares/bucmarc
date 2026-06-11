@@ -19,6 +19,12 @@ function Home({ categorizedMarks, uncategorizedMarks }: Props) {
         <>
             <main>
                 <h1>Marks</h1>
+                <p
+                    data-save-mark-error
+                    role="alert"
+                    style="border: 1px solid #b42318; background: #fff4f2; color: #7a271a; padding: 0.75rem; margin: 0 0 1rem;"
+                    hidden
+                />
                 {uncategorizedMarks.length > 0 && (
                     <section>
                         <h2>Uncategorized Marks</h2>
@@ -133,7 +139,6 @@ function EditMarkDialog({ categories }: EditMarkDialogProps) {
 }
 
 export const HomePage = {
-    path: "/",
     component: Home,
     dataLoader,
 } as const satisfies Page<Props>;

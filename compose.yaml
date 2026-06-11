@@ -10,7 +10,10 @@ services:
             - ./server-data:/app/data
             - ./drizzle:/app/drizzle
             - ./drizzle.config.ts:/app/drizzle.config.ts
-        command: ["bun", "run", "db:push"]
+        command:
+            - bun
+            - run
+            - ${DRIZZLE_UDATE_DB_COMMAND}
 
     server:
         build: .
@@ -20,6 +23,7 @@ services:
             PORT: 3000
         volumes:
             - ./server-data:/app/data
+            - ./public:/app/public
         depends_on:
             migrate:
                 condition: service_completed_successfully

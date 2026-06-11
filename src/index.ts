@@ -6,7 +6,8 @@ import { env } from "@/env";
 import apiRouter from "./routers/api";
 import { clerkMiddleware, requireAuth } from "./middleware";
 import { HTTPStatusCode } from "./honoHelpers";
-import pageRouter, { registerPublicPages } from "./routers/pages";
+import pageRouter from "./routers/pages";
+import shareRouter from "./routers/share";
 
 const logger = createLogger("server");
 
@@ -14,7 +15,7 @@ const app = new Hono();
 
 app.use("*", clerkMiddleware());
 app.use(honoLogger((...args) => logger.info(...args)));
-registerPublicPages(app);
+app.route("/share", shareRouter);
 app.use(requireAuth);
 
 app.use(

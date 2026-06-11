@@ -9,6 +9,8 @@
         "dev": "bun run src/index.ts",
         "db:push": "drizzle-kit push",
         "db:studio": "drizzle-kit studio",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
         "start": "bun dist/index.js",
         "typecheck": "tsc --noEmit",
         "build": "bun run typecheck && bun build src/index.ts --outdir=dist --target=bun"
