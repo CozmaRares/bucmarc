@@ -62,6 +62,14 @@ categoryRouter.post("/rename", zValidator("json", categoryRenameSchema), c => {
                 );
             }
 
+            if (isNotFoundCategoryError(error)) {
+                return errorResponse(
+                    c,
+                    "Category not found",
+                    HTTPStatus.NotFound,
+                );
+            }
+
             return errorResponse(c);
         },
     );
@@ -78,7 +86,17 @@ categoryRouter.delete(
         const input = c.req.valid("json");
         return deleteCategory(input.id).match(
             () => successResponse(c),
-            () => errorResponse(c),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorResponse(
+                        c,
+                        "Category not found",
+                        HTTPStatus.NotFound,
+                    );
+                }
+
+                return errorResponse(c);
+            },
         );
     },
 );
@@ -124,6 +142,7 @@ categoryRouter.post(
                         HTTPStatus.NotFound,
                     );
                 }
+
                 return errorResponse(c);
             },
         );

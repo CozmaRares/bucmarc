@@ -273,20 +273,19 @@ export function updateMark(
     );
 }
 
-async function _enableCategorySharing(
-    categoryId: number,
-): Promise<string | null> {
+async function _enableCategorySharing(categoryId: number) {
     const token = generateShareToken();
     const categories = await db
         .update(schema.categories)
         .set({ shareTokenHash: hashShareToken(token) })
         .where(eq(schema.categories.id, categoryId))
         .returning({ id: schema.categories.id });
+
     if (categories.length === 0) {
-        return null;
+        return { type: "not_found" } as const;
     }
 
-    return token;
+    return { type: "enabled", token } as const;
 }
 export function enableCategorySharing(
     categoryId: number,
@@ -294,9 +293,14 @@ export function enableCategorySharing(
     return ResultAsync.fromPromise(
         _enableCategorySharing(categoryId),
         unknownDbError,
-    ).andThen(token =>
-        token ? okAsync(token) : errAsync(notFoundCategoryError()),
-    );
+    ).andThen(outcome => {
+        switch (outcome.type) {
+            case "enabled":
+                return okAsync(outcome.token);
+            case "not_found":
+                return errAsync(notFoundCategoryError());
+        }
+    });
 }
 
 async function _disableCategorySharing(categoryId: number) {
@@ -306,7 +310,11 @@ async function _disableCategorySharing(categoryId: number) {
         .where(eq(schema.categories.id, categoryId))
         .returning({ id: schema.categories.id });
 
-    return categories.length > 0;
+    if (categories.length === 0) {
+        return { type: "not_found" } as const;
+    }
+
+    return { type: "disabled" } as const;
 }
 export function disableCategorySharing(
     categoryId: number,
@@ -314,9 +322,14 @@ export function disableCategorySharing(
     return ResultAsync.fromPromise(
         _disableCategorySharing(categoryId),
         unknownDbError,
-    ).andThen(updated =>
-        updated ? okAsync(undefined) : errAsync(notFoundCategoryError()),
-    );
+    ).andThen(outcome => {
+        switch (outcome.type) {
+            case "disabled":
+                return okAsync(undefined);
+            case "not_found":
+                return errAsync(notFoundCategoryError());
+        }
+    });
 }
 
 function generateShareToken() {
