@@ -11,16 +11,15 @@ const Layout: FC = ({ children }) => (
 export function registerPage(router: Hono, path: string, page: Page<any>) {
     const { component: Component, dataLoader } = page;
 
-    router.get(path, async c => {
-        const data = await dataLoader?.(c);
-        if (data === null) {
-            return c.text("Not found", 404);
-        }
-
-        return c.html(
-            <Layout>
-                <Component {...data} />
-            </Layout>,
-        );
-    });
+    router.get(path, c =>
+        dataLoader(c).match(
+            data =>
+                c.html(
+                    <Layout>
+                        <Component {...data} />
+                    </Layout>,
+                ),
+            error => c.text(error.message, error.httpStatusCode),
+        ),
+    );
 }

@@ -5,7 +5,7 @@ import { createLogger } from "@/lib/logger";
 import { env } from "@/env";
 import apiRouter from "./routers/api";
 import { clerkMiddleware, requireAuth } from "./middleware";
-import { HTTPStatusCode } from "./honoHelpers";
+import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
 import shareRouter from "./routers/share";
 
@@ -31,7 +31,7 @@ app.use("*", async (ctx, next) => {
         await next();
     } catch (e) {
         logger.error(e);
-        return ctx.text("Internal server error", HTTPStatusCode.ServerError);
+        return ctx.text("Internal server error", HTTPStatus.ServerError);
     }
 });
 
@@ -39,7 +39,7 @@ app.route("/api", apiRouter);
 app.route("/", pageRouter);
 
 app.get("*", c => {
-    return c.text("Not Found", HTTPStatusCode.NotFound);
+    return c.text("Not Found", HTTPStatus.NotFound);
 });
 
 const server = Bun.serve({

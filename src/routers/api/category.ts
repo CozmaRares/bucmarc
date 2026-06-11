@@ -10,7 +10,7 @@ import {
     renameCategory,
     rotateCategorySharing,
 } from "@/db";
-import { errorResponse, HTTPStatusCode, successResponse } from "@/honoHelpers";
+import { errorResponse, HTTPStatus, successResponse } from "@/honoHelpers";
 import { env } from "@/env";
 
 export const categoryRouter = new Hono();
@@ -37,7 +37,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Category name already exists",
-                    HTTPStatusCode.Conflict,
+                    HTTPStatus.Conflict,
                 );
             }
 
@@ -65,7 +65,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Category name already exists",
-                    HTTPStatusCode.Conflict,
+                    HTTPStatus.Conflict,
                 );
             }
 
@@ -112,7 +112,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Category not found",
-                    HTTPStatusCode.NotFound,
+                    HTTPStatus.NotFound,
                 );
             }
 
@@ -122,7 +122,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Sharing already enabled",
-                    HTTPStatusCode.Conflict,
+                    HTTPStatus.Conflict,
                 );
             }
 
@@ -146,7 +146,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Category not found",
-                    HTTPStatusCode.NotFound,
+                    HTTPStatus.NotFound,
                 );
             }
 
@@ -156,7 +156,7 @@ categoryRouter.post(
                 return errorResponse(
                     c,
                     "Internal error",
-                    HTTPStatusCode.ServerError,
+                    HTTPStatus.ServerError,
                 );
             }
 

@@ -1,24 +1,39 @@
 import { getCategoryByShareToken, getMarksByCategoryId } from "@/db";
 import type { Mark } from "@/db";
 import type { Context } from "hono";
-import type { Page } from "./types";
+import {
+    notFoundError,
+    serverError,
+    type Page,
+    type PageLoadError,
+} from "./types";
+import type { ResultAsync } from "neverthrow";
 
 type Props = {
     categoryName: string;
     marks: Mark[];
 };
 
-async function dataLoader(c: Context): Promise<Props | null> {
+function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
     const token = c.req.param("token");
-    const category = await getCategoryByShareToken(token);
-
-    if (!category) {
-        return null;
-    }
-
-    const marks = await getMarksByCategoryId(category.id);
-
-    return { marks, categoryName: category.name };
+    return getCategoryByShareToken(token)
+        .andThen(category =>
+            getMarksByCategoryId(category.id).map(marks => ({
+                marks,
+                categoryName: category.name,
+            })),
+        )
+        .mapErr(e => {
+            switch (e.type) {
+                case "not_found_category":
+                    return notFoundError();
+                case "unknown_db_error":
+                    return serverError();
+                default:
+                    // exhaustiveness check
+                    return e;
+            }
+        });
 }
 
 function Share({ marks, categoryName }: Props) {
@@ -38,5 +53,5 @@ function Share({ marks, categoryName }: Props) {
 
 export const SharePage = {
     component: Share,
-    dataLoader: dataLoader,
+    dataLoader,
 } as const satisfies Page<Props>;

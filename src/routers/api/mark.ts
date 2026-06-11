@@ -2,7 +2,7 @@ import { deleteMark, saveMark, updateMark } from "@/db";
 import { zValidator } from "@hono/zod-validator";
 import { Context, Hono } from "hono";
 import z from "zod";
-import { HTTPStatusCode, successResponse, errorResponse } from "@/honoHelpers";
+import { HTTPStatus, successResponse, errorResponse } from "@/honoHelpers";
 import { isDuplicateMarkUrlError } from "@/db/errors";
 
 export const markRouter = new Hono();
@@ -27,7 +27,7 @@ markRouter.get("/save/:url", async c => {
         url: string,
     ) => {
         const params = new URLSearchParams({ state, url });
-        return c.redirect(`/?${params.toString()}`, HTTPStatusCode.Found);
+        return c.redirect(`/?${params.toString()}`, HTTPStatus.Found);
     };
 
     const url = decodeUrl(c.req.param("url"));
@@ -39,7 +39,7 @@ markRouter.get("/save/:url", async c => {
 
     return saveMark(url, title).match(
         () => {
-            return c.redirect(url, HTTPStatusCode.Found);
+            return c.redirect(url, HTTPStatus.Found);
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {
@@ -62,7 +62,7 @@ markRouter.post("/update", zValidator("form", markUpdateSchema), async c => {
 
     try {
         await updateMark(input.url, input.title, input.categoryId);
-        return c.redirect("/", HTTPStatusCode.Found);
+        return c.redirect("/", HTTPStatus.Found);
     } catch {
         return errorResponse(c);
     }

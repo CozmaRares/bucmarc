@@ -1,17 +1,23 @@
 import { getCategorizedMarks, getUncategorizedMarks } from "@/db";
 import type { Category, Mark } from "@/db";
-import type { Context } from "hono";
-import type { Page } from "./types";
+import { serverError, type Page, type PageLoadError } from "./types";
+import { ResultAsync } from "neverthrow";
 
 type Props = {
-    categorizedMarks: Awaited<ReturnType<typeof getCategorizedMarks>>;
+    categorizedMarks: Array<Category & { marks: Mark[] }>;
     uncategorizedMarks: Mark[];
 };
 
-async function dataLoader(_c: Context): Promise<Props> {
-    const categorizedMarks = await getCategorizedMarks();
-    const uncategorizedMarks = await getUncategorizedMarks();
-    return { categorizedMarks, uncategorizedMarks };
+function dataLoader(): ResultAsync<Props, PageLoadError> {
+    return ResultAsync.combineWithAllErrors([
+        getCategorizedMarks(),
+        getUncategorizedMarks(),
+    ])
+        .map(([categorizedMarks, uncategorizedMarks]) => ({
+            categorizedMarks,
+            uncategorizedMarks,
+        }))
+        .mapErr(serverError);
 }
 
 function Home({ categorizedMarks, uncategorizedMarks }: Props) {
