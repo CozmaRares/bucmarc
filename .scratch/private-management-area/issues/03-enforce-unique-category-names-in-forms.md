@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Enforce Unique Category Names In Forms
 
@@ -16,17 +16,17 @@ If there already are endpoints for json validation, but the flow is form-driven,
 
 ## Acceptance criteria
 
-- [ ] The App Owner can create a Category through a form.
-- [ ] The App Owner can rename a Category through a form.
-- [ ] The App Owner can delete a Category through a form.
-- [ ] Deleting a Category moves its Marks to Uncategorized Marks instead of deleting them.
-- [ ] Category creation rejects names that duplicate an existing Category after trimming whitespace.
-- [ ] Category creation rejects names that duplicate an existing Category case-insensitively.
-- [ ] Category rename rejects names that duplicate another Category after trimming whitespace.
-- [ ] Category rename rejects names that duplicate another Category case-insensitively.
-- [ ] Valid Category names preserve the entered display casing.
-- [ ] Validation failures redirect back to the Private Management Area with a clear status message.
-- [ ] Category forms use Category identifiers internally rather than relying on names as identifiers.
+- [X] The App Owner can create a Category through a form.
+- [X] The App Owner can rename a Category through a form.
+- [X] The App Owner can delete a Category through a form.
+- [X] Deleting a Category moves its Marks to Uncategorized Marks instead of deleting them.
+- [X] Category creation rejects names that duplicate an existing Category after trimming whitespace.
+- [X] Category creation rejects names that duplicate an existing Category case-insensitively.
+- [X] Category rename rejects names that duplicate another Category after trimming whitespace.
+- [X] Category rename rejects names that duplicate another Category case-insensitively.
+- [X] Valid Category names preserve the entered display casing.
+- [X] Validation failures redirect back to the Private Management Area with a clear status message.
+- [X] Category forms use Category identifiers internally rather than relying on names as identifiers.
 
 ## Blocked by
 

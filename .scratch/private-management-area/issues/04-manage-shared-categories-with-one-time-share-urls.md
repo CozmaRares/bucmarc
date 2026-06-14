@@ -12,6 +12,8 @@ Add form-driven sharing controls for Categories in the Private Management Area. 
 
 Sharing remains at the Category boundary. Empty Categories may be Shared Categories, and Uncategorized Marks must not be directly shareable.
 
+If there already are endpoints for json validation, but the flow is form-driven, change that endpoint instead of creating a new one.
+
 ## Acceptance criteria
 
 - [ ] The App Owner can enable sharing for a Category through a form.

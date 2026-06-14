@@ -8,7 +8,13 @@ import {
     enableCategorySharing,
     renameCategory,
 } from "@/db";
-import { errorResponse, HTTPStatus, successResponse } from "@/honoHelpers";
+import {
+    errorRedirect,
+    errorResponse,
+    HTTPStatus,
+    successRedirect,
+    successResponse,
+} from "@/honoHelpers";
 import { env } from "@/env";
 import {
     isDuplicateCategoryNameError,
@@ -26,20 +32,22 @@ const categoryCreateSchema = z.object({
     name: categoryFieldsValidators.name,
 });
 
-categoryRouter.post("/create", zValidator("json", categoryCreateSchema), c => {
-    const input = c.req.valid("json");
+categoryRouter.post("/create", zValidator("form", categoryCreateSchema), c => {
+    const input = c.req.valid("form");
     return createCategory(input.name).match(
-        () => successResponse(c),
+        () => successRedirect(c, { path: "/" }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
-                return errorResponse(
+                return errorRedirect(
                     c,
-                    "Category name already exists",
-                    HTTPStatus.Conflict,
+                    "A Category with that name already exists.",
+                    { path: "/" },
                 );
             }
 
-            return errorResponse(c);
+            return errorRedirect(c, "The Category could not be created.", {
+                path: "/",
+            });
         },
     );
 });
@@ -49,28 +57,28 @@ const categoryRenameSchema = z.object({
     name: categoryFieldsValidators.name,
 });
 
-categoryRouter.post("/rename", zValidator("json", categoryRenameSchema), c => {
-    const input = c.req.valid("json");
+categoryRouter.post("/rename", zValidator("form", categoryRenameSchema), c => {
+    const input = c.req.valid("form");
     return renameCategory(input.id, input.name).match(
-        category => successResponse(c, { category }),
+        () => successRedirect(c, { path: "/" }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
-                return errorResponse(
+                return errorRedirect(
                     c,
-                    "Category name already exists",
-                    HTTPStatus.Conflict,
+                    "A Category with that name already exists.",
+                    { path: "/" },
                 );
             }
 
             if (isNotFoundCategoryError(error)) {
-                return errorResponse(
-                    c,
-                    "Category not found",
-                    HTTPStatus.NotFound,
-                );
+                return errorRedirect(c, "Category not found.", {
+                    path: "/",
+                });
             }
 
-            return errorResponse(c);
+            return errorRedirect(c, "The Category could not be renamed.", {
+                path: "/",
+            });
         },
     );
 });
@@ -79,27 +87,23 @@ const categoryDeleteSchema = z.object({
     id: categoryFieldsValidators.id,
 });
 
-categoryRouter.delete(
-    "/delete",
-    zValidator("json", categoryDeleteSchema),
-    c => {
-        const input = c.req.valid("json");
-        return deleteCategory(input.id).match(
-            () => successResponse(c),
-            error => {
-                if (isNotFoundCategoryError(error)) {
-                    return errorResponse(
-                        c,
-                        "Category not found",
-                        HTTPStatus.NotFound,
-                    );
-                }
+categoryRouter.post("/delete", zValidator("form", categoryDeleteSchema), c => {
+    const input = c.req.valid("form");
+    return deleteCategory(input.id).match(
+        () => successRedirect(c, { path: "/" }),
+        error => {
+            if (isNotFoundCategoryError(error)) {
+                return errorRedirect(c, "Category not found.", {
+                    path: "/",
+                });
+            }
 
-                return errorResponse(c);
-            },
-        );
-    },
-);
+            return errorRedirect(c, "The Category could not be deleted.", {
+                path: "/",
+            });
+        },
+    );
+});
 
 const categoryIdSchema = z.object({
     id: categoryFieldsValidators.id,
