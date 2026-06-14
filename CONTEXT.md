@@ -24,8 +24,16 @@ _Avoid_: Default category, orphan mark
 A category that can be viewed outside the private management area by using its share token.
 _Avoid_: Protected category, public category
 
+**Share-Only Category**:
+A shared category that is hidden from the regular private management area together with its assigned marks. It remains available through its shared view.
+_Avoid_: Token-gated category, hidden category
+
+**Token-Manageable Category**:
+A shared category whose share token allows viewers to modify marks in that category.
+_Avoid_: Writable shared category, editable public category
+
 **Share Token**:
-A bearer secret that grants read-only access to one shared category.
+A bearer secret that grants access to one shared category.
 _Avoid_: Access token, password, invite
 
 **Private Management Area**:
@@ -37,7 +45,7 @@ The lightweight path where the App Owner saves a mark from outside Bucmarc and, 
 _Avoid_: Add flow, bookmarklet flow, import flow
 
 **Shared View**:
-The read-only view of a shared category available to someone with its share token.
+The view of a shared category available to someone with its share token.
 _Avoid_: Public page, guest view
 
 **App Owner**:
