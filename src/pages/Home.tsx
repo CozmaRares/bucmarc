@@ -26,7 +26,7 @@ function Home({ categorizedMarks, uncategorizedMarks }: Props) {
             <main>
                 <h1>Marks</h1>
                 <p
-                    data-save-mark-error
+                    data-page-error
                     role="alert"
                     style="border: 1px solid #b42318; background: #fff4f2; color: #7a271a; padding: 0.75rem; margin: 0 0 1rem;"
                     hidden
@@ -91,7 +91,18 @@ function Mark({ mark }: MarkProps) {
                 {mark.title || mark.url}
             </a>
             <button data-edit>Edit</button>
-            <button data-delete>Delete</button>
+            <form
+                action="/api/mark/delete"
+                method="post"
+                data-delete-mark-form
+            >
+                <input
+                    name="url"
+                    type="hidden"
+                    value={mark.url}
+                />
+                <button type="submit">Delete</button>
+            </form>
         </div>
     );
 }

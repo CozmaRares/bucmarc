@@ -1,5 +1,5 @@
 import { db } from "./connection";
-import { eq, sql, desc, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import * as schema from "./schema";
 import { createHash, randomBytes } from "node:crypto";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -16,6 +16,7 @@ import {
     type CategoryFKError,
     type NotFoundMarkError,
     notFoundMarkError,
+    duplicateCategoryNameError,
 } from "./errors";
 
 export type Mark = Awaited<ReturnType<typeof _getMarks>>[number];
@@ -195,7 +196,15 @@ export function deleteMark(
 }
 
 async function _createCategory(name: string) {
-    await db.insert(schema.categories).values({ name });
+    const trimmedName = name.trim();
+    const duplicate = await _getCategoryByNormalizedName(trimmedName);
+
+    if (duplicate) {
+        return { type: "duplicate" } as const;
+    }
+
+    await db.insert(schema.categories).values({ name: trimmedName });
+    return { type: "created" } as const;
 }
 export function createCategory(
     name: string,
@@ -203,16 +212,29 @@ export function createCategory(
     return ResultAsync.fromPromise(
         _createCategory(name),
         maybeDuplicateCategoryNameError,
+    ).andThen(outcome =>
+        outcome.type === "created"
+            ? okAsync(undefined)
+            : errAsync(duplicateCategoryNameError()),
     );
 }
 
 async function _renameCategory(id: number, name: string) {
+    const trimmedName = name.trim();
+    const duplicate = await _getCategoryByNormalizedName(trimmedName, id);
+
+    if (duplicate) {
+        return { type: "duplicate" } as const;
+    }
+
     const categories = await db
         .update(schema.categories)
-        .set({ name })
+        .set({ name: trimmedName })
         .where(eq(schema.categories.id, id))
         .returning({ id: schema.categories.id });
-    return categories.length > 0;
+    return categories.length > 0
+        ? ({ type: "renamed" } as const)
+        : ({ type: "not_found" } as const);
 }
 export function renameCategory(
     id: number,
@@ -224,9 +246,33 @@ export function renameCategory(
     return ResultAsync.fromPromise(
         _renameCategory(id, name),
         maybeDuplicateCategoryNameError,
-    ).andThen(updated =>
-        updated ? okAsync(undefined) : errAsync(notFoundCategoryError()),
-    );
+    ).andThen(outcome => {
+        switch (outcome.type) {
+            case "renamed":
+                return okAsync(undefined);
+            case "duplicate":
+                return errAsync(duplicateCategoryNameError());
+            case "not_found":
+                return errAsync(notFoundCategoryError());
+        }
+    });
+}
+
+async function _getCategoryByNormalizedName(name: string, exceptId?: number) {
+    const normalizedName = name.toLocaleLowerCase();
+    const normalizedNamePredicate = sql`lower(trim(${schema.categories.name})) = ${normalizedName}`;
+    const where =
+        exceptId === undefined
+            ? normalizedNamePredicate
+            : and(normalizedNamePredicate, ne(schema.categories.id, exceptId));
+
+    const categories = await db
+        .select({ id: schema.categories.id })
+        .from(schema.categories)
+        .where(where)
+        .limit(1);
+
+    return categories[0] ?? null;
 }
 
 async function _deleteCategory(id: number) {

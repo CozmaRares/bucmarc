@@ -60,6 +60,12 @@ export function isDuplicateMarkUrlError(
     return error.type === "duplicate_mark_url";
 }
 
+export const duplicateCategoryNameError = logErrorAndCreate(
+    (): DuplicateCategoryNameError => ({
+        type: "duplicate_category_name",
+    }),
+);
+
 export const maybeDuplicateCategoryNameError = logErrorAndCreate(
     (error: unknown): DuplicateCategoryNameError | UnknownDbError =>
         isUniqueConstraintError(error)

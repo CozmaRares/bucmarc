@@ -1,4 +1,4 @@
-Status: needs-triage
+Status: ready-for-human
 
 # Deploy With Generated Database Migrations
 
@@ -51,3 +51,11 @@ The current desired Drizzle flow is:
 3. Run `drizzle-kit migrate` on the deployed VM so pending migrations are applied automatically.
 
 The current problem is specifically that the VM-side migration application does not work yet, so that failure needs to be investigated as part of this work rather than hidden behind a deploy-script change.
+
+## Comments
+
+### Triage - 2026-06-12
+
+Ready for a human as deployment reliability work.
+
+Current repo state already has `db:generate` and `db:migrate` scripts plus a `migrate` service in `compose.yaml`, but there are no generated migration files in `drizzle/`. The pickup should verify the generated-migration path end to end, ensure migrations are shipped to and mounted in the deployment environment, and confirm the compose migration command uses the intended environment variable.

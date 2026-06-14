@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: needs-info
 
 # Manage Shared Categories With One-Time Share URLs
 
@@ -29,3 +29,13 @@ Sharing remains at the Category boundary. Empty Categories may be Shared Categor
 ## Blocked by
 
 - .scratch/private-management-area/issues/03-enforce-unique-category-names-in-forms.md
+
+## Comments
+
+### Triage - 2026-06-12
+
+This is not currently ready for an AFK agent.
+
+It is mechanically blocked by Category form management in `.scratch/private-management-area/issues/03-enforce-unique-category-names-in-forms.md`.
+
+It also needs a maintainer decision before implementation because the acceptance criteria call for separate enable, rotate, and disable sharing controls, while `.scratch/qa/neverthrow-app-logic/REPORT.md` records the later resolved behavior that Bucmarc does not expose a separate rotate endpoint and that enabling a Shared Category also refreshes the Share Token. Pick one product contract, then update this issue's acceptance criteria before moving it back to `ready-for-agent`.

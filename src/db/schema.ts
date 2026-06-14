@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
     integer,
     sqliteTable,
@@ -23,7 +24,11 @@ export const categories = sqliteTable(
         shareTokenHash: text().unique(),
         updatedAt: helpers.updatedAt(),
     },
-    table => [uniqueIndex("categories_normalized_name_unique").on(table.name)],
+    table => [
+        uniqueIndex("categories_normalized_name_unique").on(
+            sql`lower(trim(${table.name}))`,
+        ),
+    ],
 );
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

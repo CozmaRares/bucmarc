@@ -18,8 +18,8 @@ import {
 export const categoryRouter = new Hono();
 
 const categoryFieldsValidators = {
-    id: z.number().int().positive(),
-    name: z.string().min(1),
+    id: z.coerce.number().int().positive(),
+    name: z.string().trim().min(1),
 };
 
 const categoryCreateSchema = z.object({

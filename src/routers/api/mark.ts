@@ -1,8 +1,8 @@
 import { deleteMark, saveMark, updateMark } from "@/db";
 import { zValidator } from "@hono/zod-validator";
-import { Context, Hono } from "hono";
+import { Hono } from "hono";
 import z from "zod";
-import { HTTPStatus, successResponse, errorResponse } from "@/honoHelpers";
+import { successRedirect, errorRedirect } from "@/honoHelpers";
 import {
     isCategoryFKError,
     isDuplicateMarkUrlError,
@@ -25,32 +25,33 @@ const markFieldsValidators = {
 };
 
 markRouter.get("/save/:url", c => {
-    const redirectWithState = (
-        c: Context,
-        state: "exists" | "invalid" | "error",
-        url: string,
-    ) => {
-        const params = new URLSearchParams({ state, url });
-        return c.redirect(`/?${params.toString()}`, HTTPStatus.Found);
-    };
-
     const url = decodeUrl(c.req.param("url"));
     const title = c.req.query("title");
 
     if (!isSaveableUrl(url)) {
-        return redirectWithState(c, "invalid", url);
+        return errorRedirect(
+            c,
+            `The URL could not be saved because it is invalid: ${url}`,
+            { path: "/" },
+        );
     }
 
     return saveMark(url, title).match(
         () => {
-            return c.redirect(url, HTTPStatus.Found);
+            return successRedirect(c, { path: url });
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {
-                return redirectWithState(c, "exists", url);
+                return errorRedirect(
+                    c,
+                    `The URL could not be saved because it already exists: ${url}`,
+                    { path: "/" },
+                );
             }
 
-            return redirectWithState(c, "error", url);
+            return errorRedirect(c, `The URL could not be saved: ${url}`, {
+                path: "/",
+            });
         },
     );
 });
@@ -65,21 +66,24 @@ markRouter.post("/update", zValidator("form", markUpdateSchema), c => {
     const input = c.req.valid("form");
 
     return updateMark(input.url, input.title, input.categoryId).match(
-        () => c.redirect("/", HTTPStatus.Found),
+        () => successRedirect(c, { path: "/" }),
         error => {
             if (isNotFoundMarkError(error)) {
-                return errorResponse(c, "Mark not found", HTTPStatus.NotFound);
-            }
-
-            if (isCategoryFKError(error)) {
-                return errorResponse(
+                return errorRedirect(
                     c,
-                    "Category not found",
-                    HTTPStatus.NotFound,
+                    "Mark not found",
+
+                    { path: "/" },
                 );
             }
 
-            return errorResponse(c);
+            if (isCategoryFKError(error)) {
+                return errorRedirect(c, "Category not found", { path: "/" });
+            }
+
+            return errorRedirect(c, "The Mark could not be updated.", {
+                path: "/",
+            });
         },
     );
 });
@@ -88,15 +92,19 @@ const markDeleteSchema = z.object({
     url: markFieldsValidators.url,
 });
 
-markRouter.delete("/delete", zValidator("json", markDeleteSchema), c => {
-    const input = c.req.valid("json");
+markRouter.post("/delete", zValidator("form", markDeleteSchema), c => {
+    const input = c.req.valid("form");
+
     return deleteMark(input.url).match(
-        () => successResponse(c),
+        () => successRedirect(c, { path: "/" }),
         error => {
             if (isNotFoundMarkError(error)) {
-                return errorResponse(c, "Mark not found", HTTPStatus.NotFound);
+                return errorRedirect(c, "Mark not found", { path: "/" });
             }
-            return errorResponse(c);
+
+            return errorRedirect(c, "The Mark could not be deleted.", {
+                path: "/",
+            });
         },
     );
 });

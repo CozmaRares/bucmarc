@@ -10,39 +10,22 @@ const categoryInput = editMarkDialog.querySelector(
     "[data-edit-mark-dialog-input-category]",
 );
 const cancelButton = editMarkDialog.querySelector('button[type="button"]');
-const saveMarkError = document.querySelector("[data-save-mark-error]");
+const pageError = document.querySelector("[data-page-error]");
 
-showSaveMarkError();
+showPageError();
 setupEditMarkDialog();
-setupDeleteMarkButtons();
+setupDeleteMarkForms();
 
-function showSaveMarkError() {
+function showPageError() {
     const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
 
-    const state = params.get("state");
-    const url = params.get("url");
-
-    if (!state || !url) {
+    if (!error) {
         return;
     }
 
-    let textContent;
-
-    switch (state) {
-        case "exists":
-            textContent = `The URL could not be saved because it already exists: ${url}`;
-            break;
-        case "invalid":
-            textContent = `The URL could not be saved because it is invalid: ${url}`;
-        case "error":
-            textContent = `The URL could not be saved: ${url}`;
-        default:
-            console.error(`Unknown state: ${state}`);
-            break;
-    }
-
-    saveMarkError.textContent = textContent;
-    saveMarkError.hidden = false;
+    pageError.textContent = error;
+    pageError.hidden = false;
 
     const nextUrl = new URL(window.location.href);
     nextUrl.search = new URLSearchParams().toString();
@@ -78,36 +61,15 @@ function openEditMarkDialog(button) {
     titleInput.focus();
 }
 
-function setupDeleteMarkButtons() {
-    document.querySelectorAll("[data-mark] [data-delete]").forEach(button => {
-        button.addEventListener("click", () => deleteMark(button));
+function setupDeleteMarkForms() {
+    document.querySelectorAll("[data-delete-mark-form]").forEach(form => {
+        form.addEventListener("submit", event => {
+            const mark = form.closest("[data-mark]");
+            const url = mark.dataset.markUrl;
+
+            if (!confirm(`Delete this Mark?\n\n${url}`)) {
+                event.preventDefault();
+            }
+        });
     });
-}
-
-async function deleteMark(button) {
-    const mark = button.closest("[data-mark]");
-    const url = mark.dataset.markUrl;
-
-    if (!confirm(`Delete this Mark?\n\n${url}`)) {
-        return;
-    }
-
-    button.setAttribute("disabled", "");
-
-    const response = await fetch("/api/mark/delete", {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ url }),
-    });
-
-    if (response.ok) {
-        window.location.reload();
-        return;
-    }
-
-    button.removeAttribute("disabled");
-    alert("The Mark could not be deleted.");
 }

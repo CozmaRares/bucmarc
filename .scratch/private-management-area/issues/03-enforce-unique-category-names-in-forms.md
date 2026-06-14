@@ -12,6 +12,8 @@ Add form-driven Category management to the Private Management Area. The App Owne
 
 Deleting a Category must preserve its Marks by returning them to Uncategorized Marks.
 
+If there already are endpoints for json validation, but the flow is form-driven, change that endpoint instead of creating a new one.
+
 ## Acceptance criteria
 
 - [ ] The App Owner can create a Category through a form.
