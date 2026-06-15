@@ -1,72 +1,26 @@
-showPageError();
-setupEditMarkDialog();
+showPageBanner();
 setupCreateCategoryDialog();
 setupEditCategoryDialog();
 setupDeleteMarkForms();
 setupDeleteCategoryForms();
 
-function showPageError() {
-    const pageError = document.querySelector("[data-page-error]");
+function showPageBanner() {
+    const pageBanner = document.querySelector("[data-page-banner]");
     const params = new URLSearchParams(window.location.search);
-    const error = params.get("error");
+    const message = params.get("message");
+    const status = params.get("status");
 
-    if (!error) {
+    if (!message || !status) {
         return;
     }
 
-    pageError.textContent = error;
-    pageError.hidden = false;
+    pageBanner.textContent = message;
+    pageBanner.dataset.pageStatus = status;
+    pageBanner.hidden = false;
 
     const nextUrl = new URL(window.location.href);
-    nextUrl.search = new URLSearchParams().toString();
+    nextUrl.search = "";
     window.history.replaceState(null, "", nextUrl);
-}
-
-function setupEditMarkDialog() {
-    const editMarkDialog = document.querySelector("[data-edit-mark-dialog]");
-    const editMarkCancelButton = editMarkDialog.querySelector(
-        'button[type="button"]',
-    );
-
-    document.querySelectorAll("[data-mark] [data-edit]").forEach(button => {
-        button.addEventListener("click", () => openEditMarkDialog(button));
-    });
-
-    editMarkCancelButton.addEventListener("click", () => {
-        editMarkDialog.close();
-    });
-
-    editMarkDialog.addEventListener("close", () => {
-        editMarkDialog.hidden = true;
-    });
-}
-
-function openEditMarkDialog(button) {
-    const editMarkDialog = document.querySelector("[data-edit-mark-dialog]");
-    const urlOutput = editMarkDialog.querySelector(
-        "[data-edit-mark-dialog-url]",
-    );
-    const urlInput = editMarkDialog.querySelector(
-        "[data-edit-mark-dialog-input-url]",
-    );
-    const titleInput = editMarkDialog.querySelector(
-        "[data-edit-mark-dialog-input-title]",
-    );
-    const categoryInput = editMarkDialog.querySelector(
-        "[data-edit-mark-dialog-input-category]",
-    );
-    const mark = button.closest("[data-mark]");
-    const url = mark.dataset.markUrl;
-    const title = mark.dataset.markTitle;
-    const categoryId = mark.dataset.markCategoryId;
-
-    urlOutput.textContent = url;
-    urlInput.value = url;
-    titleInput.value = title;
-    categoryInput.value = categoryId;
-    editMarkDialog.hidden = false;
-    editMarkDialog.showModal();
-    titleInput.focus();
 }
 
 function setupCreateCategoryDialog() {

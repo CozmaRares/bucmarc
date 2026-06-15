@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
+    index,
     integer,
     sqliteTable,
     text,
@@ -11,7 +12,7 @@ const helpers = {
     id: () => integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
     updatedAt: () =>
         integer({ mode: "timestamp" })
-            .$default(() => new Date())
+            .default(sql`(current_timestamp)`)
             .$onUpdate(() => new Date())
             .notNull(),
 };
@@ -22,12 +23,17 @@ export const categories = sqliteTable(
         id: helpers.id(),
         name: text().notNull(),
         shareTokenHash: text().unique(),
+        isShareOnly: integer({ mode: "boolean" }).notNull().default(false),
+        isTokenManageable: integer({ mode: "boolean" })
+            .notNull()
+            .default(false),
         updatedAt: helpers.updatedAt(),
     },
     table => [
         uniqueIndex("categories_normalized_name_unique").on(
             sql`lower(trim(${table.name}))`,
         ),
+        index("categories_share_token_hash_index").on(table.shareTokenHash),
     ],
 );
 
@@ -35,14 +41,19 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
     marks: many(marks),
 }));
 
-export const marks = sqliteTable("marks", {
-    url: text().primaryKey(),
-    title: text(),
-    categoryId: integer({ mode: "number" }).references(() => categories.id, {
-        onDelete: "set null",
-    }),
-    updatedAt: helpers.updatedAt(),
-});
+export const marks = sqliteTable(
+    "marks",
+    {
+        url: text().primaryKey(),
+        title: text(),
+        categoryId: integer({ mode: "number" }).references(
+            () => categories.id,
+            { onDelete: "set null" },
+        ),
+        updatedAt: helpers.updatedAt(),
+    },
+    table => [uniqueIndex("mark_title_unique").on(table.title)],
+);
 
 export const marksRelations = relations(marks, ({ one }) => ({
     category: one(categories, {

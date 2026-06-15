@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Manage Shared Categories With One-Time Share URLs
 
@@ -20,38 +20,39 @@ If there already are endpoints for json validation, but the flow is form-driven,
 
 ## Acceptance criteria
 
-- [ ] The App Owner can enable sharing for a Category through a form.
-- [ ] Enabling sharing shows a one-time share URL.
-- [ ] Enabling sharing for an already Shared Category refreshes the Share Token and invalidates the previous Share Token.
-- [ ] Refreshing sharing reuses the enable-sharing endpoint and product action rather than adding a separate rotate endpoint.
-- [ ] The enable sharing button displays "Rotate Token" when sharing is already enabled.
-- [ ] Refreshing sharing shows a new one-time share URL.
-- [ ] The App Owner can disable sharing for a Category through a form.
-- [ ] After the immediate enable or refresh response has passed, the UI shows only that sharing is enabled plus refresh, disable, Token-Manageable, and Share-Only controls.
-- [ ] Bucmarc does not reconstruct and display old raw Share Tokens.
-- [ ] Empty Categories can be Shared Categories.
-- [ ] Uncategorized Marks cannot be shared directly.
-- [ ] Disabling sharing removes public access to the Shared View.
-- [ ] The Shared View remains public while the Private Management Area remains protected.
-- [ ] Ordinary Shared Categories remain read-only for Share Token holders.
-- [ ] The App Owner can enable and disable Token-Manageable for a Shared Category from the Private Management Area.
-- [ ] Token-Manageable is opt-in and disabled by default.
-- [ ] A Share Token holder for a Token-Manageable Category can create a Mark directly in that Category.
-- [ ] Token-created Mark URLs are rejected when the URL already exists anywhere in Bucmarc.
-- [ ] A Share Token holder for a Token-Manageable Category can edit and clear Mark Titles in that Category.
-- [ ] A Share Token holder for a Token-Manageable Category can hard-delete Marks in that Category.
-- [ ] A Share Token holder cannot edit Mark URLs.
-- [ ] A Share Token holder cannot move Marks to another Category or to Uncategorized Marks.
-- [ ] A Share Token holder cannot create, rename, or delete Categories.
-- [ ] A Share Token holder cannot refresh sharing, disable sharing, enable Token-Manageable, or disable Token-Manageable.
-- [ ] The App Owner can make a Shared Category Share-Only from the regular Private Management Area.
-- [ ] Non-shared Categories cannot be made Share-Only.
-- [ ] Share-Only Categories and their Marks are hidden from the regular Private Management Area.
-- [ ] Share-Only Categories are absent from regular Mark Category selectors.
-- [ ] Share-Only Categories remain accessible through their Shared View.
-- [ ] A Share Token holder can turn Share-Only off from the Shared View.
-- [ ] A Share Token holder cannot turn Share-Only on from the Shared View.
-- [ ] Disabling sharing clears Share-Only and Token-Manageable state.
+- [x] The App Owner can enable sharing for a Category through a form.
+- [x] Enabling sharing shows a one-time share URL.
+- [x] Enabling sharing for an already Shared Category refreshes the Share Token and invalidates the previous Share Token.
+- [x] Refreshing sharing reuses the enable-sharing endpoint and product action rather than adding a separate rotate endpoint.
+- [x] The enable sharing button displays "Rotate Token" when sharing is already enabled.
+- [x] Refreshing sharing shows a new one-time share URL.
+- [x] The App Owner can disable sharing for a Category through a form.
+- [x] After the immediate enable or refresh response has passed, the UI shows only that sharing is enabled plus refresh, disable, Token-Manageable, and Share-Only controls.
+- [x] Bucmarc does not reconstruct and display old raw Share Tokens.
+- [x] Empty Categories can be Shared Categories.
+- [x] Uncategorized Marks cannot be shared directly.
+- [x] Disabling sharing removes public access to the Shared View.
+- [x] The Shared View remains public while the Private Management Area remains protected.
+- [x] Ordinary Shared Categories remain read-only for Share Token holders.
+- [x] The App Owner can enable and disable Token-Manageable for a Shared Category from the Private Management Area.
+- [x] Token-Manageable is opt-in and disabled by default.
+- [x] A Share Token holder for a Token-Manageable Category can create a Mark directly in that Category through `/share/:token/mark/save`.
+- [x] The Shared View does not show a top-of-page create Mark form.
+- [x] Token-created Mark URLs are rejected when the URL already exists anywhere in Bucmarc.
+- [x] A Share Token holder for a Token-Manageable Category can edit and clear Mark Titles in that Category.
+- [x] A Share Token holder for a Token-Manageable Category can hard-delete Marks in that Category.
+- [x] A Share Token holder cannot edit Mark URLs.
+- [x] A Share Token holder cannot move Marks to another Category or to Uncategorized Marks.
+- [x] A Share Token holder cannot create, rename, or delete Categories.
+- [x] A Share Token holder cannot refresh sharing, disable sharing, enable Token-Manageable, or disable Token-Manageable.
+- [x] The App Owner can make a Shared Category Share-Only from the regular Private Management Area.
+- [x] Non-shared Categories cannot be made Share-Only.
+- [x] Share-Only Categories and their Marks are hidden from the regular Private Management Area.
+- [x] Share-Only Categories are absent from regular Mark Category selectors.
+- [x] Share-Only Categories remain accessible through their Shared View.
+- [x] A Share Token holder can turn Share-Only off from the Shared View.
+- [x] A Share Token holder cannot turn Share-Only on from the Shared View.
+- [x] Disabling sharing clears Share-Only and Token-Manageable state.
 
 ## Blocked by
 

@@ -9,13 +9,15 @@ export type UnknownDbError = { type: "unknown_db_error"; error: unknown };
 export type NotFoundMarkError = { type: "not_found_mark" };
 export type NotFoundCategoryError = { type: "not_found_category" };
 export type CategoryFKError = { type: "category_fk" };
+export type ShareTokenPermissionError = { type: "share_token_permission" };
 export type DbError =
     | DuplicateMarkUrlError
     | DuplicateCategoryNameError
     | UnknownDbError
     | NotFoundMarkError
     | NotFoundCategoryError
-    | CategoryFKError;
+    | CategoryFKError
+    | ShareTokenPermissionError;
 
 function logErrorAndCreate<Args extends any[], E extends _DbError>(
     cb: (...args: Args) => E,
@@ -111,4 +113,13 @@ export function isNotFoundMarkError(
     error: DbError,
 ): error is NotFoundMarkError {
     return error.type === "not_found_mark";
+}
+
+export const shareTokenPermissionError = (): ShareTokenPermissionError => ({
+    type: "share_token_permission",
+});
+export function isShareTokenPermissionError(
+    error: DbError,
+): error is ShareTokenPermissionError {
+    return error.type === "share_token_permission";
 }

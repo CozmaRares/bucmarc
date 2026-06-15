@@ -5,6 +5,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
     maybeDuplicateMarkUrlError,
+    isDuplicateMarkUrlError,
     unknownDbError,
     type DuplicateMarkUrlError,
     type DuplicateCategoryNameError,
@@ -17,6 +18,8 @@ import {
     type NotFoundMarkError,
     notFoundMarkError,
     duplicateCategoryNameError,
+    type ShareTokenPermissionError,
+    shareTokenPermissionError,
 } from "./errors";
 
 export type Mark = Awaited<ReturnType<typeof _getMarks>>[number];
@@ -34,14 +37,19 @@ export function getMarks(): ResultAsync<Mark[], UnknownDbError> {
     return ResultAsync.fromPromise(_getMarks(), unknownDbError);
 }
 
+function getShareEnabledSql() {
+    return sql<boolean>`${schema.categories.shareTokenHash} is not null`;
+}
+
 export type Category = Awaited<ReturnType<typeof _getCategories>>[number];
 function _getCategories() {
-    const sharingEnabled = sql<boolean>`${schema.categories.shareTokenHash} is not null`;
     return db
         .select({
             id: schema.categories.id,
             name: schema.categories.name,
-            sharingEnabled,
+            sharingEnabled: getShareEnabledSql(),
+            isShareOnly: schema.categories.isShareOnly,
+            isTokenManageable: schema.categories.isTokenManageable,
         })
         .from(schema.categories)
         .orderBy(desc(schema.categories.updatedAt));
@@ -65,13 +73,11 @@ function _getCategorizedMarks() {
         columns: {
             id: true,
             name: true,
+            isShareOnly: true,
+            isTokenManageable: true,
         },
-        extras: {
-            sharingEnabled:
-                sql<boolean>`${schema.categories.shareTokenHash} is not null`.as(
-                    "sharing_enabled",
-                ),
-        },
+        extras: { sharingEnabled: getShareEnabledSql().as("sharing_enabled") },
+        where: eq(schema.categories.isShareOnly, false),
         orderBy: [desc(schema.categories.updatedAt)],
     });
 }
@@ -137,6 +143,8 @@ async function _getCategoryWithMarksByShareToken(token: string | undefined) {
         columns: {
             id: true,
             name: true,
+            isShareOnly: true,
+            isTokenManageable: true,
         },
         with: {
             marks: {
@@ -155,7 +163,9 @@ async function _getCategoryWithMarksByShareToken(token: string | undefined) {
 export function getCategoryWithMarksByShareToken(
     token: string | undefined,
 ): ResultAsync<
-    Pick<Category, "id" | "name"> & { marks: Mark[] },
+    Pick<Category, "id" | "name" | "isShareOnly" | "isTokenManageable"> & {
+        marks: Mark[];
+    },
     UnknownDbError | NotFoundCategoryError
 > {
     return ResultAsync.fromPromise(
@@ -176,6 +186,32 @@ export function saveMark(
     return ResultAsync.fromPromise(
         _saveMark(url, title),
         maybeDuplicateMarkUrlError,
+    );
+}
+
+async function _saveMarkInCategory(
+    categoryId: number,
+    url: string,
+    title?: string | null,
+) {
+    await db.insert(schema.marks).values({ url, title, categoryId });
+}
+function saveMarkInCategory(
+    categoryId: number,
+    url: string,
+    title?: string | null,
+): ResultAsync<void, DuplicateMarkUrlError | CategoryFKError | UnknownDbError> {
+    return ResultAsync.fromPromise(
+        _saveMarkInCategory(categoryId, url, title),
+        error => {
+            const duplicate = maybeDuplicateMarkUrlError(error);
+
+            if (isDuplicateMarkUrlError(duplicate)) {
+                return duplicate;
+            }
+
+            return maybeCategoryFKError(error);
+        },
     );
 }
 
@@ -319,6 +355,37 @@ export function updateMark(
     );
 }
 
+async function _updateMarkTitleInCategory(
+    categoryId: number,
+    url: string,
+    title: string | null | undefined,
+): Promise<boolean> {
+    const marks = await db
+        .update(schema.marks)
+        .set({ title })
+        .where(
+            and(
+                eq(schema.marks.url, url),
+                eq(schema.marks.categoryId, categoryId),
+            ),
+        )
+        .returning({ url: schema.marks.url });
+    return marks.length > 0;
+}
+
+async function _deleteMarkInCategory(categoryId: number, url: string) {
+    const marks = await db
+        .delete(schema.marks)
+        .where(
+            and(
+                eq(schema.marks.url, url),
+                eq(schema.marks.categoryId, categoryId),
+            ),
+        )
+        .returning({ url: schema.marks.url });
+    return marks.length > 0;
+}
+
 async function _enableCategorySharing(categoryId: number) {
     const token = generateShareToken();
     const categories = await db
@@ -352,7 +419,11 @@ export function enableCategorySharing(
 async function _disableCategorySharing(categoryId: number) {
     const categories = await db
         .update(schema.categories)
-        .set({ shareTokenHash: null })
+        .set({
+            shareTokenHash: null,
+            isShareOnly: false,
+            isTokenManageable: false,
+        })
         .where(eq(schema.categories.id, categoryId))
         .returning({ id: schema.categories.id });
 
@@ -376,6 +447,135 @@ export function disableCategorySharing(
                 return errAsync(notFoundCategoryError());
         }
     });
+}
+
+async function _setCategoryTokenManageable(
+    categoryId: number,
+    enabled: boolean,
+) {
+    const categories = await db
+        .update(schema.categories)
+        .set({ isTokenManageable: enabled })
+        .where(
+            and(
+                eq(schema.categories.id, categoryId),
+                sql`${schema.categories.shareTokenHash} is not null`,
+            ),
+        )
+        .returning({ id: schema.categories.id });
+
+    return categories.length > 0;
+}
+export function setCategoryTokenManageable(
+    categoryId: number,
+    enabled: boolean,
+): ResultAsync<void, UnknownDbError | NotFoundCategoryError> {
+    return ResultAsync.fromPromise(
+        _setCategoryTokenManageable(categoryId, enabled),
+        unknownDbError,
+    ).andThen(updated =>
+        updated ? okAsync(undefined) : errAsync(notFoundCategoryError()),
+    );
+}
+
+async function _setCategoryShareOnly(categoryId: number, enabled: boolean) {
+    const categories = await db
+        .update(schema.categories)
+        .set({ isShareOnly: enabled })
+        .where(
+            and(
+                eq(schema.categories.id, categoryId),
+                sql`${schema.categories.shareTokenHash} is not null`,
+            ),
+        )
+        .returning({ id: schema.categories.id });
+
+    return categories.length > 0;
+}
+export function setCategoryShareOnly(
+    categoryId: number,
+    enabled: boolean,
+): ResultAsync<void, UnknownDbError | NotFoundCategoryError> {
+    return ResultAsync.fromPromise(
+        _setCategoryShareOnly(categoryId, enabled),
+        unknownDbError,
+    ).andThen(updated =>
+        updated ? okAsync(undefined) : errAsync(notFoundCategoryError()),
+    );
+}
+
+export function revealCategoryByShareToken(
+    token: string | undefined,
+): ResultAsync<void, UnknownDbError | NotFoundCategoryError> {
+    return getCategoryByShareToken(token).andThen(category =>
+        setCategoryShareOnly(category.id, false),
+    );
+}
+
+function getTokenManageableCategory(token: string | undefined) {
+    return getCategoryByShareToken(token).andThen(category =>
+        category.isTokenManageable
+            ? okAsync(category)
+            : errAsync(shareTokenPermissionError()),
+    );
+}
+
+export function saveMarkByShareToken(
+    token: string | undefined,
+    url: string,
+    title?: string | null,
+): ResultAsync<
+    void,
+    | UnknownDbError
+    | NotFoundCategoryError
+    | ShareTokenPermissionError
+    | DuplicateMarkUrlError
+    | CategoryFKError
+> {
+    return getTokenManageableCategory(token).andThen(category =>
+        saveMarkInCategory(category.id, url, title),
+    );
+}
+
+export function updateMarkTitleByShareToken(
+    token: string | undefined,
+    url: string,
+    title: string | null | undefined,
+): ResultAsync<
+    void,
+    | UnknownDbError
+    | NotFoundCategoryError
+    | ShareTokenPermissionError
+    | NotFoundMarkError
+> {
+    return getTokenManageableCategory(token).andThen(category =>
+        ResultAsync.fromPromise(
+            _updateMarkTitleInCategory(category.id, url, title),
+            unknownDbError,
+        ).andThen(updated =>
+            updated ? okAsync(undefined) : errAsync(notFoundMarkError()),
+        ),
+    );
+}
+
+export function deleteMarkByShareToken(
+    token: string | undefined,
+    url: string,
+): ResultAsync<
+    void,
+    | UnknownDbError
+    | NotFoundCategoryError
+    | ShareTokenPermissionError
+    | NotFoundMarkError
+> {
+    return getTokenManageableCategory(token).andThen(category =>
+        ResultAsync.fromPromise(
+            _deleteMarkInCategory(category.id, url),
+            unknownDbError,
+        ).andThen(deleted =>
+            deleted ? okAsync(undefined) : errAsync(notFoundMarkError()),
+        ),
+    );
 }
 
 function generateShareToken() {

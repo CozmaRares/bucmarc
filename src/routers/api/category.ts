@@ -7,14 +7,10 @@ import {
     disableCategorySharing,
     enableCategorySharing,
     renameCategory,
+    setCategoryShareOnly,
+    setCategoryTokenManageable,
 } from "@/db";
-import {
-    errorRedirect,
-    errorResponse,
-    HTTPStatus,
-    successRedirect,
-    successResponse,
-} from "@/honoHelpers";
+import { errorRedirect, successRedirect } from "@/honoHelpers";
 import { env } from "@/env";
 import {
     isDuplicateCategoryNameError,
@@ -38,15 +34,15 @@ categoryRouter.post("/create", zValidator("form", categoryCreateSchema), c => {
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
-                return errorRedirect(
-                    c,
-                    "A Category with that name already exists.",
-                    { path: "/" },
-                );
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "A Category with that name already exists.",
+                });
             }
 
-            return errorRedirect(c, "The Category could not be created.", {
+            return errorRedirect(c, {
                 path: "/",
+                message: "The Category could not be created.",
             });
         },
     );
@@ -63,21 +59,22 @@ categoryRouter.post("/rename", zValidator("form", categoryRenameSchema), c => {
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
-                return errorRedirect(
-                    c,
-                    "A Category with that name already exists.",
-                    { path: "/" },
-                );
-            }
-
-            if (isNotFoundCategoryError(error)) {
-                return errorRedirect(c, "Category not found.", {
+                return errorRedirect(c, {
                     path: "/",
+                    message: "A Category with that name already exists.",
                 });
             }
 
-            return errorRedirect(c, "The Category could not be renamed.", {
+            if (isNotFoundCategoryError(error)) {
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Category not found.",
+                });
+            }
+
+            return errorRedirect(c, {
                 path: "/",
+                message: "The Category could not be renamed.",
             });
         },
     );
@@ -93,13 +90,15 @@ categoryRouter.post("/delete", zValidator("form", categoryDeleteSchema), c => {
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isNotFoundCategoryError(error)) {
-                return errorRedirect(c, "Category not found.", {
+                return errorRedirect(c, {
                     path: "/",
+                    message: "Category not found.",
                 });
             }
 
-            return errorRedirect(c, "The Category could not be deleted.", {
+            return errorRedirect(c, {
                 path: "/",
+                message: "The Category could not be deleted.",
             });
         },
     );
@@ -111,21 +110,23 @@ const categoryIdSchema = z.object({
 
 categoryRouter.post(
     "/share/enable",
-    zValidator("json", categoryIdSchema),
+    zValidator("form", categoryIdSchema),
     c => {
-        const input = c.req.valid("json");
+        const input = c.req.valid("form");
         return enableCategorySharing(input.id).match(
-            token => successResponse(c, buildShareUrl(token)),
+            token => shareUrlRedirect(c, token),
             error => {
                 if (isNotFoundCategoryError(error)) {
-                    return errorResponse(
-                        c,
-                        "Category not found",
-                        HTTPStatus.NotFound,
-                    );
+                    return errorRedirect(c, {
+                        path: "/",
+                        message: "Category not found.",
+                    });
                 }
 
-                return errorResponse(c);
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Sharing could not be enabled.",
+                });
             },
         );
     },
@@ -133,21 +134,95 @@ categoryRouter.post(
 
 categoryRouter.post(
     "/share/disable",
-    zValidator("json", categoryIdSchema),
+    zValidator("form", categoryIdSchema),
     c => {
-        const input = c.req.valid("json");
+        const input = c.req.valid("form");
         return disableCategorySharing(input.id).match(
-            () => successResponse(c),
+            () => successRedirect(c, { path: "/" }),
             error => {
                 if (isNotFoundCategoryError(error)) {
-                    return errorResponse(
-                        c,
-                        "Category not found",
-                        HTTPStatus.NotFound,
-                    );
+                    return errorRedirect(c, {
+                        path: "/",
+                        message: "Category not found.",
+                    });
                 }
 
-                return errorResponse(c);
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Sharing could not be disabled.",
+                });
+            },
+        );
+    },
+);
+
+categoryRouter.post(
+    "/share/token-manageable/enable",
+    zValidator("form", categoryIdSchema),
+    c => {
+        const input = c.req.valid("form");
+        return setCategoryTokenManageable(input.id, true).match(
+            () => successRedirect(c, { path: "/" }),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorRedirect(c, {
+                        path: "/",
+                        message: "Shared Category not found.",
+                    });
+                }
+
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Token-Manageable could not be enabled.",
+                });
+            },
+        );
+    },
+);
+
+categoryRouter.post(
+    "/share/token-manageable/disable",
+    zValidator("form", categoryIdSchema),
+    c => {
+        const input = c.req.valid("form");
+        return setCategoryTokenManageable(input.id, false).match(
+            () => successRedirect(c, { path: "/" }),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorRedirect(c, {
+                        path: "/",
+                        message: "Shared Category not found.",
+                    });
+                }
+
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Token-Manageable could not be disabled.",
+                });
+            },
+        );
+    },
+);
+
+categoryRouter.post(
+    "/share/share-only/enable",
+    zValidator("form", categoryIdSchema),
+    c => {
+        const input = c.req.valid("form");
+        return setCategoryShareOnly(input.id, true).match(
+            () => successRedirect(c, { path: "/" }),
+            error => {
+                if (isNotFoundCategoryError(error)) {
+                    return errorRedirect(c, {
+                        path: "/",
+                        message: "Shared Category not found.",
+                    });
+                }
+
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Share-Only could not be enabled.",
+                });
             },
         );
     },
@@ -155,4 +230,14 @@ categoryRouter.post(
 
 function buildShareUrl(token: string) {
     return new URL(`/share/${token}`, env.APP_URL).href;
+}
+
+function shareUrlRedirect(
+    c: Parameters<typeof successRedirect>[0],
+    token: string,
+) {
+    return successRedirect(c, {
+        path: "/",
+        message: `Share URL: ${buildShareUrl(token)}`,
+    });
 }

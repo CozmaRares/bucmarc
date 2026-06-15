@@ -29,11 +29,10 @@ markRouter.get("/save/:url", c => {
     const title = c.req.query("title");
 
     if (!isSaveableUrl(url)) {
-        return errorRedirect(
-            c,
-            `The URL could not be saved because it is invalid: ${url}`,
-            { path: "/" },
-        );
+        return errorRedirect(c, {
+            path: "/",
+            message: `The URL could not be saved because it is invalid: ${url}`,
+        });
     }
 
     return saveMark(url, title).match(
@@ -42,15 +41,15 @@ markRouter.get("/save/:url", c => {
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {
-                return errorRedirect(
-                    c,
-                    `The URL could not be saved because it already exists: ${url}`,
-                    { path: "/" },
-                );
+                return errorRedirect(c, {
+                    path: "/",
+                    message: `The URL could not be saved because it already exists: ${url}`,
+                });
             }
 
-            return errorRedirect(c, `The URL could not be saved: ${url}`, {
+            return errorRedirect(c, {
                 path: "/",
+                message: `The URL could not be saved: ${url}`,
             });
         },
     );
@@ -69,20 +68,22 @@ markRouter.post("/update", zValidator("form", markUpdateSchema), c => {
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isNotFoundMarkError(error)) {
-                return errorRedirect(
-                    c,
-                    "Mark not found",
-
-                    { path: "/" },
-                );
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Mark not found",
+                });
             }
 
             if (isCategoryFKError(error)) {
-                return errorRedirect(c, "Category not found", { path: "/" });
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Category not found",
+                });
             }
 
-            return errorRedirect(c, "The Mark could not be updated.", {
+            return errorRedirect(c, {
                 path: "/",
+                message: "The Mark could not be updated.",
             });
         },
     );
@@ -99,11 +100,15 @@ markRouter.post("/delete", zValidator("form", markDeleteSchema), c => {
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isNotFoundMarkError(error)) {
-                return errorRedirect(c, "Mark not found", { path: "/" });
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Mark not found",
+                });
             }
 
-            return errorRedirect(c, "The Mark could not be deleted.", {
+            return errorRedirect(c, {
                 path: "/",
+                message: "The Mark could not be deleted.",
             });
         },
     );

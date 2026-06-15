@@ -6,7 +6,8 @@ import type { Context } from "hono";
 
 type Props = {
     categorizedMarks: Array<Category & { marks: Mark[] }>;
-    pageError?: string;
+    pageMessage?: string;
+    pageStatus?: string;
     uncategorizedMarks: Mark[];
 };
 
@@ -17,13 +18,19 @@ function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
     ])
         .map(([categorizedMarks, uncategorizedMarks]) => ({
             categorizedMarks,
-            pageError: c.req.query("error"),
+            pageMessage: c.req.query("message"),
+            pageStatus: c.req.query("status"),
             uncategorizedMarks,
         }))
         .mapErr(serverError);
 }
 
-function Home({ categorizedMarks, pageError, uncategorizedMarks }: Props) {
+function Home({
+    categorizedMarks,
+    pageMessage,
+    pageStatus,
+    uncategorizedMarks,
+}: Props) {
     return (
         <>
             <main>
@@ -35,12 +42,13 @@ function Home({ categorizedMarks, pageError, uncategorizedMarks }: Props) {
                     Create Category
                 </button>
                 <p
-                    data-page-error
+                    data-page-status={pageStatus ?? ""}
+                    data-page-banner
                     role="alert"
-                    style="border: 1px solid #b42318; background: #fff4f2; color: #7a271a; padding: 0.75rem; margin: 0 0 1rem;"
-                    hidden={!pageError}
+                    style={bannerStyle(pageStatus)}
+                    hidden={!pageMessage}
                 >
-                    {pageError}
+                    {pageMessage}
                 </p>
                 {uncategorizedMarks.length > 0 && (
                     <section>
@@ -74,6 +82,7 @@ function Home({ categorizedMarks, pageError, uncategorizedMarks }: Props) {
                         {category.sharingEnabled ? (
                             <span>Share enabled</span>
                         ) : null}
+                        <SharingControls category={category} />
                         {category.marks.length > 0 ? (
                             <ul>
                                 {category.marks.map(mark => (
@@ -92,10 +101,89 @@ function Home({ categorizedMarks, pageError, uncategorizedMarks }: Props) {
             <EditCategoryDialog />
             <EditMarkDialog categories={categorizedMarks} />
             <script
+                src="/public/mark-dialog/script.js"
+                defer
+            />
+            <script
                 src="/public/home/script.js"
                 defer
             />
         </>
+    );
+}
+
+function bannerStyle(status?: string) {
+    return status === "success"
+        ? "border: 1px solid #175cd3; background: #eff8ff; color: #1849a9; padding: 0.75rem; margin: 0 0 1rem;"
+        : "border: 1px solid #b42318; background: #fff4f2; color: #7a271a; padding: 0.75rem; margin: 0 0 1rem;";
+}
+
+type SharingControlsProps = {
+    category: Category;
+};
+
+function SharingControls({ category }: SharingControlsProps) {
+    return (
+        <div>
+            <form
+                action="/api/category/share/enable"
+                method="post"
+            >
+                <input
+                    name="id"
+                    type="hidden"
+                    value={category.id}
+                />
+                <button type="submit">
+                    {category.sharingEnabled ? "Rotate Token" : "Enable Share"}
+                </button>
+            </form>
+            {category.sharingEnabled ? (
+                <>
+                    <form
+                        action="/api/category/share/disable"
+                        method="post"
+                    >
+                        <input
+                            name="id"
+                            type="hidden"
+                            value={category.id}
+                        />
+                        <button type="submit">Disable Share</button>
+                    </form>
+                    <form
+                        action={
+                            category.isTokenManageable
+                                ? "/api/category/share/token-manageable/disable"
+                                : "/api/category/share/token-manageable/enable"
+                        }
+                        method="post"
+                    >
+                        <input
+                            name="id"
+                            type="hidden"
+                            value={category.id}
+                        />
+                        <button type="submit">
+                            {category.isTokenManageable
+                                ? "Disable Token Management"
+                                : "Enable Token Management"}
+                        </button>
+                    </form>
+                    <form
+                        action="/api/category/share/share-only/enable"
+                        method="post"
+                    >
+                        <input
+                            name="id"
+                            type="hidden"
+                            value={category.id}
+                        />
+                        <button type="submit">Make Share-Only</button>
+                    </form>
+                </>
+            ) : null}
+        </div>
     );
 }
 
@@ -260,7 +348,12 @@ function EditMarkDialog({ categories }: EditMarkDialogProps) {
                 </label>
                 <button type="submit">Save</button>
             </form>
-            <button type="button">Cancel</button>
+            <button
+                type="button"
+                data-edit-mark-dialog-cancel
+            >
+                Cancel
+            </button>
         </dialog>
     );
 }

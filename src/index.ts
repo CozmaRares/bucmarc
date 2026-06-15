@@ -15,9 +15,6 @@ const app = new Hono();
 
 app.use("*", clerkMiddleware());
 app.use(honoLogger((...args) => logger.info(...args)));
-app.route("/share", shareRouter);
-app.use(requireAuth);
-
 app.use(
     "/public/*",
     serveStatic({
@@ -25,6 +22,8 @@ app.use(
         rewriteRequestPath: path => path.replace(/^\/public/, ""),
     }),
 );
+app.route("/share", shareRouter);
+app.use(requireAuth);
 
 app.use("*", async (ctx, next) => {
     try {

@@ -56,25 +56,34 @@ export function errorResponse(
 type RedirectParams = {
     path: string;
     status?: HTTPRedirectStatusCode;
+    message?: string;
 };
 
 export function successRedirect(
     c: Context,
-    { path, status = HTTPStatus.Found }: RedirectParams,
+    { path, status = HTTPStatus.Found, message }: RedirectParams,
 ) {
-    return c.redirect(path, status);
+    const url = new URL(path, c.req.url);
+
+    if (message) {
+        url.searchParams.set("message", message);
+        url.searchParams.set("status", "success");
+    }
+
+    return c.redirect(url, status);
 }
 
 export function errorRedirect(
     c: Context,
-    error: string,
-    { path, status }: RedirectParams,
+    {
+        path,
+        status = HTTPStatus.Found,
+        message,
+    }: RedirectParams & { message: string },
 ) {
-    const params = new URLSearchParams();
-    params.set("error", error);
+    const url = new URL(path, c.req.url);
+    url.searchParams.set("message", message);
+    url.searchParams.set("status", "error");
 
-    return successRedirect(c, {
-        path: `${path}?${params.toString()}`,
-        status,
-    });
+    return c.redirect(url, status);
 }
