@@ -7,7 +7,7 @@ type QaReport = {
     title: string;
 };
 
-const qaDir = ".scratch/qa";
+const qaDir = ".scratch/_qa";
 const untriagedStatus = "needs-triage";
 
 async function main() {

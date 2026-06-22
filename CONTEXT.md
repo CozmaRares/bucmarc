@@ -5,55 +5,47 @@ Bucmarc is a personal mark manager for saving web URLs, organizing them into cat
 ## Language
 
 **Mark**:
-A saved web URL in Bucmarc. A mark may have optional descriptive metadata and may belong to one category.
+A saved web URL in Bucmarc. A mark may have a title and belong to one category when it stands on its own outside a series. When a mark belongs to a series, its standalone title and category are cleared; the series category takes over for display and sharing.
 _Avoid_: Bookmark, link, favorite
 
-**Episodic Mark**:
-A mark that carries episode identity and a series pattern so Bucmarc can replace it when a newer episode mark in the same series is saved.
-_Avoid_: Serialized mark, tracked mark, episode bookmark
-
 **Title**:
-Optional descriptive text for a mark.
+User-facing descriptive text for a standalone mark or series. A mark title applies only while the mark stands on its own outside a series.
 _Avoid_: Name, label, caption
 
 **Category**:
-A uniquely named group that can contain marks. A mark can belong to at most one category.
+A uniquely named group that can contain standalone marks and series as a combined list of saved items.
 _Avoid_: Folder, collection, tag
 
 **Series**:
-A site-local sequence-like work represented by its current tracked mark, where newer episode marks may replace older episode marks. The same work on different sites belongs to separate series.
+A user-facing sequence-like saved item with a required title, required series pattern, and optional category. A series may point at a current mark as its target URL while remaining separate from that mark. A series may exist without a current mark, and a mark may exist without belonging to a series. A series category is assigned intentionally and is not inferred from a matched mark. A series remains visible even when it has no current mark.
 _Avoid_: Group, collection, pattern group
 
-**Pattern Template**:
-A reusable user-defined site-level pattern that describes which values Bucmarc can extract for episodic marks on that site. Pattern templates map captured URL parts to named params such as title, hash, or episode.
-_Avoid_: Site rule, parser, matcher
+**Series Unlinking**:
+The deliberate action of removing the current mark from a series while keeping both the series and mark. Series unlinking lets the App Owner change a series pattern when the current mark would no longer match it. When a mark is unlinked from a series, the mark becomes standalone and copies the series category, but not the series title.
+_Avoid_: Detach, remove from series, reset series
+
+**Series Matching**:
+The process Bucmarc uses after a new mark is saved to decide whether that mark should belong to a series. Series matching does not retroactively change existing marks unless the App Owner explicitly asks for that. If series matching cannot assign a new mark to a series, the mark remains unchanged. When a matched series already has a current mark, series matching uses episode identity to decide whether the new mark should become the series current mark. A matched mark that does not advance the series leaves the series unchanged.
+_Avoid_: Backfill, import matching, auto-categorization
 
 **Series Pattern**:
-The matching rule Bucmarc carries on an episodic mark to derive episode identity for marks in the same series. A series pattern includes any site-specific values needed to recognize that series.
+The regex matching rule a series uses to recognize mark URLs and derive episode identity. A series pattern has exactly one named capture, `episode`, and no other named captures. The captured episode value must be numeric. When a series has a current mark, its series pattern must match that mark.
 _Avoid_: Mark pattern, title pattern, URL rule
-
-**Replacement Rule**:
-The comparison Bucmarc uses to decide whether a matched mark should replace the current episodic mark in a series.
-_Avoid_: Deduplication rule, cleanup rule, stale check
 
 **Episode**:
 A comparable part of a series represented by a mark, such as a chapter, issue, or video episode.
 _Avoid_: Chapter, installment, part
 
 **Episode Identity**:
-The system-managed episode value Bucmarc derives for an episodic mark. Episode identity is independent of a mark's title and is carried forward by the series pattern when a newer episode mark replaces an older one.
+The system-managed numeric episode value Bucmarc derives for a matched mark. Episode identity is independent of title and determines whether a matched mark becomes the current mark for a series.
 _Avoid_: Title semantics, parsed title, visible metadata
 
-**Replaced Episode Mark**:
-An older episode mark that is hard-deleted after Bucmarc saves a newer episode mark in the same series.
-_Avoid_: Archived mark, hidden mark, stale mark
-
 **Episode Replacement**:
-The eventually consistent process where Bucmarc turns a newly saved mark into an episodic mark and hard-deletes the older episodic mark it replaces.
+The eventually consistent process where Bucmarc points a series at a newer current mark and hard-deletes the older current mark it replaces. Episode replacement uses a fixed comparison: the new mark's numeric episode identity must be greater than the current mark's numeric episode identity.
 _Avoid_: Archiving, hiding, deduplication
 
-**Uncategorized Mark**:
-A mark that does not belong to any category.
+**Uncategorized Saved Item**:
+A standalone mark or series that does not belong to any category.
 _Avoid_: Default category, orphan mark
 
 **Shared Category**:

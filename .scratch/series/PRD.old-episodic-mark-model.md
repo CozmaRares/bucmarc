@@ -1,4 +1,6 @@
-Status: ready-for-agent
+Status: archived-superseded
+
+> Historical only. Do not implement this PRD. The active Series direction is `.scratch/series/PRD.md`.
 
 # PRD: Episodic Mark Replacement Foundation
 
