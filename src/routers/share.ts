@@ -8,14 +8,14 @@ import {
     revealCategoryByShareToken,
     saveMarkByShareToken,
     updateMarkTitleByShareToken,
-} from "@/db";
+} from "@/db/dal";
 import { errorRedirect, successRedirect } from "@/honoHelpers";
 import {
     isDuplicateMarkUrlError,
     isNotFoundCategoryError,
     isNotFoundMarkError,
     isShareTokenPermissionError,
-} from "@/db/errors";
+} from "@/db/dal";
 
 const shareRouter = new Hono();
 export default shareRouter;
@@ -32,7 +32,6 @@ const shareMarkFieldValidators = {
 shareRouter.get("/:token/mark/save", c => {
     const token = c.req.param("token");
     const url = c.req.query("url");
-    const title = normalizeTitle(c.req.query("title"));
 
     if (!isSaveableUrl(url)) {
         return shareErrorRedirect(
@@ -42,7 +41,7 @@ shareRouter.get("/:token/mark/save", c => {
         );
     }
 
-    return saveMarkByShareToken(token, url, title).match(
+    return saveMarkByShareToken(token, url).match(
         () => successRedirect(c, { path: url }),
         error => {
             if (isDuplicateMarkUrlError(error)) {
@@ -197,8 +196,4 @@ const saveUrlSchema = z.url().refine(url => {
 
 function isSaveableUrl(url: string | undefined): url is string {
     return saveUrlSchema.safeParse(url).success;
-}
-
-function normalizeTitle(title: string | undefined) {
-    return title?.trim() ? title : null;
 }

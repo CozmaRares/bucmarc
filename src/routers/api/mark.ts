@@ -1,4 +1,4 @@
-import { deleteMark, saveMark, updateMark } from "@/db";
+import { deleteMark, saveMark, updateMark } from "@/db/dal";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
@@ -7,7 +7,7 @@ import {
     isCategoryFKError,
     isDuplicateMarkUrlError,
     isNotFoundMarkError,
-} from "@/db/errors";
+} from "@/db/dal";
 
 export const markRouter = new Hono();
 
@@ -26,7 +26,6 @@ const markFieldsValidators = {
 
 markRouter.get("/save/:url", c => {
     const url = decodeUrl(c.req.param("url"));
-    const title = c.req.query("title");
 
     if (!isSaveableUrl(url)) {
         return errorRedirect(c, {
@@ -35,7 +34,7 @@ markRouter.get("/save/:url", c => {
         });
     }
 
-    return saveMark(url, title).match(
+    return saveMark(url).match(
         () => {
             return successRedirect(c, { path: url });
         },

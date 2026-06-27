@@ -1,5 +1,5 @@
-import { getCategoryWithMarksByShareToken } from "@/db";
-import type { Mark } from "@/db";
+import { getCategoryWithMarksByShareToken } from "@/db/dal";
+import type { Mark } from "@/db/dal";
 import type { Context } from "hono";
 import {
     notFoundError,
@@ -8,7 +8,7 @@ import {
     type PageLoadError,
 } from "./types";
 import type { ResultAsync } from "neverthrow";
-import { isNotFoundCategoryError } from "@/db/errors";
+import { isNotFoundCategoryError } from "@/db/dal";
 
 type Props = {
     categoryName: string;
@@ -39,7 +39,7 @@ function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
         });
 }
 
-function Share({
+function component({
     isShareOnly,
     isTokenManageable,
     marks,
@@ -158,7 +158,4 @@ function EditMarkDialog({ token }: { token: string }) {
     );
 }
 
-export const SharePage = {
-    component: Share,
-    dataLoader,
-} as const satisfies Page<Props>;
+export const SharePage: Page<Props> = { component, dataLoader };

@@ -60,4 +60,30 @@ export const marksRelations = relations(marks, ({ one }) => ({
         fields: [marks.categoryId],
         references: [categories.id],
     }),
+    series: one(series),
+}));
+
+export const series = sqliteTable(
+    "series",
+    {
+        id: helpers.id(),
+        title: text().notNull(),
+        pattern: text().notNull(),
+        markUrl: text().references(() => marks.url, {
+            onDelete: "set null",
+        }),
+        updatedAt: helpers.updatedAt(),
+    },
+    table => [
+        uniqueIndex("series_pattern_unique").on(table.pattern),
+        uniqueIndex("series_mark_url_unique").on(table.markUrl),
+        index("series_mark_url_unique_id_index").on(table.markUrl),
+    ],
+);
+
+export const seriesRelations = relations(series, ({ one }) => ({
+    mark: one(marks, {
+        fields: [series.markUrl],
+        references: [marks.url],
+    }),
 }));

@@ -9,13 +9,13 @@ import {
     renameCategory,
     setCategoryShareOnly,
     setCategoryTokenManageable,
-} from "@/db";
+} from "@/db/dal";
 import { errorRedirect, successRedirect } from "@/honoHelpers";
 import { env } from "@/env";
 import {
     isDuplicateCategoryNameError,
     isNotFoundCategoryError,
-} from "@/db/errors";
+} from "@/db/dal";
 
 export const categoryRouter = new Hono();
 

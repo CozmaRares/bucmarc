@@ -1,14 +1,14 @@
-import { getCategorizedMarks, getUncategorizedMarks } from "@/db";
-import type { Category, Mark } from "@/db";
+import { getCategorizedMarks, getUncategorizedMarks } from "@/db/dal";
+import type { Category, MarkWithSeries } from "@/db/dal";
 import { serverError, type Page, type PageLoadError } from "./types";
 import { ResultAsync } from "neverthrow";
 import type { Context } from "hono";
 
 type Props = {
-    categorizedMarks: Array<Category & { marks: Mark[] }>;
+    categorizedMarks: Array<Category & { marks: MarkWithSeries[] }>;
     pageMessage?: string;
     pageStatus?: string;
-    uncategorizedMarks: Mark[];
+    uncategorizedMarks: MarkWithSeries[];
 };
 
 function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
@@ -25,7 +25,7 @@ function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
         .mapErr(serverError);
 }
 
-function Home({
+function component({
     categorizedMarks,
     pageMessage,
     pageStatus,
@@ -55,9 +55,11 @@ function Home({
                         <h2>Uncategorized Marks</h2>
 
                         <ul>
-                            {uncategorizedMarks.map(mark => (
+                            {uncategorizedMarks.map(markWithSeries => (
                                 <li>
-                                    <Mark mark={mark} />
+                                    <MarkComponent
+                                        markWithSeries={markWithSeries}
+                                    />
                                 </li>
                             ))}
                         </ul>
@@ -85,9 +87,11 @@ function Home({
                         <SharingControls category={category} />
                         {category.marks.length > 0 ? (
                             <ul>
-                                {category.marks.map(mark => (
+                                {category.marks.map(markWithSeries => (
                                     <li>
-                                        <Mark mark={mark} />
+                                        <MarkComponent
+                                            markWithSeries={markWithSeries}
+                                        />
                                     </li>
                                 ))}
                             </ul>
@@ -270,10 +274,12 @@ function EditCategoryDialog() {
 }
 
 type MarkProps = {
-    mark: Mark;
+    markWithSeries: MarkWithSeries;
 };
 
-function Mark({ mark }: MarkProps) {
+function MarkComponent({ markWithSeries }: MarkProps) {
+    const { series, ...mark } = markWithSeries;
+
     return (
         <div
             data-mark
@@ -286,10 +292,11 @@ function Mark({ mark }: MarkProps) {
                 target="_blank"
                 rel="noreferrer"
             >
-                {mark.title || mark.url}
+                {series?.title || mark.title || mark.url}
             </a>
             <button data-edit>Edit</button>
             <form
+                style="display:inline-block"
                 action="/api/mark/delete"
                 method="post"
                 data-delete-mark-form
@@ -358,7 +365,4 @@ function EditMarkDialog({ categories }: EditMarkDialogProps) {
     );
 }
 
-export const HomePage = {
-    component: Home,
-    dataLoader,
-} as const satisfies Page<Props>;
+export const HomePage: Page<Props> = { component, dataLoader };
