@@ -2,7 +2,7 @@
 .codex
 node_modules
 .env
-local.db
+local.db*
 dist
 server-data
 letsencrypt

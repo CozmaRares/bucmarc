@@ -16,6 +16,7 @@ import {
     isNotFoundMarkError,
     isShareTokenPermissionError,
 } from "@/db/dal";
+import { workerPool } from "@/lib/workerPool";
 
 const shareRouter = new Hono();
 export default shareRouter;
@@ -42,7 +43,10 @@ shareRouter.get("/:token/mark/save", c => {
     }
 
     return saveMarkByShareToken(token, url).match(
-        () => successRedirect(c, { path: url }),
+        () => {
+            workerPool.dispatchWorker();
+            return successRedirect(c, { path: url });
+        },
         error => {
             if (isDuplicateMarkUrlError(error)) {
                 return shareErrorRedirect(

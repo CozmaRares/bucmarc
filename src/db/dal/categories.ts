@@ -12,7 +12,6 @@ import type { Mark } from "./marks";
 import { getShareEnabledSql } from "./utils";
 import type { Series } from "./series";
 import { getEpisodeIdentity } from "@/lib/seriesPattern";
-import type { map } from "zod";
 
 export type DuplicateCategoryNameError = { type: "duplicate_category_name" };
 export type NotFoundCategoryError = { type: "not_found_category" };

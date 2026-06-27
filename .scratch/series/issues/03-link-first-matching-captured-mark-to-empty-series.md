@@ -14,18 +14,22 @@ Series Matching must apply only to newly saved Marks. Creating or editing a Seri
 
 ## Acceptance criteria
 
-- [ ] Saving a new Mark through `/api/mark/save/:url` still redirects immediately to the saved URL after the Mark is saved.
-- [ ] Series Matching runs after the new Mark is saved and does not change the successful Capture Flow redirect.
-- [ ] A newly saved Mark that matches exactly one empty Series becomes that Series current Mark.
-- [ ] A Mark linked to a Series has its own Title cleared.
-- [ ] A Mark linked to a Series has its own Category cleared.
-- [ ] The linked Mark appears through the Series saved item rather than as a standalone Mark in category and uncategorized views.
-- [ ] A categorized captured Mark does not cause the matched Series to inherit that Category.
-- [ ] Creating a Series does not retroactively match existing Marks.
-- [ ] Editing a Series does not retroactively match existing Marks.
-- [ ] Tests or manual verification cover the Capture Flow redirect and the eventual linked-Series display.
+- [x] Saving a new Mark through `/api/mark/save/:url` still redirects immediately to the saved URL after the Mark is saved.
+- [x] Series Matching runs after the new Mark is saved and does not change the successful Capture Flow redirect.
+- [x] A newly saved Mark that matches exactly one empty Series becomes that Series current Mark.
+- [x] A Mark linked to a Series has its own Title cleared.
+- [x] A Mark linked to a Series has its own Category cleared.
+- [x] The linked Mark appears through the Series saved item rather than as a standalone Mark in category and uncategorized views.
+- [x] A categorized captured Mark does not cause the matched Series to inherit that Category.
+- [x] Creating a Series does not retroactively match existing Marks.
+- [x] Editing a Series does not retroactively match existing Marks.
+- [x] Tests or manual verification cover the Capture Flow redirect and the eventual linked-Series display.
 
 ## Blocked by
 
 - .scratch/series/issues/01-create-empty-series-from-series-management-page.md
 - .scratch/series/issues/02-display-series-as-saved-items-in-category-views.md
+
+## Comments
+
+- implementation uses a worker pool

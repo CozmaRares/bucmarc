@@ -87,3 +87,13 @@ export const seriesRelations = relations(series, ({ one }) => ({
         references: [marks.url],
     }),
 }));
+
+const JOB_STATUSES = Object.freeze(["pending", "running", "done"] as const);
+export type JobStatus = (typeof JOB_STATUSES)[number];
+
+export const jobs = sqliteTable("jobs", {
+    id: helpers.id(),
+    markUrl: text().notNull(),
+    status: text({ enum: JOB_STATUSES }).notNull(),
+    updatedAt: helpers.updatedAt(),
+});

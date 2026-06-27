@@ -1,5 +1,5 @@
 import { db } from "../connection";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
@@ -9,7 +9,9 @@ import {
     type CategoryFKError,
     isUniqueConstraintError,
     logErrorAndCreate,
+    type DbError,
 } from "./utils";
+import { createJob } from "./jobs";
 
 export type DuplicateMarkUrlError = { type: "duplicate_mark_url" };
 export type NotFoundMarkError = { type: "not_found_mark" };
@@ -62,20 +64,31 @@ export function getMarksByCategoryId(
     );
 }
 
-async function _saveMark(url: string, categoryId?: number) {
+async function _saveMark(url: string, categoryId: number | undefined) {
     await db.insert(schema.marks).values({ url, categoryId });
 }
+
+function _saveMarkAndTriggerJob<E extends DbError>(
+    url: string,
+    categoryId: number | undefined,
+    errorFn: (error: unknown) => E,
+): ResultAsync<void, E | UnknownDbError> {
+    return ResultAsync.fromPromise(_saveMark(url, categoryId), errorFn).andThen(
+        () => createJob(url),
+    );
+}
+
 export function saveMark(
     url: string,
 ): ResultAsync<void, DuplicateMarkUrlError | UnknownDbError> {
-    return ResultAsync.fromPromise(_saveMark(url), maybeDuplicateMarkUrlError);
+    return _saveMarkAndTriggerJob(url, undefined, maybeDuplicateMarkUrlError);
 }
 
 export function saveMarkInCategory(
     categoryId: number,
     url: string,
 ): ResultAsync<void, DuplicateMarkUrlError | CategoryFKError | UnknownDbError> {
-    return ResultAsync.fromPromise(_saveMark(url, categoryId), error => {
+    return _saveMarkAndTriggerJob(url, categoryId, error => {
         const duplicate = maybeDuplicateMarkUrlError(error);
 
         if (isDuplicateMarkUrlError(duplicate)) {

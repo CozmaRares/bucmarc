@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Display Series as Saved Items in Category Views
 
@@ -14,14 +14,14 @@ A Series with a current Mark should display as the Series Title linked to the cu
 
 ## Acceptance criteria
 
-- [ ] Categorized views show standalone Marks and Series together in one saved-item list per Category.
-- [ ] Uncategorized views show uncategorized standalone Marks and uncategorized Series together.
-- [ ] A Series with a current Mark links to the current Mark URL and displays the Series Title.
-- [ ] A Series without a current Mark isn't displayed.
-- [ ] A Mark that does not belong to a Series continues to display its own Title or URL fallback.
-- [ ] Category membership for Series is based on the Series Category, not any linked Mark Category.
-- [ ] Share-Only Category visibility remains unchanged for the Private Management Area.
-- [ ] Tests or manual verification cover categorized Series, uncategorized Series, standalone Marks, and empty Categories.
+- [X] Categorized views show standalone Marks and Series together in one saved-item list per Category.
+- [X] Uncategorized views show uncategorized standalone Marks and uncategorized Series together.
+- [X] A Series with a current Mark links to the current Mark URL and displays the Series Title.
+- [X] A Series without a current Mark isn't displayed.
+- [X] A Mark that does not belong to a Series continues to display its own Title or URL fallback.
+- [X] Category membership for Series is based on the Series Category, not any linked Mark Category.
+- [X] Share-Only Category visibility remains unchanged for the Private Management Area.
+- [X] Tests or manual verification cover categorized Series, uncategorized Series, standalone Marks, and empty Categories.
 
 ## Blocked by
 

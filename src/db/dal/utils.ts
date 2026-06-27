@@ -5,7 +5,7 @@ import * as schema from "../schema";
 
 const logger = createLogger("db");
 
-type DbError = { type: string };
+export type DbError = { type: string };
 export type UnknownDbError = { type: "unknown_db_error"; error: unknown };
 export type CategoryFKError = { type: "category_fk" };
 
@@ -14,6 +14,15 @@ export function logErrorAndCreate<Args extends any[], E extends DbError>(
 ): (...args: Args) => E {
     return (...args) => {
         const result = cb(...args);
+
+        if (isUnknownDbError(result)) {
+            logger.error(result.type, result.error, ...args);
+            if (result.error instanceof Error) {
+                logger.error(result.error.message, result.error.cause);
+                logger.error(result.error.stack);
+            }
+        }
+
         const logMethod = isUnknownDbError(result)
             ? logger.error
             : logger.debug;
