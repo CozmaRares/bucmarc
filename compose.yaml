@@ -14,6 +14,11 @@ services:
             - bun
             - run
             - ${DRIZZLE_UDATE_DB_COMMAND}
+        logging:
+            driver: json-file
+            options:
+                max-size: "5m"
+                max-file: "3"
 
     server:
         build: .
@@ -29,6 +34,11 @@ services:
                 condition: service_completed_successfully
         networks:
             - appnet
+        logging:
+            driver: json-file
+            options:
+                max-size: "20m"
+                max-file: "5"
 
     nginx:
         image: nginx:1.30.2-alpine
@@ -45,6 +55,11 @@ services:
             - /etc/letsencrypt:/etc/letsencrypt
         networks:
             - appnet
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "5"
 
 networks:
     appnet:
