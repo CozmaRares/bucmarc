@@ -7,6 +7,7 @@ import { clerkMiddleware, requireAuth } from "./middleware";
 import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
 import shareRouter from "./routers/share";
+import chalk from "chalk";
 
 const logger = createLogger("server");
 
@@ -16,12 +17,7 @@ app.use("*", async (c, next) => {
     const method = c.req.method;
     const path = c.req.path;
 
-    try {
-        const body = await c.req.raw.clone().formData();
-        console.log(body);
-    } catch {}
-
-    logger.info(`-> ${method} ${path}`);
+    logger.info("->", colorMethod(method), colorPath(path));
 
     const start = performance.now();
     try {
@@ -34,7 +30,11 @@ app.use("*", async (c, next) => {
         const duration = end - start;
 
         logger.info(
-            `<- ${method} ${path} ${c.res.status} ${duration.toFixed(0)}ms`,
+            "<-",
+            colorMethod(method),
+            colorPath(path),
+            colorStatus(c.res.status),
+            `(${colorDuration(duration)}ms)`,
         );
     }
 });
@@ -64,3 +64,38 @@ const server = Bun.serve({
 logger.info(`Server started on port ${env.PORT}`);
 
 export default server;
+
+function colorMethod(method: string) {
+    switch (method.toUpperCase()) {
+        case "GET":
+            return chalk.green(method);
+        case "POST":
+            return chalk.yellow(method);
+        case "PUT":
+            return chalk.blue(method);
+        case "DELETE":
+            return chalk.red(method);
+        default:
+            return method;
+    }
+}
+
+function colorPath(path: string) {
+    return chalk.italic(path);
+}
+
+function colorStatus(status: number) {
+    if (status >= 500) return chalk.red(status);
+    if (status >= 400) return chalk.yellow(status);
+    if (status >= 300) return chalk.cyan(status);
+    if (status >= 200) return chalk.green(status);
+    return chalk.white(status);
+}
+
+function colorDuration(duration: number) {
+    const durationText = duration.toFixed(0);
+
+    if (duration > 1000) return chalk.red(durationText);
+    if (duration > 500) return chalk.yellow(durationText);
+    return chalk.green(durationText);
+}

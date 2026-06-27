@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import chalk from "chalk";
 
 export enum LogLevel {
     Fatal = 0,
@@ -34,9 +35,12 @@ const write = (level: LogLevel, place: string, args: unknown[]) => {
 
     const label = LogLevel[level];
 
-    const line = `${formatTimestamp()} [${label}] [${place}] ${args
-        .map(formatValue)
-        .join(" ")}`;
+    const timestamp = colorTimestamp(formatTimestamp());
+    const coloredLabel = colorLevel(level, `[${label}]`);
+    const coloredPlace = colorPlace(`[${place}]`);
+    const message = args.map(formatValue).join(" ");
+
+    const line = `${timestamp} ${coloredLabel} ${coloredPlace} ${message}`;
 
     if (level <= LogLevel.Error) {
         console.error(line);
@@ -54,6 +58,23 @@ export const createLogger = (place: string) => ({
     debug: (...args: unknown[]) => write(LogLevel.Debug, place, args),
 });
 
-const logger = createLogger("app");
 
-export default logger;
+function colorLevel(level: LogLevel, text: string) {
+    switch (level) {
+        case LogLevel.Fatal:
+            return chalk.red.bold(text);
+        case LogLevel.Error:
+            return chalk.red(text);
+        case LogLevel.Warn:
+            return chalk.yellow(text);
+        case LogLevel.Info:
+            return chalk.blue(text);
+        case LogLevel.Debug:
+            return chalk.gray(text);
+        default:
+            return text;
+    }
+}
+
+function colorPlace(place: string) { return chalk.cyan(place); }
+function colorTimestamp(timestamp: string) { return chalk.gray(timestamp); }
