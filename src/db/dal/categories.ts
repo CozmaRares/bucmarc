@@ -62,7 +62,7 @@ export function getCategories(): ResultAsync<Category[], UnknownDbError> {
 
 export type MarkWithSeries = Mark & { series: Pick<Series, "title"> | null };
 
-function createSerieTitleWithEpisode(
+function createSeriesTitleWithEpisode(
     markWithSeries: Mark & { series: Pick<Series, "title" | "pattern"> | null },
 ): MarkWithSeries {
     const { series, ...mark } = markWithSeries;
@@ -71,7 +71,7 @@ function createSerieTitleWithEpisode(
     if (series) {
         const episode = getEpisodeIdentity(series.pattern, mark.url) ?? "";
         returned.series = {
-            title: `${series.title} ${episode}`.trim(),
+            title: `${series.title} [${episode}]`.trim(),
         };
     }
 
@@ -120,7 +120,7 @@ export function getCategorizedMarks(): ResultAsync<
         categories =>
             categories.map(({ marks, ...category }) => ({
                 ...category,
-                marks: marks.map(createSerieTitleWithEpisode),
+                marks: marks.map(createSeriesTitleWithEpisode),
             })),
     );
 }
@@ -151,7 +151,7 @@ export function getUncategorizedMarks(): ResultAsync<
     return ResultAsync.fromPromise(
         _getUncategorizedMarks(),
         unknownDbError,
-    ).map(marks => marks.map(createSerieTitleWithEpisode));
+    ).map(marks => marks.map(createSeriesTitleWithEpisode));
 }
 
 async function _getCategoryByNormalizedName(name: string, exceptId?: number) {

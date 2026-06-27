@@ -103,14 +103,14 @@ async function _deleteMark(url: string) {
     const marks = await db
         .delete(schema.marks)
         .where(eq(schema.marks.url, url))
-        .returning({ url: schema.marks.url });
-    return marks.length > 0;
+        .returning({ url: schema.marks.url, categoryId: schema.marks.categoryId });
+    return marks[0] ?? null;
 }
 export function deleteMark(
     url: string,
-): ResultAsync<void, UnknownDbError | NotFoundMarkError> {
+): ResultAsync<{ categoryId: number | null }, UnknownDbError | NotFoundMarkError> {
     return ResultAsync.fromPromise(_deleteMark(url), unknownDbError).andThen(
-        deleted => (deleted ? okAsync() : errAsync(notFoundMarkError())),
+        deleted => (deleted ? okAsync({ categoryId: deleted.categoryId }) : errAsync(notFoundMarkError())),
     );
 }
 

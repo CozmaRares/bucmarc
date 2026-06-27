@@ -2,6 +2,7 @@ import {
     getSeries,
     assignMarkToSeries,
     deleteMark,
+    updateMark,
     type DbError,
 } from "@/db/dal";
 import { cleanQueue, completeJob, takeAllPendingJobs } from "@/db/dal/jobs";
@@ -43,7 +44,12 @@ class JobQueue {
 
                         return assignMarkToSeries(job.markUrl, matched.id)
                             .andThen(markUrl =>
-                                markUrl ? deleteMark(markUrl) : okAsync(),
+                                markUrl ? deleteMark(markUrl) : okAsync(null),
+                            )
+                            .andThen(deleted =>
+                                deleted?.categoryId != null
+                                    ? updateMark(job.markUrl, undefined, deleted.categoryId)
+                                    : okAsync(),
                             )
                             .andThen(() => completeJob(job.id));
                     });
