@@ -8,7 +8,7 @@ import {
     isDuplicateMarkUrlError,
     isNotFoundMarkError,
 } from "@/db/dal";
-import { workerPool } from "@/lib/workerPool";
+import { jobQueue } from "@/lib/jobQueue";
 
 export const markRouter = new Hono();
 
@@ -37,7 +37,7 @@ markRouter.get("/save/:url", c => {
 
     return saveMark(url).match(
         () => {
-            workerPool.dispatchWorker();
+            jobQueue.start();
             return successRedirect(c, { path: url });
         },
         error => {

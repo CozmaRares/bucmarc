@@ -17,8 +17,8 @@ export function createJob(markUrl: string) {
     return ResultAsync.fromPromise(_createJob(markUrl), unknownDbError);
 }
 
-async function _takeFirstPendingJob() {
-    const jobs = await db
+function _takeAllPendingJobs() {
+    return db
         .update(schema.jobs)
         .set({ status: "running" })
         .where(
@@ -28,16 +28,13 @@ async function _takeFirstPendingJob() {
                     .select({ id: schema.jobs.id })
                     .from(schema.jobs)
                     .where(eq(schema.jobs.status, "pending"))
-                    .orderBy(asc(schema.jobs.id))
-                    .limit(1),
+                    .orderBy(asc(schema.jobs.id)),
             ),
         )
         .returning();
-    return jobs[0] ?? null;
 }
-
-export function takeFirstPendingJob() {
-    return ResultAsync.fromPromise(_takeFirstPendingJob(), unknownDbError);
+export function takeAllPendingJobs() {
+    return ResultAsync.fromPromise(_takeAllPendingJobs(), unknownDbError);
 }
 
 async function _completeJob(id: number) {
@@ -55,7 +52,6 @@ export function completeJob(id: number) {
 }
 
 export async function cleanQueue() {
-    const retryCutoff = new Date(Date.now() - 5 * 60 * 1000); // 5 minutes ago
     const deleteCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 1 day ago
 
     await Promise.all([
@@ -63,12 +59,7 @@ export async function cleanQueue() {
         db
             .update(schema.jobs)
             .set({ status: "pending" })
-            .where(
-                and(
-                    eq(schema.jobs.status, "running"),
-                    lt(schema.jobs.updatedAt, retryCutoff),
-                ),
-            ),
+            .where(eq(schema.jobs.status, "running")),
 
         // Delete old completed jobs
         db

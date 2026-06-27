@@ -8,7 +8,7 @@ import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
 import shareRouter from "./routers/share";
 import chalk from "chalk";
-import { workerPool } from "@/lib/workerPool";
+import { jobQueue } from "@/lib/jobQueue";
 
 const logger = createLogger("server");
 
@@ -101,4 +101,4 @@ function colorDuration(duration: number) {
     return chalk.green(durationText);
 }
 
-workerPool.dispatchWorker();
+jobQueue.start();
