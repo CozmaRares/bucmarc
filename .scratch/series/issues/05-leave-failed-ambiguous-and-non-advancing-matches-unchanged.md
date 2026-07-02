@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Leave Failed, Ambiguous, and Non-Advancing Matches Unchanged
 
@@ -14,16 +14,16 @@ Where useful, log ambiguous and non-advancing matches, but do not surface Series
 
 ## Acceptance criteria
 
-- [ ] A newly saved Mark that matches zero Series remains standalone.
-- [ ] A newly saved Mark that matches multiple Series remains standalone.
-- [ ] A newly saved Mark with invalid or non-numeric Episode Identity remains standalone.
-- [ ] A newly saved Mark with an equal Episode Identity does not replace the current Mark.
-- [ ] A newly saved Mark with a lower Episode Identity does not replace the current Mark.
-- [ ] Stale or otherwise non-advancing matches leave the Series and existing current Mark unchanged.
-- [ ] Failed Series Matching does not fail the Mark save.
-- [ ] Failed Series Matching does not change the Capture Flow redirect.
-- [ ] Ambiguous and non-advancing outcomes are logged where useful.
-- [ ] Tests or manual verification cover zero-match, ambiguous, invalid, equal, and lower-episode outcomes.
+- [x] A newly saved Mark that matches zero Series remains standalone.
+- [x] A newly saved Mark that matches multiple Series remains standalone.
+- [x] A newly saved Mark with invalid or non-numeric Episode Identity remains standalone.
+- [x] A newly saved Mark with an equal Episode Identity does not replace the current Mark.
+- [x] A newly saved Mark with a lower Episode Identity does not replace the current Mark.
+- [x] Stale or otherwise non-advancing matches leave the Series and existing current Mark unchanged.
+- [x] Failed Series Matching does not fail the Mark save.
+- [x] Failed Series Matching does not change the Capture Flow redirect.
+- [x] Ambiguous and non-advancing outcomes are logged where useful.
+- [x] Tests or manual verification cover zero-match, ambiguous, invalid, equal, and lower-episode outcomes.
 
 ## Blocked by
 

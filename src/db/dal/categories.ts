@@ -1,5 +1,5 @@
 import { db } from "../connection";
-import { and, desc, eq, ne, sql, isNull } from "drizzle-orm";
+import { and, desc, eq, ne, isNull, sql } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
@@ -9,7 +9,6 @@ import {
     logErrorAndCreate,
 } from "./utils";
 import type { Mark } from "./marks";
-import { getShareEnabledSql } from "./utils";
 import type { Series } from "./series";
 import { getEpisodeIdentity } from "@/lib/seriesPattern";
 
@@ -49,9 +48,6 @@ function _getCategories() {
         .select({
             id: schema.categories.id,
             name: schema.categories.name,
-            sharingEnabled: getShareEnabledSql(),
-            isShareOnly: schema.categories.isShareOnly,
-            isTokenManageable: schema.categories.isTokenManageable,
         })
         .from(schema.categories)
         .orderBy(desc(schema.categories.updatedAt));
@@ -104,11 +100,7 @@ function _getCategorizedMarks() {
         columns: {
             id: true,
             name: true,
-            isShareOnly: true,
-            isTokenManageable: true,
         },
-        extras: { sharingEnabled: getShareEnabledSql().as("sharing_enabled") },
-        where: eq(schema.categories.isShareOnly, false),
         orderBy: [desc(schema.categories.updatedAt)],
     });
 }

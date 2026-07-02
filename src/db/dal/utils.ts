@@ -1,7 +1,5 @@
 import { sql } from "drizzle-orm";
-import { createHash, randomBytes } from "node:crypto";
 import { createLogger } from "@/lib/logger";
-import * as schema from "../schema";
 
 const logger = createLogger("db");
 
@@ -60,16 +58,4 @@ function isForeignKeyConstraintError(error: unknown) {
         error instanceof Error &&
         /FOREIGN KEY constraint failed/i.test(`${error.message} ${error.cause}`)
     );
-}
-
-export function getShareEnabledSql() {
-    return sql<boolean>`${schema.categories.shareTokenHash} is not null`;
-}
-
-export function generateShareToken() {
-    return randomBytes(32).toString("base64url");
-}
-
-export function hashShareToken(token: string) {
-    return createHash("sha256").update(token).digest("base64url");
 }

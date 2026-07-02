@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: one
 
 # Replace Current Mark When Episode Advances
 
@@ -14,15 +14,15 @@ Episode Replacement should avoid deleting the older current Mark unless the new 
 
 ## Acceptance criteria
 
-- [ ] A newly saved Mark that advances the Series becomes the Series current Mark.
-- [ ] The previous current Mark is hard-deleted after successful replacement.
-- [ ] The new current Mark has its Mark Title cleared.
-- [ ] The new current Mark has its Mark Category cleared.
-- [ ] The Series Title and Category remain unchanged during Episode Replacement.
-- [ ] Episode Identity is derived from the Series Pattern match, not from visible Title text.
-- [ ] Replacement does not delete the older current Mark if the new Mark cannot be linked.
-- [ ] Replacement is idempotent enough that a retry does not delete the wrong Mark or duplicate state changes.
-- [ ] Tests or manual verification cover replacing an older current Mark with a newer episode.
+- [x] A newly saved Mark that advances the Series becomes the Series current Mark.
+- [x] The previous current Mark is hard-deleted after successful replacement.
+- [x] The new current Mark has its Mark Title cleared.
+- [x] The new current Mark has its Mark Category cleared.
+- [x] The Series Title and Category remain unchanged during Episode Replacement.
+- [x] Episode Identity is derived from the Series Pattern match, not from visible Title text.
+- [x] Replacement does not delete the older current Mark if the new Mark cannot be linked.
+- [x] Replacement is idempotent enough that a retry does not delete the wrong Mark or duplicate state changes.
+- [x] Tests or manual verification cover replacing an older current Mark with a newer episode.
 
 ## Blocked by
 

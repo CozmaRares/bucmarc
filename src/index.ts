@@ -6,7 +6,6 @@ import apiRouter from "./routers/api";
 import { clerkMiddleware, requireAuth } from "./middleware";
 import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
-import shareRouter from "./routers/share";
 import chalk from "chalk";
 import { jobQueue } from "@/lib/jobQueue";
 
@@ -47,7 +46,6 @@ app.use(
         rewriteRequestPath: path => path.replace(/^\/public/, ""),
     }),
 );
-app.route("/share", shareRouter);
 app.use(requireAuth);
 
 app.route("/api", apiRouter);

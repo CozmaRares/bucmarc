@@ -22,18 +22,12 @@ export const categories = sqliteTable(
     {
         id: helpers.id(),
         name: text().notNull(),
-        shareTokenHash: text().unique(),
-        isShareOnly: integer({ mode: "boolean" }).notNull().default(false),
-        isTokenManageable: integer({ mode: "boolean" })
-            .notNull()
-            .default(false),
         updatedAt: helpers.updatedAt(),
     },
     table => [
         uniqueIndex("categories_normalized_name_unique").on(
             sql`lower(trim(${table.name}))`,
         ),
-        index("categories_share_token_hash_index").on(table.shareTokenHash),
     ],
 );
 
