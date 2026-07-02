@@ -46,6 +46,13 @@ app.use(
         rewriteRequestPath: path => path.replace(/^\/public/, ""),
     }),
 );
+app.use(
+    "/robots.txt",
+    serveStatic({
+        root: "./public",
+        path: "./robots.txt",
+    }),
+);
 app.use(requireAuth);
 
 app.route("/api", apiRouter);
