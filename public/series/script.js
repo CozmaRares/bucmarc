@@ -43,5 +43,4 @@ function openEditSeriesDialog(button) {
 
     editSeriesDialog.hidden = false;
     editSeriesDialog.showModal();
-    titleInput.focus();
 }

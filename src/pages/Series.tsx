@@ -5,8 +5,6 @@ import type { Context } from "hono";
 import { ResultAsync } from "neverthrow";
 
 type Props = {
-    pageMessage?: string;
-    pageStatus?: string;
     series: Series[];
 };
 
@@ -20,66 +18,66 @@ function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
         .mapErr(serverError);
 }
 
-function component({ pageMessage, pageStatus, series }: Props) {
+function component({ series }: Props) {
     return (
-        <main>
-            <h1>Series</h1>
-            <p>
-                <a href="/">Marks</a>
-            </p>
-            <p
-                data-page-status={pageStatus ?? ""}
-                data-page-banner
-                role="alert"
-                style={bannerStyle(pageStatus)}
-                hidden={!pageMessage}
-            >
-                {pageMessage}
-            </p>
-            <section>
-                <h2>Create Series</h2>
-                <form
-                    action="/api/series/create"
-                    method="post"
-                >
-                    <label>
-                        Title
-                        <input
-                            name="title"
-                            type="text"
-                            required
-                        />
-                    </label>
-                    <label>
-                        Pattern
-                        <textarea
-                            name="pattern"
-                            required
-                        />
-                    </label>
-                    <button type="submit">Create</button>
-                </form>
-            </section>
-            <section>
-                <h2>Saved Series</h2>
-                {series.length > 0 ? (
-                    <ul>
-                        {series.map(item => (
-                            <li>
-                                <SeriesItem series={item} />
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>No Series yet.</p>
-                )}
-            </section>
-            <EditSeriesDialog />
+        <>
+            <div class="series">
+                <div class="series-hero">
+                    <h1 class="series-title">Series</h1>
+                </div>
+                <p>
+                    <a href="/">Marks</a>
+                </p>
+                <section>
+                    <h2 class="series-section-title">Create Series</h2>
+                    <form
+                        class="series-form"
+                        action="/api/series/create"
+                        method="post"
+                    >
+                        <label>
+                            Title
+                            <input
+                                name="title"
+                                type="text"
+                                required
+                            />
+                        </label>
+                        <label>
+                            Pattern
+                            <textarea
+                                name="pattern"
+                                required
+                            />
+                        </label>
+                        <button type="submit">Create</button>
+                    </form>
+                </section>
+                <section>
+                    <h2 class="series-section-title">Saved Series</h2>
+                    {series.length > 0 ? (
+                        <ul class="series-list">
+                            {series.map(item => (
+                                <li class="series-list-item">
+                                    <SeriesItem series={item} />
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>No Series yet.</p>
+                    )}
+                </section>
+                <EditSeriesDialog />
+            </div>
+            <link
+                rel="stylesheet"
+                href="/public/series/style.css"
+            />
             <script
                 src="/public/series/script.js"
                 defer
             />
-        </main>
+        </>
     );
 }
 
@@ -90,6 +88,7 @@ type SeriesItemProps = {
 function SeriesItem({ series }: SeriesItemProps) {
     return (
         <div
+            class="series-card"
             data-series
             data-series-id={series.id}
             data-series-title={series.title}
@@ -98,6 +97,7 @@ function SeriesItem({ series }: SeriesItemProps) {
         >
             {series.markUrl ? (
                 <a
+                    class="series-card-title"
                     href={series.markUrl}
                     target="_blank"
                     rel="noreferrer"
@@ -105,15 +105,19 @@ function SeriesItem({ series }: SeriesItemProps) {
                     {series.title}
                 </a>
             ) : (
-                <span>{series.title}</span>
+                <span class="series-card-title">{series.title}</span>
             )}
-            <dl>
+            <dl class="series-card-details">
                 <dt>Pattern</dt>
                 <dd>{series.pattern}</dd>
                 <dt>Current Mark</dt>
                 <dd>{series.markUrl ?? "No current Mark"}</dd>
             </dl>
-            <button type="button" data-edit-series>
+            <button
+                class="series-card-edit"
+                type="button"
+                data-edit-series
+            >
                 Edit Series
             </button>
         </div>
@@ -122,13 +126,18 @@ function SeriesItem({ series }: SeriesItemProps) {
 
 function EditSeriesDialog() {
     return (
-        <dialog
+        <div
+            class="series-dialog"
             data-edit-series-dialog
             hidden
         >
-            <h2>Edit Series</h2>
-            <p data-edit-series-dialog-mark-url />
+            <h2 class="series-dialog-title">Edit Series</h2>
+            <p
+                class="series-dialog-summary"
+                data-edit-series-dialog-mark-url
+            />
             <form
+                class="series-form"
                 action="/api/series/update"
                 method="post"
             >
@@ -157,19 +166,18 @@ function EditSeriesDialog() {
                 <button type="submit">Save</button>
             </form>
             <button
+                class="series-dialog-cancel"
                 type="button"
                 data-edit-series-dialog-cancel
             >
                 Cancel
             </button>
-        </dialog>
+        </div>
     );
 }
 
-function bannerStyle(status?: string) {
-    return status === "success"
-        ? "border: 1px solid #175cd3; background: #eff8ff; color: #1849a9; padding: 0.75rem; margin: 0 0 1rem;"
-        : "border: 1px solid #b42318; background: #fff4f2; color: #7a271a; padding: 0.75rem; margin: 0 0 1rem;";
-}
-
-export const SeriesPage: Page<Props> = { component, dataLoader };
+export const SeriesPage: Page<Props> = {
+    name: "Series",
+    component,
+    dataLoader,
+};

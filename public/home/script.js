@@ -1,31 +1,15 @@
-showPageBanner();
 setupCreateCategoryDialog();
 setupEditCategoryDialog();
+setupEditMarkDialog();
 setupDeleteMarkForms();
 setupDeleteCategoryForms();
-
-function showPageBanner() {
-    const pageBanner = document.querySelector("[data-page-banner]");
-    const params = new URLSearchParams(window.location.search);
-    const message = params.get("message");
-    const status = params.get("status");
-
-    if (!message || !status) {
-        return;
-    }
-
-    pageBanner.textContent = message;
-    pageBanner.dataset.pageStatus = status;
-    pageBanner.hidden = false;
-
-    const nextUrl = new URL(window.location.href);
-    nextUrl.search = "";
-    window.history.replaceState(null, "", nextUrl);
-}
 
 function setupCreateCategoryDialog() {
     const createCategoryDialog = document.querySelector(
         "[data-create-category-dialog]",
+    );
+    const createCategoryDialogContent = createCategoryDialog.querySelector(
+        "[data-create-category-dialog-content]",
     );
     const createCategoryNameInput = createCategoryDialog.querySelector(
         "[data-create-category-dialog-input-name]",
@@ -39,15 +23,17 @@ function setupCreateCategoryDialog() {
         .addEventListener("click", () => {
             createCategoryNameInput.value = "";
             createCategoryDialog.hidden = false;
-            createCategoryDialog.showModal();
-            createCategoryNameInput.focus();
         });
 
-    createCategoryCancelButton.addEventListener("click", () => {
-        createCategoryDialog.close();
+    createCategoryDialogContent.addEventListener("click", event => {
+        event.stopPropagation();
     });
 
-    createCategoryDialog.addEventListener("close", () => {
+    createCategoryDialog.addEventListener("click", () => {
+        createCategoryDialog.hidden = true;
+    });
+
+    createCategoryCancelButton.addEventListener("click", () => {
         createCategoryDialog.hidden = true;
     });
 }
@@ -55,6 +41,9 @@ function setupCreateCategoryDialog() {
 function setupEditCategoryDialog() {
     const editCategoryDialog = document.querySelector(
         "[data-edit-category-dialog]",
+    );
+    const editCategoryDialogContent = editCategoryDialog.querySelector(
+        "[data-edit-category-dialog-content]",
     );
     const editCategoryCancelButton = editCategoryDialog.querySelector(
         "[data-edit-category-dialog-cancel]",
@@ -68,11 +57,15 @@ function setupEditCategoryDialog() {
             );
         });
 
-    editCategoryCancelButton.addEventListener("click", () => {
-        editCategoryDialog.close();
+    editCategoryDialogContent.addEventListener("click", event => {
+        event.stopPropagation();
     });
 
-    editCategoryDialog.addEventListener("close", () => {
+    editCategoryDialog.addEventListener("click", () => {
+        editCategoryDialog.hidden = true;
+    });
+
+    editCategoryCancelButton.addEventListener("click", () => {
         editCategoryDialog.hidden = true;
     });
 }
@@ -103,8 +96,62 @@ function openEditCategoryDialog(button) {
     editCategoryDeleteIdInput.value = id;
     editCategoryDialog.dataset.categoryName = name;
     editCategoryDialog.hidden = false;
-    editCategoryDialog.showModal();
-    editCategoryNameInput.focus();
+}
+
+function setupEditMarkDialog() {
+    const editMarkDialog = document.querySelector("[data-edit-mark-dialog]");
+    const editMarkDialogContent = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-content]",
+    );
+    const editMarkCancelButton = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-cancel]",
+    );
+
+    document.querySelectorAll("[data-mark] [data-edit]").forEach(button => {
+        button.addEventListener("click", () => openEditMarkDialog(button));
+    });
+
+    editMarkDialogContent.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    editMarkDialog.addEventListener("close", () => {
+        editMarkDialog.hidden = true;
+    });
+
+    editMarkCancelButton.addEventListener("click", () => {
+        editMarkDialog.hidden = true;
+    });
+}
+
+function openEditMarkDialog(button) {
+    const editMarkDialog = document.querySelector("[data-edit-mark-dialog]");
+    const urlOutput = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-url]",
+    );
+    const urlInput = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-input-url]",
+    );
+    const titleInput = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-input-title]",
+    );
+    const categoryInput = editMarkDialog.querySelector(
+        "[data-edit-mark-dialog-input-category]",
+    );
+    const mark = button.closest("[data-mark]");
+    const url = mark.dataset.markUrl;
+    const title = mark.dataset.markTitle;
+    const categoryId = mark.dataset.markCategoryId;
+
+    urlOutput.textContent = url;
+    urlInput.value = url;
+    titleInput.value = title;
+
+    if (categoryInput) {
+        categoryInput.value = categoryId;
+    }
+
+    editMarkDialog.hidden = false;
 }
 
 function setupDeleteMarkForms() {
@@ -130,7 +177,7 @@ function setupDeleteCategoryForms() {
 
             if (
                 !confirm(
-                    `Delete this Category?\n\n${name}\n\nIts Marks will move to Uncategorized Marks.`,
+                    `Delete this Category?\n\n${name}\n\nIts Marks will move to Marks.`,
                 )
             ) {
                 event.preventDefault();

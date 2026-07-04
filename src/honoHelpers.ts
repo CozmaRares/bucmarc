@@ -56,20 +56,13 @@ export function errorResponse(
 type RedirectParams = {
     path: string;
     status?: HTTPRedirectStatusCode;
-    message?: string;
 };
 
 export function successRedirect(
     c: Context,
-    { path, status = HTTPStatus.Found, message }: RedirectParams,
+    { path, status = HTTPStatus.Found }: RedirectParams,
 ) {
     const url = new URL(path, c.req.url);
-
-    if (message) {
-        url.searchParams.set("message", message);
-        url.searchParams.set("status", "success");
-    }
-
     return c.redirect(url, status);
 }
 

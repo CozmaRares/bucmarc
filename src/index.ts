@@ -13,6 +13,9 @@ const logger = createLogger("server");
 
 const app = new Hono();
 
+app.use("*", clerkMiddleware());
+app.use(requireAuth);
+
 app.use("*", async (c, next) => {
     const method = c.req.method;
     const path = c.req.path;
@@ -38,7 +41,6 @@ app.use("*", async (c, next) => {
         );
     }
 });
-app.use("*", clerkMiddleware());
 app.use(
     "/public/*",
     serveStatic({
@@ -53,7 +55,6 @@ app.use(
         path: "./robots.txt",
     }),
 );
-app.use(requireAuth);
 
 app.route("/api", apiRouter);
 app.route("/", pageRouter);
@@ -63,6 +64,7 @@ app.get("*", c => {
 });
 
 const server = Bun.serve({
+    hostname: "0.0.0.0",
     port: env.PORT,
     fetch: app.fetch,
 });
