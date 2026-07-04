@@ -48,9 +48,10 @@ function _getCategories() {
         .select({
             id: schema.categories.id,
             name: schema.categories.name,
+            sortOrder: schema.categories.sortOrder,
         })
         .from(schema.categories)
-        .orderBy(desc(schema.categories.updatedAt));
+        .orderBy(desc(schema.categories.sortOrder), desc(schema.categories.updatedAt));
 }
 export function getCategories(): ResultAsync<Category[], UnknownDbError> {
     return ResultAsync.fromPromise(_getCategories(), unknownDbError);
@@ -100,8 +101,9 @@ function _getCategorizedMarks() {
         columns: {
             id: true,
             name: true,
+            sortOrder: true,
         },
-        orderBy: [desc(schema.categories.updatedAt)],
+        orderBy: [desc(schema.categories.sortOrder), desc(schema.categories.updatedAt)],
     });
 }
 export function getCategorizedMarks(): ResultAsync<
@@ -186,7 +188,7 @@ export function createCategory(
     );
 }
 
-async function _renameCategory(id: number, name: string) {
+async function _updateCategory(id: number, name: string, sortOrder: number) {
     const duplicate = await _getCategoryByNormalizedName(name, id);
 
     if (duplicate) {
@@ -195,26 +197,27 @@ async function _renameCategory(id: number, name: string) {
 
     const categories = await db
         .update(schema.categories)
-        .set({ name })
+        .set({ name, sortOrder })
         .where(eq(schema.categories.id, id))
         .returning({ id: schema.categories.id });
     return categories.length > 0
-        ? ("renamed" as const)
+        ? ("updated" as const)
         : ("not_found" as const);
 }
-export function renameCategory(
+export function updateCategory(
     id: number,
     name: string,
+    sortOrder: number,
 ): ResultAsync<
     void,
     DuplicateCategoryNameError | UnknownDbError | NotFoundCategoryError
 > {
     return ResultAsync.fromPromise(
-        _renameCategory(id, name),
+        _updateCategory(id, name, sortOrder),
         maybeDuplicateCategoryNameError,
     ).andThen(outcome => {
         switch (outcome) {
-            case "renamed":
+            case "updated":
                 return okAsync();
             case "duplicate":
                 return errAsync(duplicateCategoryNameError());

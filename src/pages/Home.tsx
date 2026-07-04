@@ -54,6 +54,7 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                     data-category
                     data-category-id={category.id}
                     data-category-name={category.name}
+                    data-category-sort-order={category.sortOrder}
                 >
                     <div class="home-section-header">
                         <h2 class="home-section-title">{category.name}</h2>
@@ -212,13 +213,13 @@ function EditCategoryDialog() {
                 </div>
                 <form
                     class="dialog-form"
-                    action="/api/category/rename"
+                    action="/api/category/update"
                     method="post"
                 >
                     <input
                         name="id"
                         type="hidden"
-                        data-edit-category-dialog-rename-id
+                        data-edit-category-dialog-update-id
                     />
                     <label>
                         Category Name
@@ -226,6 +227,15 @@ function EditCategoryDialog() {
                             name="name"
                             type="text"
                             data-edit-category-dialog-input-name
+                            required
+                        />
+                    </label>
+                    <label>
+                        Sort Order
+                        <input
+                            name="sortOrder"
+                            type="number"
+                            data-edit-category-dialog-input-sort-order
                             required
                         />
                     </label>

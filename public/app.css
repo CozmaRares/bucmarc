@@ -83,7 +83,7 @@ body > * {
 
 main {
     padding: 1rem var(--gutter);
-    & > *:not(:first-child) {
+    & > *:not(:first-child):not(.dialog) {
         margin-top: 1.5rem;
     }
 }

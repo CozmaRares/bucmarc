@@ -22,6 +22,7 @@ export const categories = sqliteTable(
     {
         id: helpers.id(),
         name: text().notNull(),
+        sortOrder: integer({ mode: "number" }).default(0).notNull(),
         updatedAt: helpers.updatedAt(),
     },
     table => [

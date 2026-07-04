@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import {
     createCategory,
     deleteCategory,
-    renameCategory,
+    updateCategory,
 } from "@/db/dal";
 import { errorRedirect, successRedirect } from "@/honoHelpers";
 import {
@@ -43,14 +43,15 @@ categoryRouter.post("/create", zValidator("form", categoryCreateSchema), c => {
     );
 });
 
-const categoryRenameSchema = z.object({
+const categoryUpdateSchema = z.object({
     id: categoryFieldsValidators.id,
     name: categoryFieldsValidators.name,
+    sortOrder: z.coerce.number().int().default(0),
 });
 
-categoryRouter.post("/rename", zValidator("form", categoryRenameSchema), c => {
+categoryRouter.post("/update", zValidator("form", categoryUpdateSchema), c => {
     const input = c.req.valid("form");
-    return renameCategory(input.id, input.name).match(
+    return updateCategory(input.id, input.name, input.sortOrder).match(
         () => successRedirect(c, { path: "/" }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
@@ -69,7 +70,7 @@ categoryRouter.post("/rename", zValidator("form", categoryRenameSchema), c => {
 
             return errorRedirect(c, {
                 path: "/",
-                message: "The Category could not be renamed.",
+                message: "The Category could not be updated.",
             });
         },
     );

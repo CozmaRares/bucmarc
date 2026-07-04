@@ -18,12 +18,13 @@ function setupCreateCategoryDialog() {
         "[data-create-category-dialog-cancel]",
     );
 
-    document
-        .querySelector("[data-create-category]")
-        .addEventListener("click", () => {
-            createCategoryNameInput.value = "";
-            createCategoryDialog.hidden = false;
-        });
+    const createCategoryButton = document.querySelector(
+        "[data-create-category]",
+    );
+    createCategoryButton.addEventListener("click", () => {
+        createCategoryNameInput.value = "";
+        createCategoryDialog.hidden = false;
+    });
 
     createCategoryDialogContent.addEventListener("click", event => {
         event.stopPropagation();
@@ -80,20 +81,25 @@ function openEditCategoryDialog(button) {
     const editCategoryNameInput = editCategoryDialog.querySelector(
         "[data-edit-category-dialog-input-name]",
     );
-    const editCategoryRenameIdInput = editCategoryDialog.querySelector(
-        "[data-edit-category-dialog-rename-id]",
+    const editCategoryUpdateIdInput = editCategoryDialog.querySelector(
+        "[data-edit-category-dialog-update-id]",
     );
     const editCategoryDeleteIdInput = editCategoryDialog.querySelector(
         "[data-edit-category-dialog-delete-id]",
     );
+    const editCategorySortOrderInput = editCategoryDialog.querySelector(
+        "[data-edit-category-dialog-input-sort-order]",
+    );
     const category = button.closest("[data-category]");
     const id = category.dataset.categoryId;
     const name = category.dataset.categoryName;
+    const sortOrder = category.dataset.categorySortOrder;
 
     editCategoryNameOutput.textContent = name;
     editCategoryNameInput.value = name;
-    editCategoryRenameIdInput.value = id;
+    editCategoryUpdateIdInput.value = id;
     editCategoryDeleteIdInput.value = id;
+    editCategorySortOrderInput.value = sortOrder;
     editCategoryDialog.dataset.categoryName = name;
     editCategoryDialog.hidden = false;
 }
