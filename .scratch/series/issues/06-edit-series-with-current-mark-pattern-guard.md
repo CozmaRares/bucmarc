@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Edit Series With Current-Mark Pattern Guard
 
@@ -12,13 +12,13 @@ Add Series editing to the `/series` management page. The App Owner should be abl
 
 ## Acceptance criteria
 
-- [ ] The `/series` page supports editing a Series Title.
-- [ ] The `/series` page supports editing a Series Category.
-- [ ] The `/series` page supports editing a Series Pattern.
-- [ ] Edited Series Patterns require exactly one named capture called `episode`.
-- [ ] Edited Series Patterns reject any other named captures.
-- [ ] Editing a Series without a current Mark does not require matching an existing Mark.
-- [ ] Editing a Series does not retroactively reorganize existing Marks.
+- [x] The `/series` page supports editing a Series Title.
+- [x] The `/series` page supports editing a Series Category.
+- [x] The `/series` page supports editing a Series Pattern.
+- [x] Edited Series Patterns require exactly one named capture called `episode`.
+- [x] Edited Series Patterns reject any other named captures.
+- [x] Editing a Series without a current Mark does not require matching an existing Mark.
+- [x] Editing a Series does not retroactively reorganize existing Marks.
 
 ## Blocked by
 

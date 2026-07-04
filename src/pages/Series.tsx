@@ -74,6 +74,11 @@ function component({ pageMessage, pageStatus, series }: Props) {
                     <p>No Series yet.</p>
                 )}
             </section>
+            <EditSeriesDialog />
+            <script
+                src="/public/series/script.js"
+                defer
+            />
         </main>
     );
 }
@@ -108,7 +113,56 @@ function SeriesItem({ series }: SeriesItemProps) {
                 <dt>Current Mark</dt>
                 <dd>{series.markUrl ?? "No current Mark"}</dd>
             </dl>
+            <button type="button" data-edit-series>
+                Edit Series
+            </button>
         </div>
+    );
+}
+
+function EditSeriesDialog() {
+    return (
+        <dialog
+            data-edit-series-dialog
+            hidden
+        >
+            <h2>Edit Series</h2>
+            <p data-edit-series-dialog-mark-url />
+            <form
+                action="/api/series/update"
+                method="post"
+            >
+                <input
+                    name="id"
+                    type="hidden"
+                    data-edit-series-dialog-input-id
+                />
+                <label>
+                    Title
+                    <input
+                        name="title"
+                        type="text"
+                        data-edit-series-dialog-input-title
+                        required
+                    />
+                </label>
+                <label>
+                    Pattern
+                    <textarea
+                        name="pattern"
+                        data-edit-series-dialog-input-pattern
+                        required
+                    />
+                </label>
+                <button type="submit">Save</button>
+            </form>
+            <button
+                type="button"
+                data-edit-series-dialog-cancel
+            >
+                Cancel
+            </button>
+        </dialog>
     );
 }
 

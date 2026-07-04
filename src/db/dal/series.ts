@@ -3,12 +3,39 @@ import { desc, eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
+import { validateSeriesPattern } from "@/lib/seriesPattern";
+
+type PatternError = Exclude<
+    ReturnType<typeof validateSeriesPattern>,
+    undefined
+>;
 
 export type NotFoundSeriesError = { type: "not_found_series" };
+export type InvalidSeriesPatternError = {
+    type: "invalid_series_pattern";
+    error: PatternError;
+};
+
+export const invalidSeriesPatternError = (
+    error: PatternError,
+): InvalidSeriesPatternError => ({
+    type: "invalid_series_pattern",
+    error,
+});
+export function isInvalidSeriesPatternError(error: {
+    type: string;
+}): error is InvalidSeriesPatternError {
+    return error.type === "invalid_series_pattern";
+}
 
 export const notFoundSeriesError = (): NotFoundSeriesError => ({
     type: "not_found_series",
 });
+export function isNotFoundSeriesError(error: {
+    type: string;
+}): error is NotFoundSeriesError {
+    return error.type === "not_found_series";
+}
 
 export type Series = Awaited<ReturnType<typeof _getSeries>>[number];
 function _getSeries() {
@@ -27,20 +54,76 @@ export function getSeries(): ResultAsync<Series[], UnknownDbError> {
 }
 
 async function _createSeries(title: string, pattern: string) {
+    const error = validateSeriesPattern(pattern);
+
+    if (error) {
+        return { type: "invalid_pattern", error } as const;
+    }
+
     await db.insert(schema.series).values({ title, pattern });
+
+    return { type: "created" } as const;
 }
 export function createSeries(
     title: string,
     pattern: string,
-): ResultAsync<void, UnknownDbError> {
+): ResultAsync<void, UnknownDbError | InvalidSeriesPatternError> {
     return ResultAsync.fromPromise(
         _createSeries(title, pattern),
         unknownDbError,
-    );
+    ).andThen(outcome => {
+        switch (outcome.type) {
+            case "created":
+                return okAsync();
+            case "invalid_pattern":
+                return errAsync(invalidSeriesPatternError(outcome.error));
+        }
+    });
 }
 
-async function _assignMarkToSeries(markUrl: string, seriesId: number) {
-    const updated = await db.transaction(async tx => {
+async function _updateSeries(id: number, title: string, pattern: string) {
+    const error = validateSeriesPattern(pattern);
+
+    if (error) {
+        return { type: "invalid_pattern", error } as const;
+    }
+
+    const updated = await db
+        .update(schema.series)
+        .set({ title, pattern })
+        .where(eq(schema.series.id, id))
+        .returning({ id: schema.series.id });
+
+    return {
+        type: updated.length > 0 ? "updated" : "not_found",
+    } as const;
+}
+export function updateSeries(
+    id: number,
+    title: string,
+    pattern: string,
+): ResultAsync<
+    void,
+    UnknownDbError | NotFoundSeriesError | InvalidSeriesPatternError
+> {
+    return ResultAsync.fromPromise(
+        _updateSeries(id, title, pattern),
+        unknownDbError,
+    ).andThen(outcome => {
+        switch (outcome.type) {
+            case "updated":
+                return okAsync();
+            case "not_found":
+                return errAsync(notFoundSeriesError());
+            case "invalid_pattern":
+                return errAsync(invalidSeriesPatternError(outcome.error));
+        }
+    });
+}
+
+// return the previous mark url for later deletion
+function _assignMarkToSeries(markUrl: string, seriesId: number) {
+    return db.transaction(async tx => {
         const current = await tx.query.series.findFirst({
             where: eq(schema.series.id, seriesId),
         });
@@ -59,27 +142,19 @@ async function _assignMarkToSeries(markUrl: string, seriesId: number) {
             return null;
         }
 
-        return {
-            id: current.id,
-            previousMarkUrl: current.markUrl,
-        };
+        return current.markUrl;
     });
-
-    return updated;
 }
 export function assignMarkToSeries(
     markUrl: string,
     seriesId: number,
-): ResultAsync<
-    string | null,
-    UnknownDbError | NotFoundSeriesError
-> {
+): ResultAsync<string, UnknownDbError | NotFoundSeriesError> {
     return ResultAsync.fromPromise(
         _assignMarkToSeries(markUrl, seriesId),
         unknownDbError,
-    ).andThen(updated =>
-        updated
-            ? okAsync(updated.previousMarkUrl)
+    ).andThen(previousMarkUrl =>
+        previousMarkUrl
+            ? okAsync(previousMarkUrl)
             : errAsync(notFoundSeriesError()),
     );
 }
