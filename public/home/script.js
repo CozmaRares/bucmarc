@@ -5,17 +5,25 @@ setupDeleteMarkForms();
 setupDeleteCategoryForms();
 
 function setupCreateCategoryDialog() {
+    const createCategoryButton = document.querySelector(
+        "[data-create-category]",
+    );
+
+    // it is possible that the button isn't in the DOM
+    // when there are no marks to be categorized
+    if (!createCategoryButton) {
+        return;
+    }
+
     const createCategoryDialog = document.querySelector(
         "[data-create-category-dialog]",
     );
+
     const createCategoryDialogContent = createCategoryDialog.querySelector(
         "[data-create-category-dialog-content]",
     );
     const createCategoryCancelButton = createCategoryDialog.querySelector(
         "[data-create-category-dialog-cancel]",
-    );
-    const createCategoryButton = document.querySelector(
-        "[data-create-category]",
     );
     createCategoryButton.addEventListener("click", () => {
         createCategoryDialog.hidden = false;
