@@ -27,7 +27,7 @@ export function isDuplicateMarkUrlError(error: {
     return error.type === "duplicate_mark_url";
 }
 
-const notFoundMarkError = (): NotFoundMarkError => ({
+export const notFoundMarkError = (): NotFoundMarkError => ({
     type: "not_found_mark",
 });
 export function isNotFoundMarkError(error: {

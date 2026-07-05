@@ -30,6 +30,10 @@ button {
         display: flex;
         flex-direction: row;
 
+        &:is(a):hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 640px) {
             font-size: 0.65rem;
             margin-right: auto;

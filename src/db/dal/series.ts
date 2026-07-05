@@ -5,6 +5,7 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
 import { validateSeriesPattern } from "@/lib/seriesPattern";
 import type { Series } from "../schema";
+import { notFoundMarkError, type NotFoundMarkError } from "./marks";
 
 type PatternError = Exclude<
     ReturnType<typeof validateSeriesPattern>,
@@ -129,7 +130,7 @@ function _assignMarkToSeries(markUrl: string, seriesId: number) {
         });
 
         if (!current) {
-            return null;
+            return { error: "not_found_series" } as const;
         }
 
         const updated = await tx
@@ -139,24 +140,32 @@ function _assignMarkToSeries(markUrl: string, seriesId: number) {
             .returning({ id: schema.series.id });
 
         if (updated.length === 0) {
-            return null;
+            return { error: "not_found_mark" } as const;
         }
 
-        return current.markUrl;
+        return { success: current.markUrl };
     });
 }
 export function assignMarkToSeries(
     markUrl: string,
     seriesId: number,
-): ResultAsync<string, UnknownDbError | NotFoundSeriesError> {
+): ResultAsync<
+    string | null,
+    UnknownDbError | NotFoundSeriesError | NotFoundMarkError
+> {
     return ResultAsync.fromPromise(
         _assignMarkToSeries(markUrl, seriesId),
         unknownDbError,
-    ).andThen(previousMarkUrl =>
-        previousMarkUrl
-            ? okAsync(previousMarkUrl)
-            : errAsync(notFoundSeriesError()),
-    );
+    ).andThen(result => {
+        switch (result.error) {
+            case "not_found_series":
+                return errAsync(notFoundSeriesError());
+            case "not_found_mark":
+                return errAsync(notFoundMarkError());
+            default:
+                return okAsync(result.success);
+        }
+    });
 }
 
 async function _deleteSeries(id: number) {

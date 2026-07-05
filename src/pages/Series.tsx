@@ -67,7 +67,12 @@ function SeriesItem({ series }: SeriesItemProps) {
             data-series-pattern={series.pattern}
         >
             {series.markUrl ? (
-                <a class="series-title">
+                <a
+                    class="series-title"
+                    href={series.markUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                >
                     {series.title}
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

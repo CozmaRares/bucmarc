@@ -24,10 +24,15 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
     const now = Date.now();
 
     const createAgedMark = (mark: MarkWithSeries) => {
-        const days = (now - new Date(mark.updatedAt).getTime()) / MS_PER_DAY;
+        const days = (now - mark.updatedAt.getTime()) / MS_PER_DAY;
 
         const color = Object.values(THRESHOLDS).find(
-            ([threshold]) => days < threshold,
+            ([threshold]) => {
+                if (isNaN(days)) {
+                    console.log(mark)
+                }
+                return days < threshold;
+            }
         )![1];
         return { ...mark, ageIndicatorColor: color };
     };

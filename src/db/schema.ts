@@ -12,7 +12,7 @@ const helpers = {
     id: () => integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
     updatedAt: () =>
         integer({ mode: "timestamp" })
-            .default(sql`(current_timestamp)`)
+            .default(sql`(unixepoch())`)
             .$onUpdate(() => new Date())
             .notNull(),
 };

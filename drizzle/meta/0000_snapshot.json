@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e4940a10-e649-452b-9d64-dd5a241e2e92",
+  "id": "0090ea6f-5b02-40fc-9b85-a3cead968311",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "categories": {
@@ -21,28 +21,13 @@
           "notNull": true,
           "autoincrement": false
         },
-        "share_token_hash": {
-          "name": "share_token_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "is_share_only": {
-          "name": "is_share_only",
+        "sort_order": {
+          "name": "sort_order",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": false
-        },
-        "is_token_manageable": {
-          "name": "is_token_manageable",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "default": 0
         },
         "updated_at": {
           "name": "updated_at",
@@ -50,30 +35,16 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(current_timestamp)"
+          "default": "(unixepoch())"
         }
       },
       "indexes": {
-        "categories_shareTokenHash_unique": {
-          "name": "categories_shareTokenHash_unique",
-          "columns": [
-            "share_token_hash"
-          ],
-          "isUnique": true
-        },
         "categories_normalized_name_unique": {
           "name": "categories_normalized_name_unique",
           "columns": [
             "lower(trim(\"name\"))"
           ],
           "isUnique": true
-        },
-        "categories_share_token_hash_index": {
-          "name": "categories_share_token_hash_index",
-          "columns": [
-            "share_token_hash"
-          ],
-          "isUnique": false
         }
       },
       "foreignKeys": {},
@@ -111,7 +82,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(current_timestamp)"
+          "default": "(unixepoch())"
         }
       },
       "indexes": {},
@@ -150,7 +121,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(current_timestamp)"
+          "default": "(unixepoch())"
         }
       },
       "indexes": {
@@ -218,7 +189,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(current_timestamp)"
+          "default": "(unixepoch())"
         }
       },
       "indexes": {
