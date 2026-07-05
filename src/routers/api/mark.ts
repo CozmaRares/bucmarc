@@ -28,6 +28,9 @@ const markFieldsValidators = {
 markRouter.get("/save/:url", c => {
     const url = decodeUrl(c.req.param("url"));
 
+    // don't redirect back to the saved URL
+    const noRedirect = c.req.query("no-redirect") !== undefined;
+
     if (!isSaveableUrl(url)) {
         return errorRedirect(c, {
             path: "/",
@@ -38,7 +41,8 @@ markRouter.get("/save/:url", c => {
     return saveMark(url).match(
         () => {
             jobQueue.start();
-            return successRedirect(c, { path: url });
+            const path = noRedirect ? "/" : url;
+            return successRedirect(c, { path });
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {
