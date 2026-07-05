@@ -93,6 +93,7 @@ export const jobs = sqliteTable("jobs", {
 });
 
 type WithoutUpdatedAt<T extends Table> = Omit<InferSelectModel<T>, "updatedAt">;
+
 export type Category = WithoutUpdatedAt<typeof categories>;
-export type Mark = WithoutUpdatedAt<typeof marks>;
+export type Mark = InferSelectModel<typeof marks>;
 export type Series = WithoutUpdatedAt<typeof series>;

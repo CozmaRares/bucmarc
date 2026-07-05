@@ -41,7 +41,8 @@ export function isNotFoundCategoryError(error: {
     return error.type === "not_found_category";
 }
 
-export type MarkWithSeries = Mark & { series: Pick<Series, "title"> | null };
+type SeriesDisplay = Pick<Series, "title"> & { episode: string };
+export type MarkWithSeries = Mark & { series: SeriesDisplay | null };
 
 function createSeriesTitleWithEpisode(
     markWithSeries: Mark & { series: Pick<Series, "title" | "pattern"> | null },
@@ -52,7 +53,8 @@ function createSeriesTitleWithEpisode(
     if (series) {
         const episode = getEpisodeIdentity(series.pattern, mark.url) ?? "";
         returned.series = {
-            title: `${series.title} [${episode}]`.trim(),
+            title: series.title,
+            episode,
         };
     }
 
@@ -63,11 +65,6 @@ function _getCategorizedMarks() {
     return db.query.categories.findMany({
         with: {
             marks: {
-                columns: {
-                    url: true,
-                    title: true,
-                    categoryId: true,
-                },
                 orderBy: [
                     asc(schema.series.updatedAt),
                     asc(schema.marks.updatedAt),
@@ -115,11 +112,6 @@ function _getUncategorizedMarks() {
                     pattern: true,
                 },
             },
-        },
-        columns: {
-            url: true,
-            title: true,
-            categoryId: true,
         },
         orderBy: [asc(schema.series.updatedAt), asc(schema.marks.updatedAt)],
         where: isNull(schema.marks.categoryId),

@@ -3,19 +3,45 @@ import type { Category, MarkWithSeries } from "@/db/dal";
 import { serverError, type Page, type PageLoadError } from "./types";
 import { ResultAsync } from "neverthrow";
 
+type AgedMark = MarkWithSeries & { ageIndicatorColor: string };
+
 type Props = {
-    categorizedMarks: Array<Category & { marks: MarkWithSeries[] }>;
-    uncategorizedMarks: MarkWithSeries[];
+    categorizedMarks: Array<Category & { marks: AgedMark[] }>;
+    uncategorizedMarks: AgedMark[];
 };
 
 function dataLoader(): ResultAsync<Props, PageLoadError> {
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    const THRESHOLDS = {
+        FRESH: [30, "#22C55E"],
+        AGING: [90, "#EAB308"],
+        STALE: [180, "#F97316"],
+        VERY_STALE: [365, "#EF4444"],
+        ANCIENT: [Infinity, "#6B7280"],
+    } as const;
+
+    const now = Date.now();
+
+    const createAgedMark = (mark: MarkWithSeries) => {
+        const days = (now - new Date(mark.updatedAt).getTime()) / MS_PER_DAY;
+
+        const color = Object.values(THRESHOLDS).find(
+            ([threshold]) => days < threshold,
+        )![1];
+        return { ...mark, ageIndicatorColor: color };
+    };
+
     return ResultAsync.combineWithAllErrors([
         getCategorizedMarks(),
         getUncategorizedMarks(),
     ])
         .map(([categorizedMarks, uncategorizedMarks]) => ({
-            categorizedMarks,
-            uncategorizedMarks,
+            categorizedMarks: categorizedMarks.map(category => ({
+                ...category,
+                marks: category.marks.map(createAgedMark),
+            })),
+            uncategorizedMarks: uncategorizedMarks.map(createAgedMark),
         }))
         .mapErr(serverError);
 }
@@ -37,11 +63,9 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                     </div>
 
                     <ul class="home-list">
-                        {uncategorizedMarks.map(markWithSeries => (
+                        {uncategorizedMarks.map(agedMark => (
                             <li class="home-list-item">
-                                <MarkComponent
-                                    markWithSeries={markWithSeries}
-                                />
+                                <MarkComponent agedMark={agedMark} />
                             </li>
                         ))}
                     </ul>
@@ -68,11 +92,9 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                     </div>
                     {category.marks.length > 0 ? (
                         <ul class="home-list">
-                            {category.marks.map(markWithSeries => (
+                            {category.marks.map(agedMark => (
                                 <li class="home-list-item">
-                                    <MarkComponent
-                                        markWithSeries={markWithSeries}
-                                    />
+                                    <MarkComponent agedMark={agedMark} />
                                 </li>
                             ))}
                         </ul>
@@ -97,11 +119,11 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
 }
 
 type MarkProps = {
-    markWithSeries: MarkWithSeries;
+    agedMark: AgedMark;
 };
 
-function MarkComponent({ markWithSeries }: MarkProps) {
-    const { series, ...mark } = markWithSeries;
+function MarkComponent({ agedMark }: MarkProps) {
+    const { series, ...mark } = agedMark;
 
     return (
         <div
@@ -111,6 +133,13 @@ function MarkComponent({ markWithSeries }: MarkProps) {
             data-mark-title={mark.title ?? ""}
             data-mark-category-id={mark.categoryId ?? ""}
         >
+            <div
+                class="mark-age-indicator"
+                style={`background-color: ${mark.ageIndicatorColor}`}
+            />
+            {series?.episode && (
+                <span class="mark-episode">[{series.episode}]</span>
+            )}
             <a
                 class="mark-link"
                 href={mark.url}

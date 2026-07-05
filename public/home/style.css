@@ -54,15 +54,24 @@ button {
     align-items: center;
     gap: 0.5rem;
 
+    & .mark-age-indicator {
+        --size: 1.2em;
+
+        width: var(--size);
+        min-width: var(--size);
+        height: var(--size);
+        min-height: var(--size);
+        border-radius: 50%;
+    }
+
+    & .mark-episode {
+        font-weight: bold;
+    }
+
     & .mark-link {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-
-        @media (max-width: 640px) {
-            font-size: 0.65rem;
-            margin-right: auto;
-        }
     }
 
     & .mark-edit {
@@ -72,5 +81,13 @@ button {
 
     & .mark-delete {
         background-color: var(--danger);
+    }
+
+    @media (max-width: 640px) {
+        font-size: 0.65rem;
+
+        & .mark-link {
+            margin-right: auto;
+        }
     }
 }
