@@ -21,54 +21,26 @@ function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
 function component({ series }: Props) {
     return (
         <>
-            <div class="series">
-                <div class="series-hero">
-                    <h1 class="series-title">Series</h1>
-                </div>
-                <p>
-                    <a href="/">Marks</a>
-                </p>
-                <section>
-                    <h2 class="series-section-title">Create Series</h2>
-                    <form
-                        class="series-form"
-                        action="/api/series/create"
-                        method="post"
-                    >
-                        <label>
-                            Title
-                            <input
-                                name="title"
-                                type="text"
-                                required
-                            />
-                        </label>
-                        <label>
-                            Pattern
-                            <textarea
-                                name="pattern"
-                                required
-                            />
-                        </label>
-                        <button type="submit">Create</button>
-                    </form>
-                </section>
-                <section>
-                    <h2 class="series-section-title">Saved Series</h2>
-                    {series.length > 0 ? (
-                        <ul class="series-list">
-                            {series.map(item => (
-                                <li class="series-list-item">
-                                    <SeriesItem series={item} />
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p>No Series yet.</p>
-                    )}
-                </section>
-                <EditSeriesDialog />
-            </div>
+            <button
+                class="series-create-series-button"
+                type="button"
+                data-create-series
+            >
+                Create Series
+            </button>
+            {series.length > 0 ? (
+                <ul class="series-list">
+                    {series.map(item => (
+                        <li class="series-list-item">
+                            <SeriesItem series={item} />
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>No Series yet.</p>
+            )}
+            <CreateSeriesDialog />
+            <EditSeriesDialog />
             <link
                 rel="stylesheet"
                 href="/public/series/style.css"
@@ -93,33 +65,65 @@ function SeriesItem({ series }: SeriesItemProps) {
             data-series-id={series.id}
             data-series-title={series.title}
             data-series-pattern={series.pattern}
-            data-series-current-mark-url={series.markUrl ?? ""}
         >
-            {series.markUrl ? (
-                <a
-                    class="series-card-title"
-                    href={series.markUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    {series.title}
-                </a>
-            ) : (
-                <span class="series-card-title">{series.title}</span>
-            )}
-            <dl class="series-card-details">
-                <dt>Pattern</dt>
-                <dd>{series.pattern}</dd>
-                <dt>Current Mark</dt>
-                <dd>{series.markUrl ?? "No current Mark"}</dd>
-            </dl>
+            <span class="series-card-title">{series.title}</span>
             <button
                 class="series-card-edit"
                 type="button"
                 data-edit-series
             >
-                Edit Series
+                Edit
             </button>
+        </div>
+    );
+}
+
+function CreateSeriesDialog() {
+    return (
+        <div
+            class="dialog"
+            data-create-series-dialog
+            hidden
+        >
+            <div class="dialog-content">
+                <h2 class="dialog-title">Create Series</h2>
+                <form
+                    class="dialog-form"
+                    action="/api/series/create"
+                    method="post"
+                >
+                    <label>
+                        Title
+                        <input
+                            name="title"
+                            type="text"
+                            required
+                        />
+                    </label>
+                    <label>
+                        Pattern
+                        <textarea
+                            name="pattern"
+                            required
+                        />
+                    </label>
+                    <div class="dialog-actions">
+                        <button
+                            class="dialog-cancel"
+                            type="button"
+                            data-create-series-dialog-cancel
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            class="dialog-submit"
+                            type="submit"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }
@@ -127,51 +131,61 @@ function SeriesItem({ series }: SeriesItemProps) {
 function EditSeriesDialog() {
     return (
         <div
-            class="series-dialog"
+            class="dialog"
             data-edit-series-dialog
             hidden
         >
-            <h2 class="series-dialog-title">Edit Series</h2>
-            <p
-                class="series-dialog-summary"
-                data-edit-series-dialog-mark-url
-            />
-            <form
-                class="series-form"
-                action="/api/series/update"
-                method="post"
-            >
-                <input
-                    name="id"
-                    type="hidden"
-                    data-edit-series-dialog-input-id
+            <div class="dialog-content">
+                <h2 class="dialog-title">Edit Series</h2>
+                <p
+                    class="dialog-summary"
+                    data-edit-series-dialog-title
                 />
-                <label>
-                    Title
+                <form
+                    class="dialog-form"
+                    action="/api/series/update"
+                    method="post"
+                >
                     <input
-                        name="title"
-                        type="text"
-                        data-edit-series-dialog-input-title
-                        required
+                        name="id"
+                        type="hidden"
+                        data-edit-series-dialog-input-id
                     />
-                </label>
-                <label>
-                    Pattern
-                    <textarea
-                        name="pattern"
-                        data-edit-series-dialog-input-pattern
-                        required
-                    />
-                </label>
-                <button type="submit">Save</button>
-            </form>
-            <button
-                class="series-dialog-cancel"
-                type="button"
-                data-edit-series-dialog-cancel
-            >
-                Cancel
-            </button>
+                    <label>
+                        Title
+                        <input
+                            name="title"
+                            type="text"
+                            data-edit-series-dialog-input-title
+                            required
+                        />
+                    </label>
+                    <label>
+                        Pattern
+                        <textarea
+                            name="pattern"
+                            data-edit-series-dialog-input-pattern
+                            required
+                        />
+                    </label>
+
+                    <div class="dialog-actions">
+                        <button
+                            class="dialog-cancel"
+                            type="button"
+                            data-edit-series-dialog-cancel
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            class="dialog-submit"
+                            type="submit"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

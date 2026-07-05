@@ -1,0 +1,41 @@
+button {
+    font-size: 1rem;
+    line-height: 1em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.series-create-series-button {
+    background-color: var(--secondary);
+    color: var(--background);
+}
+
+.series-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.series-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    & .series-card-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        @media (max-width: 640px) {
+            font-size: 0.65rem;
+            margin-right: auto;
+        }
+    }
+
+    & .series-card-edit {
+        background-color: var(--primary);
+        color: var(--background);
+    }
+}

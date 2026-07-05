@@ -11,18 +11,13 @@ function setupCreateCategoryDialog() {
     const createCategoryDialogContent = createCategoryDialog.querySelector(
         "[data-create-category-dialog-content]",
     );
-    const createCategoryNameInput = createCategoryDialog.querySelector(
-        "[data-create-category-dialog-input-name]",
-    );
     const createCategoryCancelButton = createCategoryDialog.querySelector(
         "[data-create-category-dialog-cancel]",
     );
-
     const createCategoryButton = document.querySelector(
         "[data-create-category]",
     );
     createCategoryButton.addEventListener("click", () => {
-        createCategoryNameInput.value = "";
         createCategoryDialog.hidden = false;
     });
 
