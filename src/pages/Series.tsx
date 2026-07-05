@@ -60,15 +60,37 @@ type SeriesItemProps = {
 function SeriesItem({ series }: SeriesItemProps) {
     return (
         <div
-            class="series-card"
+            class="series"
             data-series
             data-series-id={series.id}
             data-series-title={series.title}
             data-series-pattern={series.pattern}
         >
-            <span class="series-card-title">{series.title}</span>
+            {series.markUrl ? (
+                <a class="series-title">
+                    {series.title}
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="1.2em"
+                        height="1.2em"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-arrow-up-right-icon lucide-arrow-up-right"
+                    >
+                        <path d="M7 7h10v10" />
+                        <path d="M7 17 17 7" />
+                    </svg>
+                </a>
+            ) : (
+                <span class="series-title">{series.title}</span>
+            )}
+
             <button
-                class="series-card-edit"
+                class="series-edit"
                 type="button"
                 data-edit-series
             >

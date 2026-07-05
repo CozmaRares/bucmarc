@@ -1,5 +1,5 @@
 import { db } from "../connection";
-import { and, desc, eq, ne, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ne, isNull, sql } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
@@ -8,20 +8,19 @@ import {
     isUniqueConstraintError,
     logErrorAndCreate,
 } from "./utils";
-import type { Mark } from "./marks";
-import type { Series } from "./series";
 import { getEpisodeIdentity } from "@/lib/seriesPattern";
+import type { Category, Mark, Series } from "../schema";
 
 export type DuplicateCategoryNameError = { type: "duplicate_category_name" };
 export type NotFoundCategoryError = { type: "not_found_category" };
 
-export const duplicateCategoryNameError = logErrorAndCreate(
+const duplicateCategoryNameError = logErrorAndCreate(
     (): DuplicateCategoryNameError => ({
         type: "duplicate_category_name",
     }),
 );
 
-export const maybeDuplicateCategoryNameError = logErrorAndCreate(
+const maybeDuplicateCategoryNameError = logErrorAndCreate(
     (error: unknown): DuplicateCategoryNameError | UnknownDbError =>
         isUniqueConstraintError(error)
             ? { type: "duplicate_category_name" }
@@ -33,28 +32,13 @@ export function isDuplicateCategoryNameError(error: {
     return error.type === "duplicate_category_name";
 }
 
-export const notFoundCategoryError = (): NotFoundCategoryError => ({
+const notFoundCategoryError = (): NotFoundCategoryError => ({
     type: "not_found_category",
 });
 export function isNotFoundCategoryError(error: {
     type: string;
 }): error is NotFoundCategoryError {
     return error.type === "not_found_category";
-}
-
-export type Category = Awaited<ReturnType<typeof _getCategories>>[number];
-function _getCategories() {
-    return db
-        .select({
-            id: schema.categories.id,
-            name: schema.categories.name,
-            sortOrder: schema.categories.sortOrder,
-        })
-        .from(schema.categories)
-        .orderBy(desc(schema.categories.sortOrder), desc(schema.categories.updatedAt));
-}
-export function getCategories(): ResultAsync<Category[], UnknownDbError> {
-    return ResultAsync.fromPromise(_getCategories(), unknownDbError);
 }
 
 export type MarkWithSeries = Mark & { series: Pick<Series, "title"> | null };
@@ -85,8 +69,8 @@ function _getCategorizedMarks() {
                     categoryId: true,
                 },
                 orderBy: [
-                    desc(schema.series.updatedAt),
-                    desc(schema.marks.updatedAt),
+                    asc(schema.series.updatedAt),
+                    asc(schema.marks.updatedAt),
                 ],
                 with: {
                     series: {
@@ -103,7 +87,10 @@ function _getCategorizedMarks() {
             name: true,
             sortOrder: true,
         },
-        orderBy: [desc(schema.categories.sortOrder), desc(schema.categories.updatedAt)],
+        orderBy: [
+            desc(schema.categories.sortOrder),
+            desc(schema.categories.updatedAt),
+        ],
     });
 }
 export function getCategorizedMarks(): ResultAsync<
@@ -134,7 +121,7 @@ function _getUncategorizedMarks() {
             title: true,
             categoryId: true,
         },
-        orderBy: [desc(schema.series.updatedAt), desc(schema.marks.updatedAt)],
+        orderBy: [asc(schema.series.updatedAt), asc(schema.marks.updatedAt)],
         where: isNull(schema.marks.categoryId),
     });
 }

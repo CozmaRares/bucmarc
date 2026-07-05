@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("db");
@@ -19,12 +18,11 @@ export function logErrorAndCreate<Args extends any[], E extends DbError>(
                 logger.error(result.error.message, result.error.cause);
                 logger.error(result.error.stack);
             }
+        } else {
+            const { type, ...rest } = result;
+            logger.debug(type, rest, ...args);
         }
 
-        const logMethod = isUnknownDbError(result)
-            ? logger.error
-            : logger.debug;
-        logMethod(result.type, ...args);
         return result;
     };
 }
@@ -32,7 +30,7 @@ export function logErrorAndCreate<Args extends any[], E extends DbError>(
 export const unknownDbError = logErrorAndCreate(
     (error: unknown): UnknownDbError => ({ type: "unknown_db_error", error }),
 );
-export function isUnknownDbError(error: DbError): error is UnknownDbError {
+function isUnknownDbError(error: DbError): error is UnknownDbError {
     return error.type === "unknown_db_error";
 }
 

@@ -8,10 +8,7 @@ export type PageLoadError = {
     message: string;
     httpStatusCode: HTTPStatusCode;
 };
-export const badRequestError = (): PageLoadError => ({
-    message: "Bad request",
-    httpStatusCode: HTTPStatus.BadRequest,
-});
+
 export const serverError = (error: unknown): PageLoadError => {
     const logger = createLogger("page render");
     logger.error(error);
@@ -20,11 +17,6 @@ export const serverError = (error: unknown): PageLoadError => {
         httpStatusCode: HTTPStatus.ServerError,
     };
 };
-
-export const notFoundError = (): PageLoadError => ({
-    message: "Not found",
-    httpStatusCode: HTTPStatus.NotFound,
-});
 
 export type Page<P> = {
     name: string;

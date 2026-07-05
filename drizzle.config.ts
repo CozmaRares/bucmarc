@@ -1,4 +1,5 @@
 import { defineConfig } from "drizzle-kit";
+import { env } from "./src/env";
 
 export default defineConfig({
     out: "./drizzle",
@@ -6,12 +7,6 @@ export default defineConfig({
     dialect: "sqlite",
     casing: "snake_case",
     dbCredentials: {
-        url:
-            process.env.DB_FILE_NAME ??
-            (() => {
-                throw new Error(
-                    "DB_FILE_NAME is required for Drizzle migrations",
-                );
-            })(),
+        url: env.DB_FILE_NAME,
     },
 });

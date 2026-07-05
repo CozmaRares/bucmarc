@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, Table, type InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
     index,
@@ -31,7 +31,6 @@ export const categories = sqliteTable(
         ),
     ],
 );
-
 export const categoriesRelations = relations(categories, ({ many }) => ({
     marks: many(marks),
 }));
@@ -92,3 +91,8 @@ export const jobs = sqliteTable("jobs", {
     status: text({ enum: JOB_STATUSES }).notNull(),
     updatedAt: helpers.updatedAt(),
 });
+
+type WithoutUpdatedAt<T extends Table> = Omit<InferSelectModel<T>, "updatedAt">;
+export type Category = WithoutUpdatedAt<typeof categories>;
+export type Mark = WithoutUpdatedAt<typeof marks>;
+export type Series = WithoutUpdatedAt<typeof series>;

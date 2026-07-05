@@ -1,5 +1,5 @@
 import { db } from "../connection";
-import { and, desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
@@ -9,14 +9,13 @@ import {
     type CategoryFKError,
     isUniqueConstraintError,
     logErrorAndCreate,
-    type DbError,
 } from "./utils";
 import { createJob } from "./jobs";
 
 export type DuplicateMarkUrlError = { type: "duplicate_mark_url" };
 export type NotFoundMarkError = { type: "not_found_mark" };
 
-export const maybeDuplicateMarkUrlError = logErrorAndCreate(
+const maybeDuplicateMarkUrlError = logErrorAndCreate(
     (error: unknown): DuplicateMarkUrlError | UnknownDbError =>
         isUniqueConstraintError(error)
             ? { type: "duplicate_mark_url" }
@@ -28,7 +27,7 @@ export function isDuplicateMarkUrlError(error: {
     return error.type === "duplicate_mark_url";
 }
 
-export const notFoundMarkError = (): NotFoundMarkError => ({
+const notFoundMarkError = (): NotFoundMarkError => ({
     type: "not_found_mark",
 });
 export function isNotFoundMarkError(error: {
@@ -37,80 +36,40 @@ export function isNotFoundMarkError(error: {
     return error.type === "not_found_mark";
 }
 
-export type Mark = Awaited<ReturnType<typeof _getMarks>>[number];
-function _getMarks() {
-    return db
-        .select({
-            url: schema.marks.url,
-            title: schema.marks.title,
-            categoryId: schema.marks.categoryId,
-        })
-        .from(schema.marks)
-        .orderBy(desc(schema.marks.updatedAt));
-}
-export function getMarks(): ResultAsync<Mark[], UnknownDbError> {
-    return ResultAsync.fromPromise(_getMarks(), unknownDbError);
-}
-
-function _getMarksByCategoryId(categoryId: number) {
-    return _getMarks().where(eq(schema.marks.categoryId, categoryId));
-}
-export function getMarksByCategoryId(
-    categoryId: number,
-): ResultAsync<Mark[], UnknownDbError> {
-    return ResultAsync.fromPromise(
-        _getMarksByCategoryId(categoryId),
-        unknownDbError,
-    );
-}
-
-async function _saveMark(url: string, categoryId: number | undefined) {
-    await db.insert(schema.marks).values({ url, categoryId });
-}
-
-function _saveMarkAndTriggerJob<E extends DbError>(
-    url: string,
-    categoryId: number | undefined,
-    errorFn: (error: unknown) => E,
-): ResultAsync<void, E | UnknownDbError> {
-    return ResultAsync.fromPromise(_saveMark(url, categoryId), errorFn).andThen(
-        () => createJob(url),
-    );
+async function _saveMark(url: string) {
+    await db.insert(schema.marks).values({ url });
 }
 
 export function saveMark(
     url: string,
 ): ResultAsync<void, DuplicateMarkUrlError | UnknownDbError> {
-    return _saveMarkAndTriggerJob(url, undefined, maybeDuplicateMarkUrlError);
-}
-
-export function saveMarkInCategory(
-    categoryId: number,
-    url: string,
-): ResultAsync<void, DuplicateMarkUrlError | CategoryFKError | UnknownDbError> {
-    return _saveMarkAndTriggerJob(url, categoryId, error => {
-        const duplicate = maybeDuplicateMarkUrlError(error);
-
-        if (isDuplicateMarkUrlError(duplicate)) {
-            return duplicate;
-        }
-
-        return maybeCategoryFKError(error);
-    });
+    return ResultAsync.fromPromise(
+        _saveMark(url),
+        maybeDuplicateMarkUrlError,
+    ).andThen(() => createJob(url));
 }
 
 async function _deleteMark(url: string) {
     const marks = await db
         .delete(schema.marks)
         .where(eq(schema.marks.url, url))
-        .returning({ url: schema.marks.url, categoryId: schema.marks.categoryId });
+        .returning({
+            url: schema.marks.url,
+            categoryId: schema.marks.categoryId,
+        });
     return marks[0] ?? null;
 }
 export function deleteMark(
     url: string,
-): ResultAsync<{ categoryId: number | null }, UnknownDbError | NotFoundMarkError> {
+): ResultAsync<
+    { categoryId: number | null },
+    UnknownDbError | NotFoundMarkError
+> {
     return ResultAsync.fromPromise(_deleteMark(url), unknownDbError).andThen(
-        deleted => (deleted ? okAsync({ categoryId: deleted.categoryId }) : errAsync(notFoundMarkError())),
+        deleted =>
+            deleted
+                ? okAsync({ categoryId: deleted.categoryId })
+                : errAsync(notFoundMarkError()),
     );
 }
 
@@ -138,54 +97,4 @@ export function updateMark(
         _updateMark(url, title, categoryId),
         maybeCategoryFKError,
     ).andThen(updated => (updated ? okAsync() : errAsync(notFoundMarkError())));
-}
-
-async function _updateMarkTitleInCategory(
-    categoryId: number,
-    url: string,
-    title: string | null | undefined,
-): Promise<boolean> {
-    const marks = await db
-        .update(schema.marks)
-        .set({ title })
-        .where(
-            and(
-                eq(schema.marks.url, url),
-                eq(schema.marks.categoryId, categoryId),
-            ),
-        )
-        .returning({ url: schema.marks.url });
-    return marks.length > 0;
-}
-export function updateMarkTitleInCategory(
-    categoryId: number,
-    url: string,
-    title: string | null | undefined,
-): ResultAsync<void, UnknownDbError | NotFoundMarkError> {
-    return ResultAsync.fromPromise(
-        _updateMarkTitleInCategory(categoryId, url, title),
-        unknownDbError,
-    ).andThen(updated => (updated ? okAsync() : errAsync(notFoundMarkError())));
-}
-
-async function _deleteMarkInCategory(categoryId: number, url: string) {
-    const marks = await db
-        .delete(schema.marks)
-        .where(
-            and(
-                eq(schema.marks.url, url),
-                eq(schema.marks.categoryId, categoryId),
-            ),
-        )
-        .returning({ url: schema.marks.url });
-    return marks.length > 0;
-}
-export function deleteMarkInCategory(
-    categoryId: number,
-    url: string,
-): ResultAsync<void, UnknownDbError | NotFoundMarkError> {
-    return ResultAsync.fromPromise(
-        _deleteMarkInCategory(categoryId, url),
-        unknownDbError,
-    ).andThen(deleted => (deleted ? okAsync() : errAsync(notFoundMarkError())));
 }

@@ -14,7 +14,7 @@ export const env = createEnv({
         CLERK_PORTAL_SIGN_IN: z.url(),
     },
     runtimeEnv: process.env,
-
+    skipValidation: process.env.SKIP_ENV_VALIDATION === "true",
     createFinalSchema: shape =>
         z.object(shape).transform(env => {
             const clerkUrl = new URL(env.CLERK_PORTAL_SIGN_IN);

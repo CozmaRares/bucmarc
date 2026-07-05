@@ -29,29 +29,8 @@ export const HTTPStatus = {
 };
 
 type StatusCode<T> = T extends object ? T[keyof T] : never;
-export type HTTPSuccessStatusCode = StatusCode<typeof HTTPSuccessStatus>;
-export type HTTPRedirectStatusCode = StatusCode<typeof HTTPRedirectStatus>;
-export type HTTPErrorStatusCode = StatusCode<typeof HTTPErrorStatus>;
-export type HTTPServerErrorStatusCode = StatusCode<
-    typeof HTTPServerErrorStatus
->;
+type HTTPRedirectStatusCode = StatusCode<typeof HTTPRedirectStatus>;
 export type HTTPStatusCode = StatusCode<typeof HTTPStatus>;
-
-export function successResponse<T>(
-    c: Context,
-    data?: T,
-    status: HTTPStatusCode = HTTPStatus.OK,
-) {
-    return c.json({ success: true, data }, status);
-}
-
-export function errorResponse(
-    c: Context,
-    error?: string,
-    status: HTTPStatusCode = HTTPStatus.BadRequest,
-) {
-    return c.json({ success: false, error }, status);
-}
 
 type RedirectParams = {
     path: string;

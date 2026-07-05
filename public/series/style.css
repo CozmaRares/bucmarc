@@ -17,16 +17,18 @@ button {
     gap: 0.25rem;
 }
 
-.series-card {
+.series {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
 
-    & .series-card-title {
+    & .series-title {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: flex;
+        flex-direction: row;
 
         @media (max-width: 640px) {
             font-size: 0.65rem;
@@ -34,7 +36,7 @@ button {
         }
     }
 
-    & .series-card-edit {
+    & .series-edit {
         background-color: var(--primary);
         color: var(--background);
     }

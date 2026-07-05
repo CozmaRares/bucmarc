@@ -4,6 +4,7 @@ import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
 import { validateSeriesPattern } from "@/lib/seriesPattern";
+import type { Series } from "../schema";
 
 type PatternError = Exclude<
     ReturnType<typeof validateSeriesPattern>,
@@ -16,7 +17,7 @@ export type InvalidSeriesPatternError = {
     error: PatternError;
 };
 
-export const invalidSeriesPatternError = (
+const invalidSeriesPatternError = (
     error: PatternError,
 ): InvalidSeriesPatternError => ({
     type: "invalid_series_pattern",
@@ -28,7 +29,7 @@ export function isInvalidSeriesPatternError(error: {
     return error.type === "invalid_series_pattern";
 }
 
-export const notFoundSeriesError = (): NotFoundSeriesError => ({
+const notFoundSeriesError = (): NotFoundSeriesError => ({
     type: "not_found_series",
 });
 export function isNotFoundSeriesError(error: {
@@ -37,7 +38,6 @@ export function isNotFoundSeriesError(error: {
     return error.type === "not_found_series";
 }
 
-export type Series = Awaited<ReturnType<typeof _getSeries>>[number];
 function _getSeries() {
     return db
         .select({

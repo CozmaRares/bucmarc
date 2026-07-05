@@ -6,7 +6,7 @@ import { and, eq, lt, asc, inArray } from "drizzle-orm";
 
 export type NotFoundJobError = { type: "not_found_job" };
 
-export const notFoundJobError = (): NotFoundJobError => ({
+const notFoundJobError = (): NotFoundJobError => ({
     type: "not_found_job",
 });
 
