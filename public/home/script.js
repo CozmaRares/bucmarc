@@ -147,10 +147,7 @@ function openEditMarkDialog(button) {
     urlOutput.textContent = url;
     urlInput.value = url;
     titleInput.value = title;
-
-    if (categoryInput) {
-        categoryInput.value = categoryId;
-    }
+    categoryInput.value = categoryId;
 
     editMarkDialog.hidden = false;
 }

@@ -207,6 +207,19 @@ function EditSeriesDialog() {
                         </button>
                     </div>
                 </form>
+                <form
+                    class="dialog-form-delete"
+                    action="/api/series/delete"
+                    method="post"
+                    data-delete-series-form
+                >
+                    <input
+                        name="id"
+                        type="hidden"
+                        data-edit-series-dialog-delete-id
+                    />
+                    <button type="submit">Delete</button>
+                </form>
             </div>
         </div>
     );

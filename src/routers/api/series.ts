@@ -1,6 +1,7 @@
 import {
     createSeries,
     updateSeries,
+    deleteSeries,
     isNotFoundSeriesError,
     isInvalidSeriesPatternError,
 } from "@/db/dal";
@@ -63,6 +64,30 @@ seriesRouter.post("/update", zValidator("form", seriesUpdateSchema), c => {
             return errorRedirect(c, {
                 path: "/series",
                 message: "The Series could not be updated.",
+            });
+        },
+    );
+});
+
+const seriesDeleteSchema = z.object({
+    id: seriesFieldsValidators.id,
+});
+
+seriesRouter.post("/delete", zValidator("form", seriesDeleteSchema), c => {
+    const input = c.req.valid("form");
+    return deleteSeries(input.id).match(
+        () => successRedirect(c, { path: "/series" }),
+        error => {
+            if (isNotFoundSeriesError(error)) {
+                return errorRedirect(c, {
+                    path: "/series",
+                    message: "Series not found.",
+                });
+            }
+
+            return errorRedirect(c, {
+                path: "/series",
+                message: "The Series could not be deleted.",
             });
         },
     );

@@ -58,7 +58,6 @@ export const createLogger = (place: string) => ({
     debug: (...args: unknown[]) => write(LogLevel.Debug, place, args),
 });
 
-
 function colorLevel(level: LogLevel, text: string) {
     switch (level) {
         case LogLevel.Fatal:
@@ -76,5 +75,9 @@ function colorLevel(level: LogLevel, text: string) {
     }
 }
 
-function colorPlace(place: string) { return chalk.cyan(place); }
-function colorTimestamp(timestamp: string) { return chalk.gray(timestamp); }
+function colorPlace(place: string) {
+    return chalk.cyan(place);
+}
+function colorTimestamp(timestamp: string) {
+    return chalk.gray(timestamp);
+}

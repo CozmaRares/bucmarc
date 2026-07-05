@@ -108,7 +108,7 @@ main {
         background-color: var(--secondary);
         padding: 1rem;
         border-radius: 0.5rem;
-        max-width: min(40rem, 100vw - 2rem);
+        width: min(40rem, 100vw - 2rem);
 
         & > *:not(:first-child) {
             margin-top: 1rem;

@@ -1,11 +1,7 @@
 import { Hono } from "hono";
 import z from "zod";
 import { zValidator } from "@hono/zod-validator";
-import {
-    createCategory,
-    deleteCategory,
-    updateCategory,
-} from "@/db/dal";
+import { createCategory, deleteCategory, updateCategory } from "@/db/dal";
 import { errorRedirect, successRedirect } from "@/honoHelpers";
 import {
     isDuplicateCategoryNameError,

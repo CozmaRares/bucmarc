@@ -48,7 +48,11 @@ class JobQueue {
                             )
                             .andThen(deleted =>
                                 deleted?.categoryId != null
-                                    ? updateMark(job.markUrl, undefined, deleted.categoryId)
+                                    ? updateMark(
+                                          job.markUrl,
+                                          undefined,
+                                          deleted.categoryId,
+                                      )
                                     : okAsync(),
                             )
                             .andThen(() => completeJob(job.id));

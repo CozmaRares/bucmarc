@@ -158,3 +158,29 @@ export function assignMarkToSeries(
             : errAsync(notFoundSeriesError()),
     );
 }
+
+async function _deleteSeries(id: number) {
+    const deleted = await db
+        .delete(schema.series)
+        .where(eq(schema.series.id, id))
+        .returning({ id: schema.series.id });
+
+    return {
+        type: deleted.length > 0 ? "deleted" : "not_found",
+    } as const;
+}
+
+export function deleteSeries(
+    id: number,
+): ResultAsync<void, UnknownDbError | NotFoundSeriesError> {
+    return ResultAsync.fromPromise(_deleteSeries(id), unknownDbError).andThen(
+        outcome => {
+            switch (outcome.type) {
+                case "deleted":
+                    return okAsync();
+                case "not_found":
+                    return errAsync(notFoundSeriesError());
+            }
+        },
+    );
+}
