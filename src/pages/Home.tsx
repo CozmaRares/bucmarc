@@ -14,10 +14,10 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
     const THRESHOLDS = {
-        FRESH: [30, "#22C55E"],
-        AGING: [90, "#EAB308"],
-        STALE: [180, "#F97316"],
-        VERY_STALE: [365, "#EF4444"],
+        FRESH: [7, "#22C55E"],
+        AGING: [30, "#EAB308"],
+        STALE: [60, "#F97316"],
+        VERY_STALE: [90, "#EF4444"],
         ANCIENT: [Infinity, "#6B7280"],
     } as const;
 
