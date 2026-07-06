@@ -33,8 +33,6 @@ services:
         depends_on:
             migrate:
                 condition: service_completed_successfully
-        networks:
-            - appnet
         logging:
             driver: json-file
             options:
@@ -47,24 +45,13 @@ services:
             server:
                 condition: service_started
         ports:
-            - "0.0.0.0:80:80"
-            - "0.0.0.0:443:443"
-            - "[::]:80:80"
-            - "[::]:443:443"
+            - "80:80"
+            - "443:443"
         volumes:
             - ${NGINX_CONFIG}:/etc/nginx/conf.d/default.conf:ro
             - /etc/letsencrypt:/etc/letsencrypt
-        networks:
-            - appnet
         logging:
             driver: json-file
             options:
                 max-size: "10m"
                 max-file: "5"
-
-networks:
-    appnet:
-        enable_ipv6: true
-        ipam:
-            config:
-                - subnet: "fd00:cafe:babe:1::/64"

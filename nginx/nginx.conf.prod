@@ -11,7 +11,6 @@ server_tokens off;
 
 server {
     listen 80;
-    listen [::]:80 ipv6only=on;
     server_name bucmarc.raru.dev;
 
     return 301 https://$host$request_uri;
@@ -19,7 +18,6 @@ server {
 
 server {
     listen 443 ssl http2;
-    listen [::]:443 ssl http2 ipv6only=on;
     server_name bucmarc.raru.dev;
 
     ssl_certificate /etc/letsencrypt/live/bucmarc.raru.dev/fullchain.pem;
