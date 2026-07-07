@@ -21,6 +21,8 @@
 body {
     min-height: 100dvh;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 body > * {
@@ -83,8 +85,60 @@ body > * {
 
 main {
     padding: 1rem var(--gutter);
+    flex: 1;
     & > *:not(:first-child):not(.dialog) {
         margin-top: 1.5rem;
+    }
+}
+
+.footer {
+    padding-inline: var(--gutter);
+    padding-block: 1.5rem;
+    border-top: 1px solid rgb(var(--primary-base) / 0.5);
+    margin-top: 2rem;
+    font-size: 0.875rem;
+
+    & .footer-bookmarklets {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    & .footer-label {
+        color: rgb(var(--text-base) / 0.7);
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+    }
+
+    & .footer-bookmarklet-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    & .footer-copy-button {
+        background-color: var(--primary);
+        color: var(--background);
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        min-width: 4rem;
+
+        &:hover {
+            background-color: var(--secondary);
+        }
+
+        &.copied {
+            background-color: var(--secondary);
+        }
+    }
+
+    & .footer-bookmarklet-name {
+        color: var(--text);
     }
 }
 
