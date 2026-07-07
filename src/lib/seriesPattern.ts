@@ -25,7 +25,7 @@ export function validateSeriesPattern(pattern: string) {
 }
 
 export function getEpisodeIdentity(pattern: string, url: string) {
-    const regex = new RegExp(pattern);
+    const regex = new RegExp(pattern, "i");
     const match = regex.exec(url);
     const episode = match?.groups?.episode;
     return episode;
