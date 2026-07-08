@@ -27,7 +27,14 @@ seriesRouter.post("/create", zValidator("form", seriesCreateSchema), c => {
     const input = c.req.valid("form");
     return createSeries(input.title, input.pattern).match(
         () => successRedirect(c, { path: "/series" }),
-        () => {
+        error => {
+            if (isInvalidSeriesPatternError(error)) {
+                return errorRedirect(c, {
+                    path: "/series",
+                    message: error.error,
+                });
+            }
+
             return errorRedirect(c, {
                 path: "/series",
                 message: "The Series could not be created.",
