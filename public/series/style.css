@@ -23,6 +23,16 @@ button {
     align-items: center;
     gap: 0.5rem;
 
+    & .series-link-indicator {
+        --size: 1.2em;
+
+        width: var(--size);
+        min-width: var(--size);
+        height: var(--size);
+        min-height: var(--size);
+        border-radius: 50%;
+    }
+
     & .series-title {
         white-space: nowrap;
         overflow: hidden;

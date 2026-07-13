@@ -57,6 +57,11 @@ type SeriesItemProps = {
     series: Series;
 };
 
+const INDICAOTR_COLOR = {
+    WITH_MARK: "#22C55E",
+    WITHOUT_MARK: "#EAB308",
+} as const;
+
 function SeriesItem({ series }: SeriesItemProps) {
     return (
         <div
@@ -66,34 +71,11 @@ function SeriesItem({ series }: SeriesItemProps) {
             data-series-title={series.title}
             data-series-pattern={series.pattern}
         >
-            {series.markUrl ? (
-                <a
-                    class="series-title"
-                    href={series.markUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    {series.title}
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="1.2em"
-                        height="1.2em"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="lucide lucide-arrow-up-right-icon lucide-arrow-up-right"
-                    >
-                        <path d="M7 7h10v10" />
-                        <path d="M7 17 17 7" />
-                    </svg>
-                </a>
-            ) : (
-                <span class="series-title">{series.title}</span>
-            )}
-
+            <div
+                class="series-link-indicator"
+                style={`background-color: ${series.markUrl ? INDICAOTR_COLOR.WITH_MARK : INDICAOTR_COLOR.WITHOUT_MARK}`}
+            />
+            <span class="series-title">{series.title}</span>
             <button
                 class="series-edit"
                 type="button"
