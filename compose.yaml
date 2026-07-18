@@ -7,7 +7,7 @@ services:
         env_file:
             - .env
         volumes:
-            - ./server-data:/app/data
+            - ${BUCMARC_DATA_DIR:-./server-data}:/app/data
             - ./drizzle:/app/drizzle
             - ./drizzle.config.ts:/app/drizzle.config.ts
         command:
@@ -28,30 +28,21 @@ services:
             PORT: 3000
             FORCE_COLOR: 1
         volumes:
-            - ./server-data:/app/data
+            - ${BUCMARC_DATA_DIR:-./server-data}:/app/data
             - ./public:/app/public
         depends_on:
             migrate:
                 condition: service_completed_successfully
+        networks:
+            reverse-proxy:
+                aliases:
+                    - bucmarc
         logging:
             driver: json-file
             options:
                 max-size: "20m"
                 max-file: "5"
 
-    nginx:
-        image: nginx:1.30.2-alpine
-        depends_on:
-            server:
-                condition: service_started
-        ports:
-            - "80:80"
-            - "443:443"
-        volumes:
-            - ${NGINX_CONFIG}:/etc/nginx/conf.d/default.conf:ro
-            - /etc/letsencrypt:/etc/letsencrypt
-        logging:
-            driver: json-file
-            options:
-                max-size: "10m"
-                max-file: "5"
+networks:
+    reverse-proxy:
+        external: true
