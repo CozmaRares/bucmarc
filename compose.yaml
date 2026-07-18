@@ -7,7 +7,7 @@ services:
         env_file:
             - .env
         volumes:
-            - ${BUCMARC_DATA_DIR:-./server-data}:/app/data
+            - ${BUCMARC_DATA_DIR:?BUCMARC_DATA_DIR is required}:/app/data
             - ./drizzle:/app/drizzle
             - ./drizzle.config.ts:/app/drizzle.config.ts
         command:
@@ -28,7 +28,7 @@ services:
             PORT: 3000
             FORCE_COLOR: 1
         volumes:
-            - ${BUCMARC_DATA_DIR:-./server-data}:/app/data
+            - ${BUCMARC_DATA_DIR:?BUCMARC_DATA_DIR is required}:/app/data
             - ./public:/app/public
         depends_on:
             migrate:
