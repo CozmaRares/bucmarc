@@ -148,8 +148,6 @@ function MarkComponent({ agedMark }: MarkProps) {
             <a
                 class="mark-link"
                 href={mark.url}
-                target="_blank"
-                rel="noreferrer"
             >
                 {series?.title || mark.title || mark.url}
             </a>
