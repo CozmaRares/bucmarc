@@ -49,78 +49,19 @@ button {
 }
 
 .mark {
-    --mark-indicator-fresh: #22c55e;
-    --mark-indicator-aging: #eab308;
-    --mark-indicator-stale: #f97316;
-    --mark-indicator-very-stale: #ef4444;
-    --mark-indicator-ancient: #6b7280;
-
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
 
-    & .mark-indicator {
+    & .mark-age-indicator {
         --size: 1.2em;
 
-        position: relative;
-        overflow: hidden;
         width: var(--size);
         min-width: var(--size);
         height: var(--size);
         min-height: var(--size);
         border-radius: 50%;
-        background-color: var(--mark-age-indicator-color);
-
-        &::after {
-            content: "";
-            position: absolute;
-            inset: 0 0 0 50%;
-            background-color: var(
-                --mark-last-clicked-indicator-color,
-                transparent
-            );
-        }
-    }
-
-    & .mark-indicator-age-fresh {
-        --mark-age-indicator-color: var(--mark-indicator-fresh);
-    }
-
-    & .mark-indicator-age-aging {
-        --mark-age-indicator-color: var(--mark-indicator-aging);
-    }
-
-    & .mark-indicator-age-stale {
-        --mark-age-indicator-color: var(--mark-indicator-stale);
-    }
-
-    & .mark-indicator-age-very-stale {
-        --mark-age-indicator-color: var(--mark-indicator-very-stale);
-    }
-
-    & .mark-indicator-age-ancient {
-        --mark-age-indicator-color: var(--mark-indicator-ancient);
-    }
-
-    & .mark-indicator-clicked-fresh {
-        --mark-last-clicked-indicator-color: var(--mark-indicator-fresh);
-    }
-
-    & .mark-indicator-clicked-aging {
-        --mark-last-clicked-indicator-color: var(--mark-indicator-aging);
-    }
-
-    & .mark-indicator-clicked-stale {
-        --mark-last-clicked-indicator-color: var(--mark-indicator-stale);
-    }
-
-    & .mark-indicator-clicked-very-stale {
-        --mark-last-clicked-indicator-color: var(--mark-indicator-very-stale);
-    }
-
-    & .mark-indicator-clicked-ancient {
-        --mark-last-clicked-indicator-color: var(--mark-indicator-ancient);
     }
 
     & .mark-episode {
