@@ -1,6 +1,11 @@
 import { getSeries } from "@/db/dal";
 import type { Series } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
+import {
+    SERIES_CREATE_URL,
+    SERIES_DELETE_URL,
+    SERIES_UPDATE_URL,
+} from "@/routers/api/series";
 import { serverError, type Page, type PageLoadError } from "./types";
 import type { Context } from "hono";
 import { ResultAsync } from "neverthrow";
@@ -99,7 +104,7 @@ function CreateSeriesDialog() {
                 <h2 class="dialog-title">Create Series</h2>
                 <form
                     class="dialog-form"
-                    action="/api/series/create"
+                    action={SERIES_CREATE_URL}
                     method="post"
                 >
                     <label>
@@ -153,7 +158,7 @@ function EditSeriesDialog() {
                 />
                 <form
                     class="dialog-form"
-                    action="/api/series/update"
+                    action={SERIES_UPDATE_URL}
                     method="post"
                 >
                     <input
@@ -197,7 +202,7 @@ function EditSeriesDialog() {
                 </form>
                 <form
                     class="dialog-form-delete"
-                    action="/api/series/delete"
+                    action={SERIES_DELETE_URL}
                     method="post"
                     data-delete-series-form
                 >

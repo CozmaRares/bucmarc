@@ -9,6 +9,7 @@ import {
     isNotFoundMarkError,
 } from "@/db/dal";
 import { jobQueue } from "@/lib/jobQueue";
+import { HOME_PAGE_URL } from "../pagePaths";
 
 export const markRouter = new Hono();
 
@@ -25,6 +26,7 @@ const markFieldsValidators = {
     ),
 };
 
+export const MARK_SAVE_URL_PREFIX = "/api/mark/save/";
 markRouter.get("/save/:url", c => {
     const url = decodeUrl(c.req.param("url"));
 
@@ -33,7 +35,7 @@ markRouter.get("/save/:url", c => {
 
     if (!isSaveableUrl(url)) {
         return errorRedirect(c, {
-            path: "/",
+            path: HOME_PAGE_URL,
             message: `The URL could not be saved because it is invalid: ${url}`,
         });
     }
@@ -41,25 +43,26 @@ markRouter.get("/save/:url", c => {
     return saveMark(url).match(
         () => {
             jobQueue.start();
-            const path = noRedirect ? "/" : url;
+            const path = noRedirect ? HOME_PAGE_URL : url;
             return successRedirect(c, { path });
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {
                 return errorRedirect(c, {
-                    path: "/",
+                    path: HOME_PAGE_URL,
                     message: `The URL could not be saved because it already exists: ${url}`,
                 });
             }
 
             return errorRedirect(c, {
-                path: "/",
+                path: HOME_PAGE_URL,
                 message: `The URL could not be saved: ${url}`,
             });
         },
     );
 });
 
+export const MARK_OPEN_URL = (url: string) => `/api/mark/open/${encodeURIComponent(url)}`;
 markRouter.get("/open/:url", c => {
     const url = decodeUrl(c.req.param("url"));
 
@@ -68,13 +71,13 @@ markRouter.get("/open/:url", c => {
         error => {
             if (isNotFoundMarkError(error)) {
                 return errorRedirect(c, {
-                    path: "/",
+                    path: HOME_PAGE_URL,
                     message: "Mark not found",
                 });
             }
 
             return errorRedirect(c, {
-                path: "/",
+                path: HOME_PAGE_URL,
                 message: "The Mark click could not be recorded.",
             });
         },
@@ -87,28 +90,29 @@ const markUpdateSchema = z.object({
     categoryId: markFieldsValidators.categoryId,
 });
 
+export const MARK_UPDATE_URL = "/api/mark/update";
 markRouter.post("/update", zValidator("form", markUpdateSchema), c => {
     const input = c.req.valid("form");
 
     return updateMark(input.url, input.title, input.categoryId).match(
-        () => successRedirect(c, { path: "/" }),
+        () => successRedirect(c, { path: HOME_PAGE_URL }),
         error => {
             if (isNotFoundMarkError(error)) {
                 return errorRedirect(c, {
-                    path: "/",
+                    path: HOME_PAGE_URL,
                     message: "Mark not found",
                 });
             }
 
             if (isCategoryFKError(error)) {
                 return errorRedirect(c, {
-                    path: "/",
+                    path: HOME_PAGE_URL,
                     message: "Category not found",
                 });
             }
 
             return errorRedirect(c, {
-                path: "/",
+                path: HOME_PAGE_URL,
                 message: "The Mark could not be updated.",
             });
         },
@@ -119,21 +123,22 @@ const markDeleteSchema = z.object({
     url: markFieldsValidators.url,
 });
 
+export const MARK_DELETE_URL = "/api/mark/delete";
 markRouter.post("/delete", zValidator("form", markDeleteSchema), c => {
     const input = c.req.valid("form");
 
     return deleteMark(input.url).match(
-        () => successRedirect(c, { path: "/" }),
+        () => successRedirect(c, { path: HOME_PAGE_URL }),
         error => {
             if (isNotFoundMarkError(error)) {
                 return errorRedirect(c, {
-                    path: "/",
+                    path: HOME_PAGE_URL,
                     message: "Mark not found",
                 });
             }
 
             return errorRedirect(c, {
-                path: "/",
+                path: HOME_PAGE_URL,
                 message: "The Mark could not be deleted.",
             });
         },

@@ -1,6 +1,16 @@
 import { getCategorizedMarks, getUncategorizedMarks } from "@/db/dal";
 import type { Category, MarkWithSeries } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
+import {
+    CATEGORY_CREATE_URL,
+    CATEGORY_DELETE_URL,
+    CATEGORY_UPDATE_URL,
+} from "@/routers/api/category";
+import {
+    MARK_DELETE_URL,
+    MARK_OPEN_URL,
+    MARK_UPDATE_URL,
+} from "@/routers/api/mark";
 import { serverError, type Page, type PageLoadError } from "./types";
 import { ResultAsync } from "neverthrow";
 
@@ -160,7 +170,7 @@ function MarkComponent({ markWithIndicators }: MarkProps) {
             )}
             <a
                 class="mark-link"
-                href={`/api/mark/open/${encodeURIComponent(mark.url)}`}
+                href={MARK_OPEN_URL(mark.url)}
             >
                 {series?.title || mark.title || mark.url}
             </a>
@@ -171,7 +181,7 @@ function MarkComponent({ markWithIndicators }: MarkProps) {
                 Edit
             </button>
             <form
-                action="/api/mark/delete"
+                action={MARK_DELETE_URL}
                 method="post"
                 data-delete-mark-form
             >
@@ -205,7 +215,7 @@ function CreateCategoryDialog() {
                 <h2 class="dialog-title">Create Category</h2>
                 <form
                     class="dialog-form"
-                    action="/api/category/create"
+                    action={CATEGORY_CREATE_URL}
                     method="post"
                 >
                     <label>
@@ -258,7 +268,7 @@ function EditCategoryDialog() {
                 </div>
                 <form
                     class="dialog-form"
-                    action="/api/category/update"
+                    action={CATEGORY_UPDATE_URL}
                     method="post"
                 >
                     <input
@@ -302,7 +312,7 @@ function EditCategoryDialog() {
                 </form>
                 <form
                     class="dialog-form-delete"
-                    action="/api/category/delete"
+                    action={CATEGORY_DELETE_URL}
                     method="post"
                     data-delete-category-form
                 >
@@ -342,7 +352,7 @@ function EditMarkDialog({ categories }: EditMarkDialogProps) {
                 </div>
                 <form
                     class="dialog-form"
-                    action="/api/mark/update"
+                    action={MARK_UPDATE_URL}
                     method="post"
                 >
                     <input

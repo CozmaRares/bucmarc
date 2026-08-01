@@ -5,13 +5,15 @@ import { HomePage } from "@/pages/Home";
 import { SeriesPage } from "@/pages/Series";
 import { env } from "@/env";
 import { assetPath } from "@/lib/assets";
+import { MARK_SAVE_URL_PREFIX } from "./api/mark";
+import { HOME_PAGE_URL, SERIES_PAGE_URL } from "./pagePaths";
 
 const pageRouter = new Hono();
 export default pageRouter;
 
 const pages = [
-    ["/", HomePage],
-    ["/series", SeriesPage],
+    [HOME_PAGE_URL, HomePage],
+    [SERIES_PAGE_URL, SeriesPage],
 ] as const;
 pages.forEach(([path, page]) => registerPage(path, page));
 
@@ -23,8 +25,8 @@ type LayoutProps = {
 };
 
 const Layout: FC<LayoutProps> = ({ children, currentPath }) => {
-    const bookmarkletSave = `javascript:(function(){location.href='${env.APP_URL}/api/mark/save/'+encodeURIComponent(location.href);})();`;
-    const bookmarkletSaveOpen = `javascript:(function(){location.href='${env.APP_URL}/api/mark/save/'+encodeURIComponent(location.href)+'?no-redirect';})();`;
+    const bookmarkletSave = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href);})();`;
+    const bookmarkletSaveOpen = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href)+'?no-redirect';})();`;
 
     return (
         <html>
@@ -52,7 +54,7 @@ const Layout: FC<LayoutProps> = ({ children, currentPath }) => {
                 <header class="header">
                     <a
                         class="header-title"
-                        href="/"
+                        href={HOME_PAGE_URL}
                     >
                         Bucmarc
                     </a>
