@@ -1,6 +1,17 @@
+const LAST_CLICKED_STORAGE_KEY = "bucmarc:last-clicked:v1";
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const INDICATOR_THRESHOLDS = [
+    [7, "fresh"],
+    [30, "aging"],
+    [60, "stale"],
+    [90, "very-stale"],
+    [Infinity, "ancient"],
+];
+
 setupCreateCategoryDialog();
 setupEditCategoryDialog();
 setupEditMarkDialog();
+setupMarkIndicators();
 setupDeleteMarkForms();
 setupDeleteCategoryForms();
 
@@ -160,6 +171,82 @@ function openEditMarkDialog(button) {
     editMarkDialog.hidden = false;
 }
 
+function getLastClickedByUrl() {
+    try {
+        const value = localStorage.getItem(LAST_CLICKED_STORAGE_KEY);
+
+        if (!value) {
+            return {};
+        }
+
+        const parsed = JSON.parse(value);
+
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return {};
+        }
+
+        return parsed;
+    } catch {
+        return {};
+    }
+}
+
+function setLastClickedByUrl(lastClickedByUrl) {
+    try {
+        localStorage.setItem(
+            LAST_CLICKED_STORAGE_KEY,
+            JSON.stringify(lastClickedByUrl),
+        );
+    } catch {}
+}
+
+function getIndicatorClass(prefix, timestamp) {
+    const days = (Date.now() - timestamp) / MS_PER_DAY;
+    const token = INDICATOR_THRESHOLDS.find(
+        ([threshold]) => days < threshold,
+    )[1];
+    return `mark-indicator-${prefix}-${token}`;
+}
+
+function setupMarkIndicators() {
+    const lastClickedByUrl = getLastClickedByUrl();
+
+    document.querySelectorAll("[data-mark]").forEach(mark => {
+        const url = mark.dataset.markUrl;
+        const updatedAt = Number(mark.dataset.markUpdatedAt);
+        const lastClickedAt = lastClickedByUrl[url];
+        const indicator = mark.querySelector("[data-mark-indicator]");
+
+        if (!indicator || !Number.isFinite(updatedAt)) {
+            return;
+        }
+
+        indicator.classList.add(getIndicatorClass("age", updatedAt));
+
+        if (Number.isFinite(lastClickedAt)) {
+            indicator.classList.add(
+                getIndicatorClass("clicked", lastClickedAt),
+            );
+        }
+    });
+
+    document.querySelectorAll("[data-mark] .mark-link").forEach(link => {
+        link.addEventListener("click", () => {
+            const mark = link.closest("[data-mark]");
+            const url = mark.dataset.markUrl;
+            const nextLastClickedByUrl = getLastClickedByUrl();
+            nextLastClickedByUrl[url] = Date.now();
+            setLastClickedByUrl(nextLastClickedByUrl);
+        });
+    });
+}
+
+function removeLastClickedMark(url) {
+    const lastClickedByUrl = getLastClickedByUrl();
+    delete lastClickedByUrl[url];
+    setLastClickedByUrl(lastClickedByUrl);
+}
+
 function setupDeleteMarkForms() {
     document.querySelectorAll("[data-delete-mark-form]").forEach(form => {
         form.addEventListener("submit", event => {
@@ -168,7 +255,10 @@ function setupDeleteMarkForms() {
 
             if (!confirm(`Delete this Mark?\n\n${url}`)) {
                 event.preventDefault();
+                return;
             }
+
+            removeLastClickedMark(url);
         });
     });
 }
