@@ -3,38 +3,45 @@ import type { Category, MarkWithSeries } from "@/db/dal";
 import { serverError, type Page, type PageLoadError } from "./types";
 import { ResultAsync } from "neverthrow";
 
-type AgedMark = MarkWithSeries & { ageIndicatorColor: string };
+type IndicatorStatus = "fresh" | "aging" | "stale" | "very-stale" | "ancient";
+
+type MarkWithIndicators = MarkWithSeries & {
+    ageIndicatorStatus: IndicatorStatus;
+    lastClickedIndicatorStatus: IndicatorStatus;
+};
 
 type Props = {
-    categorizedMarks: Array<Category & { marks: AgedMark[] }>;
-    uncategorizedMarks: AgedMark[];
+    categorizedMarks: Array<Category & { marks: MarkWithIndicators[] }>;
+    uncategorizedMarks: MarkWithIndicators[];
 };
 
 function dataLoader(): ResultAsync<Props, PageLoadError> {
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-    const THRESHOLDS = {
-        FRESH: [7, "#22C55E"],
-        AGING: [30, "#EAB308"],
-        STALE: [60, "#F97316"],
-        VERY_STALE: [90, "#EF4444"],
-        ANCIENT: [Infinity, "#6B7280"],
-    } as const;
+    const THRESHOLDS = [
+        [7, "fresh"],
+        [30, "aging"],
+        [60, "stale"],
+        [90, "very-stale"],
+        [Infinity, "ancient"],
+    ] as const;
 
     const now = Date.now();
 
-    const createAgedMark = (mark: MarkWithSeries) => {
-        const days = (now - mark.updatedAt.getTime()) / MS_PER_DAY;
+    const getIndicatorStatus = (date: Date): IndicatorStatus => {
+        const days = (now - date.getTime()) / MS_PER_DAY;
+        const [, indicatorStatus] = THRESHOLDS.find(
+            ([threshold]) => days < threshold,
+        )!;
+        return indicatorStatus;
+    };
 
-        const color = Object.values(THRESHOLDS).find(
-            ([threshold]) => {
-                if (isNaN(days)) {
-                    console.log(mark)
-                }
-                return days < threshold;
-            }
-        )![1];
-        return { ...mark, ageIndicatorColor: color };
+    const createMarkWithIndicators = (mark: MarkWithSeries) => {
+        return {
+            ...mark,
+            ageIndicatorStatus: getIndicatorStatus(mark.createdAt),
+            lastClickedIndicatorStatus: getIndicatorStatus(mark.lastClickedAt),
+        };
     };
 
     return ResultAsync.combineWithAllErrors([
@@ -44,9 +51,11 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
         .map(([categorizedMarks, uncategorizedMarks]) => ({
             categorizedMarks: categorizedMarks.map(category => ({
                 ...category,
-                marks: category.marks.map(createAgedMark),
+                marks: category.marks.map(createMarkWithIndicators),
             })),
-            uncategorizedMarks: uncategorizedMarks.map(createAgedMark),
+            uncategorizedMarks: uncategorizedMarks.map(
+                createMarkWithIndicators,
+            ),
         }))
         .mapErr(serverError);
 }
@@ -68,9 +77,11 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                     </div>
 
                     <ul class="home-list">
-                        {uncategorizedMarks.map(agedMark => (
+                        {uncategorizedMarks.map(markWithIndicators => (
                             <li class="home-list-item">
-                                <MarkComponent agedMark={agedMark} />
+                                <MarkComponent
+                                    markWithIndicators={markWithIndicators}
+                                />
                             </li>
                         ))}
                     </ul>
@@ -97,9 +108,11 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                     </div>
                     {category.marks.length > 0 ? (
                         <ul class="home-list">
-                            {category.marks.map(agedMark => (
+                            {category.marks.map(markWithIndicators => (
                                 <li class="home-list-item">
-                                    <MarkComponent agedMark={agedMark} />
+                                    <MarkComponent
+                                        markWithIndicators={markWithIndicators}
+                                    />
                                 </li>
                             ))}
                         </ul>
@@ -124,11 +137,11 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
 }
 
 type MarkProps = {
-    agedMark: AgedMark;
+    markWithIndicators: MarkWithIndicators;
 };
 
-function MarkComponent({ agedMark }: MarkProps) {
-    const { series, ...mark } = agedMark;
+function MarkComponent({ markWithIndicators }: MarkProps) {
+    const { series, ...mark } = markWithIndicators;
 
     return (
         <div
@@ -139,15 +152,14 @@ function MarkComponent({ agedMark }: MarkProps) {
             data-mark-category-id={mark.categoryId ?? ""}
         >
             <div
-                class="mark-age-indicator"
-                style={`background-color: ${mark.ageIndicatorColor}`}
+                class={`mark-indicator mark-indicator-age-${mark.ageIndicatorStatus} mark-indicator-clicked-${mark.lastClickedIndicatorStatus}`}
             />
             {series?.episode && (
                 <span class="mark-episode">[{series.episode}]</span>
             )}
             <a
                 class="mark-link"
-                href={mark.url}
+                href={`/api/mark/open/${encodeURIComponent(mark.url)}`}
             >
                 {series?.title || mark.title || mark.url}
             </a>

@@ -10,11 +10,11 @@ import {
 
 const helpers = {
     id: () => integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-    updatedAt: () =>
+    timestamp: () =>
         integer({ mode: "timestamp" })
             .default(sql`(unixepoch())`)
-            .$onUpdate(() => new Date())
             .notNull(),
+    updatedAt: () => helpers.timestamp().$onUpdate(() => new Date()),
 };
 
 export const categories = sqliteTable(
@@ -44,7 +44,8 @@ export const marks = sqliteTable(
             () => categories.id,
             { onDelete: "set null" },
         ),
-        updatedAt: helpers.updatedAt(),
+        lastClickedAt: helpers.timestamp(),
+        createdAt: helpers.timestamp(),
     },
     table => [uniqueIndex("mark_title_unique").on(table.title)],
 );

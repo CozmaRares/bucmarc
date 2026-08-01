@@ -1,4 +1,4 @@
-import { deleteMark, saveMark, updateMark } from "@/db/dal";
+import { deleteMark, recordMarkClick, saveMark, updateMark } from "@/db/dal";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
@@ -55,6 +55,27 @@ markRouter.get("/save/:url", c => {
             return errorRedirect(c, {
                 path: "/",
                 message: `The URL could not be saved: ${url}`,
+            });
+        },
+    );
+});
+
+markRouter.get("/open/:url", c => {
+    const url = decodeUrl(c.req.param("url"));
+
+    return recordMarkClick(url).match(
+        () => c.redirect(url),
+        error => {
+            if (isNotFoundMarkError(error)) {
+                return errorRedirect(c, {
+                    path: "/",
+                    message: "Mark not found",
+                });
+            }
+
+            return errorRedirect(c, {
+                path: "/",
+                message: "The Mark click could not be recorded.",
             });
         },
     );

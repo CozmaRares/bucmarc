@@ -1,5 +1,5 @@
 import { db } from "../connection";
-import { and, asc, desc, eq, ne, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ne, isNotNull, isNull, sql } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
@@ -61,24 +61,33 @@ function createSeriesTitleWithEpisode(
     return returned;
 }
 
-function _getCategorizedMarks() {
-    return db.query.categories.findMany({
-        with: {
-            marks: {
-                orderBy: [
-                    asc(schema.series.updatedAt),
-                    asc(schema.marks.updatedAt),
-                ],
-                with: {
-                    series: {
-                        columns: {
-                            title: true,
-                            pattern: true,
-                        },
-                    },
-                },
-            },
-        },
+function createMarkWithSeries(row: {
+    url: string;
+    title: string | null;
+    categoryId: number | null;
+    lastClickedAt: Date;
+    createdAt: Date;
+    seriesTitle: string | null;
+    seriesPattern: string | null;
+}) {
+    return createSeriesTitleWithEpisode({
+        url: row.url,
+        title: row.title,
+        categoryId: row.categoryId,
+        lastClickedAt: row.lastClickedAt,
+        createdAt: row.createdAt,
+        series:
+            row.seriesTitle && row.seriesPattern
+                ? {
+                      title: row.seriesTitle,
+                      pattern: row.seriesPattern,
+                  }
+                : null,
+    });
+}
+
+async function _getCategorizedMarks() {
+    const categories = await db.query.categories.findMany({
         columns: {
             id: true,
             name: true,
@@ -89,33 +98,59 @@ function _getCategorizedMarks() {
             desc(schema.categories.updatedAt),
         ],
     });
+
+    const marks = await db
+        .select({
+            url: schema.marks.url,
+            title: schema.marks.title,
+            categoryId: schema.marks.categoryId,
+            lastClickedAt: schema.marks.lastClickedAt,
+            createdAt: schema.marks.createdAt,
+            seriesTitle: schema.series.title,
+            seriesPattern: schema.series.pattern,
+        })
+        .from(schema.marks)
+        .leftJoin(schema.series, eq(schema.series.markUrl, schema.marks.url))
+        .where(isNotNull(schema.marks.categoryId))
+        .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt));
+
+    const marksByCategoryId = new Map<number, MarkWithSeries[]>();
+
+    marks.map(createMarkWithSeries).forEach(mark => {
+        if (mark.categoryId === null) return;
+
+        const categoryMarks = marksByCategoryId.get(mark.categoryId) ?? [];
+        categoryMarks.push(mark);
+        marksByCategoryId.set(mark.categoryId, categoryMarks);
+    });
+
+    return categories.map(category => ({
+        ...category,
+        marks: marksByCategoryId.get(category.id) ?? [],
+    }));
 }
 export function getCategorizedMarks(): ResultAsync<
     Array<Category & { marks: MarkWithSeries[] }>,
     UnknownDbError
 > {
-    return ResultAsync.fromPromise(_getCategorizedMarks(), unknownDbError).map(
-        categories =>
-            categories.map(({ marks, ...category }) => ({
-                ...category,
-                marks: marks.map(createSeriesTitleWithEpisode),
-            })),
-    );
+    return ResultAsync.fromPromise(_getCategorizedMarks(), unknownDbError);
 }
 
 function _getUncategorizedMarks() {
-    return db.query.marks.findMany({
-        with: {
-            series: {
-                columns: {
-                    title: true,
-                    pattern: true,
-                },
-            },
-        },
-        orderBy: [asc(schema.series.updatedAt), asc(schema.marks.updatedAt)],
-        where: isNull(schema.marks.categoryId),
-    });
+    return db
+        .select({
+            url: schema.marks.url,
+            title: schema.marks.title,
+            categoryId: schema.marks.categoryId,
+            lastClickedAt: schema.marks.lastClickedAt,
+            createdAt: schema.marks.createdAt,
+            seriesTitle: schema.series.title,
+            seriesPattern: schema.series.pattern,
+        })
+        .from(schema.marks)
+        .leftJoin(schema.series, eq(schema.series.markUrl, schema.marks.url))
+        .where(isNull(schema.marks.categoryId))
+        .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt));
 }
 export function getUncategorizedMarks(): ResultAsync<
     MarkWithSeries[],
@@ -124,7 +159,7 @@ export function getUncategorizedMarks(): ResultAsync<
     return ResultAsync.fromPromise(
         _getUncategorizedMarks(),
         unknownDbError,
-    ).map(marks => marks.map(createSeriesTitleWithEpisode));
+    ).map(marks => marks.map(createMarkWithSeries));
 }
 
 async function _getCategoryByNormalizedName(name: string, exceptId?: number) {

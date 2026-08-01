@@ -98,3 +98,21 @@ export function updateMark(
         maybeCategoryFKError,
     ).andThen(updated => (updated ? okAsync() : errAsync(notFoundMarkError())));
 }
+
+async function _recordMarkClick(url: string): Promise<boolean> {
+    const marks = await db
+        .update(schema.marks)
+        .set({ lastClickedAt: new Date() })
+        .where(eq(schema.marks.url, url))
+        .returning({ url: schema.marks.url });
+    return marks.length > 0;
+}
+
+export function recordMarkClick(
+    url: string,
+): ResultAsync<void, UnknownDbError | NotFoundMarkError> {
+    return ResultAsync.fromPromise(
+        _recordMarkClick(url),
+        unknownDbError,
+    ).andThen(updated => (updated ? okAsync() : errAsync(notFoundMarkError())));
+}
