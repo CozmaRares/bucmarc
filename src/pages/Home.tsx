@@ -1,5 +1,6 @@
 import { getCategorizedMarks, getUncategorizedMarks } from "@/db/dal";
 import type { Category, MarkWithSeries } from "@/db/dal";
+import { assetPath } from "@/lib/assets";
 import { serverError, type Page, type PageLoadError } from "./types";
 import { ResultAsync } from "neverthrow";
 
@@ -126,10 +127,10 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
             <EditMarkDialog categories={categorizedMarks} />
             <link
                 rel="stylesheet"
-                href="/public/home/style.css"
+                href={assetPath("/home/style.css")}
             />
             <script
-                src="/public/home/script.js"
+                src={assetPath("/home/script.js")}
                 defer
             />
         </>

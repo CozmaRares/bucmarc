@@ -5,7 +5,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY package.json bun.lock .
-RUN bun install --frozen-lockfile
+RUN HUSKY=0 bun install --frozen-lockfile
 
 COPY . .
 

@@ -4,6 +4,7 @@ import type { Page } from "@/pages/types";
 import { HomePage } from "@/pages/Home";
 import { SeriesPage } from "@/pages/Series";
 import { env } from "@/env";
+import { assetPath } from "@/lib/assets";
 
 const pageRouter = new Hono();
 export default pageRouter;
@@ -35,14 +36,14 @@ const Layout: FC<LayoutProps> = ({ children, currentPath }) => {
                 />
                 <link
                     rel="stylesheet"
-                    href="/public/reset.css"
+                    href={assetPath("/reset.css")}
                 />
                 <link
                     rel="stylesheet"
-                    href="/public/app.css"
+                    href={assetPath("/app.css")}
                 />
                 <script
-                    src="/public/app.js"
+                    src={assetPath("/app.js")}
                     defer
                 />
                 <title>Bucmarc</title>

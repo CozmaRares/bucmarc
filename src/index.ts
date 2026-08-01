@@ -13,6 +13,11 @@ const logger = createLogger("server");
 
 const app = new Hono();
 
+const STATIC_ASSET_CACHE_CONTROL =
+    env.NODE_ENV === "production"
+        ? "private, max-age=31536000, immutable"
+        : "no-cache";
+
 app.use("*", clerkMiddleware());
 app.use(requireAuth);
 
@@ -46,6 +51,9 @@ app.use(
     serveStatic({
         root: "./public",
         rewriteRequestPath: path => path.replace(/^\/public/, ""),
+        onFound: (_path, c) => {
+            c.header("Cache-Control", STATIC_ASSET_CACHE_CONTROL);
+        },
     }),
 );
 app.use(
@@ -53,6 +61,9 @@ app.use(
     serveStatic({
         root: "./public",
         path: "./robots.txt",
+        onFound: (_path, c) => {
+            c.header("Cache-Control", STATIC_ASSET_CACHE_CONTROL);
+        },
     }),
 );
 

@@ -1,5 +1,6 @@
 import { getSeries } from "@/db/dal";
 import type { Series } from "@/db/dal";
+import { assetPath } from "@/lib/assets";
 import { serverError, type Page, type PageLoadError } from "./types";
 import type { Context } from "hono";
 import { ResultAsync } from "neverthrow";
@@ -43,10 +44,10 @@ function component({ series }: Props) {
             <EditSeriesDialog />
             <link
                 rel="stylesheet"
-                href="/public/series/style.css"
+                href={assetPath("/series/style.css")}
             />
             <script
-                src="/public/series/script.js"
+                src={assetPath("/series/script.js")}
                 defer
             />
         </>
