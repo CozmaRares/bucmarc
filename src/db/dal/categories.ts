@@ -1,4 +1,4 @@
-import { db } from "../connection";
+import { dbQuery } from "../connection";
 import { and, asc, desc, eq, ne, isNotNull, isNull, sql } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -87,32 +87,44 @@ function createMarkWithSeries(row: {
 }
 
 async function _getCategorizedMarks() {
-    const categories = await db.query.categories.findMany({
-        columns: {
-            id: true,
-            name: true,
-            sortOrder: true,
-        },
-        orderBy: [
-            desc(schema.categories.sortOrder),
-            desc(schema.categories.updatedAt),
-        ],
-    });
+    const categories = await dbQuery("get categories", db =>
+        db.query.categories.findMany({
+            columns: {
+                id: true,
+                name: true,
+                sortOrder: true,
+            },
+            orderBy: [
+                desc(schema.categories.sortOrder),
+                desc(schema.categories.updatedAt),
+            ],
+        }),
+    );
 
-    const marks = await db
-        .select({
-            url: schema.marks.url,
-            title: schema.marks.title,
-            categoryId: schema.marks.categoryId,
-            lastClickedAt: schema.marks.lastClickedAt,
-            createdAt: schema.marks.createdAt,
-            seriesTitle: schema.series.title,
-            seriesPattern: schema.series.pattern,
-        })
-        .from(schema.marks)
-        .leftJoin(schema.series, eq(schema.series.markUrl, schema.marks.url))
-        .where(isNotNull(schema.marks.categoryId))
-        .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt));
+    const marks = await dbQuery(
+        "get marks with a category joined with series",
+        db =>
+            db
+                .select({
+                    url: schema.marks.url,
+                    title: schema.marks.title,
+                    categoryId: schema.marks.categoryId,
+                    lastClickedAt: schema.marks.lastClickedAt,
+                    createdAt: schema.marks.createdAt,
+                    seriesTitle: schema.series.title,
+                    seriesPattern: schema.series.pattern,
+                })
+                .from(schema.marks)
+                .leftJoin(
+                    schema.series,
+                    eq(schema.series.markUrl, schema.marks.url),
+                )
+                .where(isNotNull(schema.marks.categoryId))
+                .orderBy(
+                    asc(schema.series.updatedAt),
+                    asc(schema.marks.createdAt),
+                ),
+    );
 
     const marksByCategoryId = new Map<number, MarkWithSeries[]>();
 
@@ -137,20 +149,25 @@ export function getCategorizedMarks(): ResultAsync<
 }
 
 function _getUncategorizedMarks() {
-    return db
-        .select({
-            url: schema.marks.url,
-            title: schema.marks.title,
-            categoryId: schema.marks.categoryId,
-            lastClickedAt: schema.marks.lastClickedAt,
-            createdAt: schema.marks.createdAt,
-            seriesTitle: schema.series.title,
-            seriesPattern: schema.series.pattern,
-        })
-        .from(schema.marks)
-        .leftJoin(schema.series, eq(schema.series.markUrl, schema.marks.url))
-        .where(isNull(schema.marks.categoryId))
-        .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt));
+    return dbQuery("get marks without a category joined with series", db =>
+        db
+            .select({
+                url: schema.marks.url,
+                title: schema.marks.title,
+                categoryId: schema.marks.categoryId,
+                lastClickedAt: schema.marks.lastClickedAt,
+                createdAt: schema.marks.createdAt,
+                seriesTitle: schema.series.title,
+                seriesPattern: schema.series.pattern,
+            })
+            .from(schema.marks)
+            .leftJoin(
+                schema.series,
+                eq(schema.series.markUrl, schema.marks.url),
+            )
+            .where(isNull(schema.marks.categoryId))
+            .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt)),
+    );
 }
 export function getUncategorizedMarks(): ResultAsync<
     MarkWithSeries[],
@@ -170,11 +187,15 @@ async function _getCategoryByNormalizedName(name: string, exceptId?: number) {
             ? normalizedNamePredicate
             : and(normalizedNamePredicate, ne(schema.categories.id, exceptId));
 
-    const categories = await db
-        .select({ id: schema.categories.id })
-        .from(schema.categories)
-        .where(where)
-        .limit(1);
+    const categories = await dbQuery(
+        "search categories for possible name duplicates",
+        db =>
+            db
+                .select({ id: schema.categories.id })
+                .from(schema.categories)
+                .where(where)
+                .limit(1),
+    );
 
     return categories[0] ?? null;
 }
@@ -186,7 +207,9 @@ async function _createCategory(name: string) {
         return { type: "duplicate" } as const;
     }
 
-    await db.insert(schema.categories).values({ name });
+    await dbQuery("create category", db =>
+        db.insert(schema.categories).values({ name }),
+    );
     return { type: "created" } as const;
 }
 export function createCategory(
@@ -209,11 +232,14 @@ async function _updateCategory(id: number, name: string, sortOrder: number) {
         return "duplicate" as const;
     }
 
-    const categories = await db
-        .update(schema.categories)
-        .set({ name, sortOrder })
-        .where(eq(schema.categories.id, id))
-        .returning({ id: schema.categories.id });
+    const categories = await dbQuery("update category", db =>
+        db
+            .update(schema.categories)
+            .set({ name, sortOrder })
+            .where(eq(schema.categories.id, id))
+            .returning({ id: schema.categories.id }),
+    );
+
     return categories.length > 0
         ? ("updated" as const)
         : ("not_found" as const);
@@ -242,10 +268,12 @@ export function updateCategory(
 }
 
 async function _deleteCategory(id: number) {
-    const categories = await db
-        .delete(schema.categories)
-        .where(eq(schema.categories.id, id))
-        .returning({ id: schema.categories.id });
+    const categories = await dbQuery("delete category", db =>
+        db
+            .delete(schema.categories)
+            .where(eq(schema.categories.id, id))
+            .returning({ id: schema.categories.id }),
+    );
     return categories.length > 0;
 }
 export function deleteCategory(

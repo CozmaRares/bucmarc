@@ -4,16 +4,25 @@ import { env } from "@/env";
 import { createLogger } from "@/lib/logger";
 import chalk from "chalk";
 
-export const db = drizzle(env.DB_FILE_NAME, {
+const logger = createLogger("db");
+
+const db = drizzle(env.DB_FILE_NAME, {
     schema,
     casing: "snake_case",
     logger: {
         logQuery(query: string, params: unknown[]) {
-            const logger = createLogger("db");
             logger.info(colorQuery(query), "--", `{ ${colorParams(params)} }`);
         },
     },
 });
+
+export async function dbQuery<T>(
+    purpose: string,
+    callback: (database: typeof db) => PromiseLike<T>,
+): Promise<T> {
+    logger.info(chalk.green(purpose));
+    return await callback(db);
+}
 
 function colorQuery(query: string) {
     return chalk.magenta(query);

@@ -1,4 +1,4 @@
-import { db } from "../connection";
+import { dbQuery } from "../connection";
 import { eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -37,7 +37,7 @@ export function isNotFoundMarkError(error: {
 }
 
 async function _saveMark(url: string) {
-    await db.insert(schema.marks).values({ url });
+    await dbQuery("insert mark", db => db.insert(schema.marks).values({ url }));
 }
 
 export function saveMark(
@@ -50,13 +50,12 @@ export function saveMark(
 }
 
 async function _deleteMark(url: string) {
-    const marks = await db
-        .delete(schema.marks)
-        .where(eq(schema.marks.url, url))
-        .returning({
+    const marks = await dbQuery("delete mark", db =>
+        db.delete(schema.marks).where(eq(schema.marks.url, url)).returning({
             url: schema.marks.url,
             categoryId: schema.marks.categoryId,
-        });
+        }),
+    );
     return marks[0] ?? null;
 }
 export function deleteMark(
@@ -78,14 +77,16 @@ async function _updateMark(
     title: string | null | undefined,
     categoryId: number | null,
 ): Promise<boolean> {
-    const marks = await db
-        .update(schema.marks)
-        .set({
-            title,
-            categoryId,
-        })
-        .where(eq(schema.marks.url, url))
-        .returning({ url: schema.marks.url });
+    const marks = await dbQuery("update mark", db =>
+        db
+            .update(schema.marks)
+            .set({
+                title,
+                categoryId,
+            })
+            .where(eq(schema.marks.url, url))
+            .returning({ url: schema.marks.url }),
+    );
     return marks.length > 0;
 }
 export function updateMark(
@@ -100,11 +101,13 @@ export function updateMark(
 }
 
 async function _recordMarkClick(url: string): Promise<boolean> {
-    const marks = await db
-        .update(schema.marks)
-        .set({ lastClickedAt: new Date() })
-        .where(eq(schema.marks.url, url))
-        .returning({ url: schema.marks.url });
+    const marks = await dbQuery("record mark click", db =>
+        db
+            .update(schema.marks)
+            .set({ lastClickedAt: new Date() })
+            .where(eq(schema.marks.url, url))
+            .returning({ url: schema.marks.url }),
+    );
     return marks.length > 0;
 }
 

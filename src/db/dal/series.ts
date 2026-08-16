@@ -1,4 +1,4 @@
-import { db } from "../connection";
+import { dbQuery } from "../connection";
 import { desc, eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
@@ -40,15 +40,17 @@ export function isNotFoundSeriesError(error: {
 }
 
 function _getSeries() {
-    return db
-        .select({
-            id: schema.series.id,
-            title: schema.series.title,
-            pattern: schema.series.pattern,
-            markUrl: schema.series.markUrl,
-        })
-        .from(schema.series)
-        .orderBy(desc(schema.series.updatedAt));
+    return dbQuery("get series", db =>
+        db
+            .select({
+                id: schema.series.id,
+                title: schema.series.title,
+                pattern: schema.series.pattern,
+                markUrl: schema.series.markUrl,
+            })
+            .from(schema.series)
+            .orderBy(desc(schema.series.updatedAt)),
+    );
 }
 export function getSeries(): ResultAsync<Series[], UnknownDbError> {
     return ResultAsync.fromPromise(_getSeries(), unknownDbError);
@@ -61,7 +63,9 @@ async function _createSeries(title: string, pattern: string) {
         return { type: "invalid_pattern", error } as const;
     }
 
-    await db.insert(schema.series).values({ title, pattern });
+    await dbQuery("create series", db =>
+        db.insert(schema.series).values({ title, pattern }),
+    );
 
     return { type: "created" } as const;
 }
@@ -89,11 +93,13 @@ async function _updateSeries(id: number, title: string, pattern: string) {
         return { type: "invalid_pattern", error } as const;
     }
 
-    const updated = await db
-        .update(schema.series)
-        .set({ title, pattern })
-        .where(eq(schema.series.id, id))
-        .returning({ id: schema.series.id });
+    const updated = await dbQuery("update series", db =>
+        db
+            .update(schema.series)
+            .set({ title, pattern })
+            .where(eq(schema.series.id, id))
+            .returning({ id: schema.series.id }),
+    );
 
     return {
         type: updated.length > 0 ? "updated" : "not_found",
@@ -124,27 +130,29 @@ export function updateSeries(
 
 // return the previous mark url for later deletion
 function _assignMarkToSeries(markUrl: string, seriesId: number) {
-    return db.transaction(async tx => {
-        const current = await tx.query.series.findFirst({
-            where: eq(schema.series.id, seriesId),
-        });
+    return dbQuery("transaction to assign mark to series", db =>
+        db.transaction(async tx => {
+            const current = await tx.query.series.findFirst({
+                where: eq(schema.series.id, seriesId),
+            });
 
-        if (!current) {
-            return { error: "not_found_series" } as const;
-        }
+            if (!current) {
+                return { error: "not_found_series" } as const;
+            }
 
-        const updated = await tx
-            .update(schema.series)
-            .set({ markUrl })
-            .where(eq(schema.series.id, seriesId))
-            .returning({ id: schema.series.id });
+            const updated = await tx
+                .update(schema.series)
+                .set({ markUrl })
+                .where(eq(schema.series.id, seriesId))
+                .returning({ id: schema.series.id });
 
-        if (updated.length === 0) {
-            return { error: "not_found_mark" } as const;
-        }
+            if (updated.length === 0) {
+                return { error: "not_found_mark" } as const;
+            }
 
-        return { success: current.markUrl };
-    });
+            return { success: current.markUrl };
+        }),
+    );
 }
 export function assignMarkToSeries(
     markUrl: string,
@@ -169,10 +177,12 @@ export function assignMarkToSeries(
 }
 
 async function _deleteSeries(id: number) {
-    const deleted = await db
-        .delete(schema.series)
-        .where(eq(schema.series.id, id))
-        .returning({ id: schema.series.id });
+    const deleted = await dbQuery("delete series", db =>
+        db
+            .delete(schema.series)
+            .where(eq(schema.series.id, id))
+            .returning({ id: schema.series.id }),
+    );
 
     return {
         type: deleted.length > 0 ? "deleted" : "not_found",
