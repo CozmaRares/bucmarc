@@ -10,17 +10,20 @@
         "db:studio": "drizzle-kit studio",
         "db:generate": "drizzle-kit generate",
         "db:migrate": "drizzle-kit migrate",
+        "lint": "eslint .",
         "start": "bun dist/index.js",
         "typecheck": "tsc --noEmit",
         "knip": "SKIP_ENV_VALIDATION=true knip",
-        "check": "bun run typecheck && bun run knip",
+        "check": "bun run typecheck && bun run lint && bun run knip",
         "build": "bun run check && bun build src/index.ts --outdir=dist --target=bun",
         "prepare": "husky"
     },
     "devDependencies": {
         "@types/bun": "1.3.14",
         "@types/node": "26.1.0",
+        "@typescript-eslint/parser": "8.67.0",
         "drizzle-kit": "0.31.10",
+        "eslint": "10.8.1",
         "husky": "9.1.7",
         "knip": "6.24.0",
         "prettier": "3.8.3"
