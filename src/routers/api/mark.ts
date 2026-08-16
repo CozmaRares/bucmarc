@@ -28,7 +28,7 @@ const markFieldsValidators = {
 
 export const MARK_SAVE_URL_PREFIX = "/api/mark/save/";
 markRouter.get("/save/:url", c => {
-    const url = decodeUrl(c.req.param("url"));
+    const url = c.req.param("url");
 
     // don't redirect back to the saved URL
     const noRedirect = c.req.query("no-redirect") !== undefined;
@@ -62,9 +62,10 @@ markRouter.get("/save/:url", c => {
     );
 });
 
-export const MARK_OPEN_URL = (url: string) => `/api/mark/open/${encodeURIComponent(url)}`;
+export const MARK_OPEN_URL = (url: string) =>
+    `/api/mark/open/${encodeURIComponent(url)}`;
 markRouter.get("/open/:url", c => {
-    const url = decodeUrl(c.req.param("url"));
+    const url = c.req.param("url");
 
     return recordMarkClick(url).match(
         () => c.redirect(url),
@@ -144,14 +145,6 @@ markRouter.post("/delete", zValidator("form", markDeleteSchema), c => {
         },
     );
 });
-
-function decodeUrl(url: string) {
-    try {
-        return decodeURIComponent(url);
-    } catch {
-        return url;
-    }
-}
 
 const saveUrlSchema = z.url().refine(url => {
     const protocol = new URL(url).protocol;
