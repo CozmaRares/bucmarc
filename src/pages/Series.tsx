@@ -122,9 +122,7 @@ function CreateSeriesDialog() {
                             name="matchType"
                             required
                         >
-                            <option value="deterministic">
-                                Deterministic
-                            </option>
+                            <option value="deterministic">Deterministic</option>
                             <option value="ambiguous">Ambiguous</option>
                         </select>
                     </label>
@@ -195,9 +193,7 @@ function EditSeriesDialog() {
                             data-edit-series-dialog-input-match-type
                             required
                         >
-                            <option value="deterministic">
-                                Deterministic
-                            </option>
+                            <option value="deterministic">Deterministic</option>
                             <option value="ambiguous">Ambiguous</option>
                         </select>
                     </label>

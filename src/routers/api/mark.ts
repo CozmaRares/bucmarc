@@ -27,7 +27,7 @@ const markFieldsValidators = {
 };
 
 export const MARK_SAVE_URL_PREFIX = "/api/mark/save/";
-markRouter.get("/save/:url", c => {
+markRouter.get("/save/:url", async c => {
     const url = c.req.param("url");
 
     // don't redirect back to the saved URL
@@ -40,11 +40,15 @@ markRouter.get("/save/:url", c => {
         });
     }
 
-    return saveMark(url).match(
-        () => {
-            jobQueue.start();
-            const path = noRedirect ? HOME_PAGE_URL : url;
-            return successRedirect(c, { path });
+    return await saveMark(url).match(
+        async () => {
+            if (!noRedirect) {
+                void jobQueue.start();
+                return successRedirect(c, { path: url });
+            }
+
+            await jobQueue.start();
+            return successRedirect(c, { path: HOME_PAGE_URL });
         },
         error => {
             if (isDuplicateMarkUrlError(error)) {

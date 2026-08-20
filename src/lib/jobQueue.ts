@@ -9,77 +9,106 @@ import {
     takeAllPendingJobs,
     replaceMarkSeriesCandidates,
 } from "@/db/dal";
+import type { Series } from "@/db/dal";
 import { createLogger } from "./logger";
-import { okAsync, ResultAsync } from "neverthrow";
+import { okAsync, ResultAsync, errAsync } from "neverthrow";
 
 const logger = createLogger("job queue");
 
 class JobQueue {
-    private running = false;
+    private runningPromise: Promise<void> | null = null;
 
-    start() {
-        if (this.running) {
-            return;
+    start(): Promise<void> {
+        if (!this.runningPromise) {
+            this.runningPromise = this.run().finally(() => {
+                this.runningPromise = null;
+            });
         }
 
-        void this.run();
+        return this.runningPromise;
     }
 
     private async run() {
-        this.running = true;
+        while (true) {
+            const shouldContinue = await ResultAsync.combine([
+                getSeries(),
+                takeAllPendingJobs(),
+            ])
+                .andThen(([seriesArr, jobs]) => {
+                    logger.info(`Found ${jobs.length} pending jobs`);
 
-        await ResultAsync.combine([getSeries(), takeAllPendingJobs()])
-            .andThen(([seriesArr, jobs]) => {
-                logger.info(`Found ${jobs.length} pending jobs`);
+                    if (jobs.length === 0) {
+                        return okAsync(false);
+                    }
 
-                return jobs.reduce(function reduce(
-                    acc: ResultAsync<void, DbError>,
-                    job,
-                ): ResultAsync<void, DbError> {
-                    return acc.andThen(() => {
-                        const ambiguousSeriesIds: number[] = [];
+                    return jobs
+                        .reduce((acc: ResultAsync<void, DbError>, job) => {
+                            return acc.andThen(() =>
+                                this.processJob(seriesArr, job),
+                            );
+                        }, okAsync())
+                        .map(() => true);
+                })
+                .andThen(() =>
+                    ResultAsync.fromPromise(cleanQueue(), error => ({
+                        type: "unknown_db_error",
+                        error,
+                    })),
+                )
+                .orElse(error => {
+                    logger.error(error);
+                    return errAsync(error);
+                })
+                .match(
+                    shouldContinue => shouldContinue,
+                    () => false,
+                );
 
-                        for (const series of seriesArr) {
-                            if (!new RegExp(series.pattern).test(job.markUrl)) {
-                                continue;
-                            }
+            if (!shouldContinue) {
+                break;
+            }
+        }
+    }
 
-                            if (series.matchType === "deterministic") {
-                                return assignMarkToSeries(job.markUrl, series.id)
-                                    .andThen(markUrl =>
-                                        markUrl
-                                            ? deleteMark(markUrl)
-                                            : okAsync(null),
-                                    )
-                                    .andThen(deleted =>
-                                        deleted?.categoryId != null
-                                            ? updateMark(
-                                                  job.markUrl,
-                                                  undefined,
-                                                  deleted.categoryId,
-                                              )
-                                            : okAsync(),
-                                    )
-                                    .andThen(() => completeJob(job.id));
-                            }
+    private processJob(
+        seriesArr: Series[],
+        job: { id: number; markUrl: string },
+    ): ResultAsync<void, DbError> {
+        const ambiguousSeriesIds: number[] = [];
 
-                            ambiguousSeriesIds.push(series.id);
-                        }
+        for (const series of seriesArr) {
+            if (!new RegExp(series.pattern).test(job.markUrl)) {
+                continue;
+            }
 
-                        if (ambiguousSeriesIds.length === 0) {
-                            return completeJob(job.id);
-                        }
+            if (series.matchType === "deterministic") {
+                return assignMarkToSeries(job.markUrl, series.id)
+                    .andThen(markUrl =>
+                        markUrl ? deleteMark(markUrl) : okAsync(null),
+                    )
+                    .andThen(deleted =>
+                        deleted?.categoryId != null
+                            ? updateMark(
+                                  job.markUrl,
+                                  undefined,
+                                  deleted.categoryId,
+                              )
+                            : okAsync(),
+                    )
+                    .andThen(() => completeJob(job.id));
+            }
 
-                        return replaceMarkSeriesCandidates(
-                            job.markUrl,
-                            ambiguousSeriesIds,
-                        ).andThen(() => completeJob(job.id));
-                    });
-                }, okAsync());
-            })
-            .match(cleanQueue, logger.error);
+            ambiguousSeriesIds.push(series.id);
+        }
 
-        this.running = false;
+        if (ambiguousSeriesIds.length === 0) {
+            return completeJob(job.id);
+        }
+
+        return replaceMarkSeriesCandidates(
+            job.markUrl,
+            ambiguousSeriesIds,
+        ).andThen(() => completeJob(job.id));
     }
 }
 

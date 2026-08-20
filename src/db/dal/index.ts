@@ -34,10 +34,7 @@ export {
     isNotFoundSeriesError,
     updateSeries,
 } from "./series";
-export type {
-    InvalidSeriesPatternError,
-    NotFoundSeriesError,
-} from "./series";
+export type { InvalidSeriesPatternError, NotFoundSeriesError } from "./series";
 export { isCategoryFKError, isUniqueConstraintError } from "./utils";
 export type { CategoryFKError, DbError, UnknownDbError } from "./utils";
 export type {

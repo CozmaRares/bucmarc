@@ -119,4 +119,4 @@ function colorDuration(duration: number) {
     return chalk.green(durationText);
 }
 
-jobQueue.start();
+void jobQueue.start();
