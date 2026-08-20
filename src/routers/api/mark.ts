@@ -5,6 +5,7 @@ import {
     saveMark,
     updateMark,
 } from "@/db/dal";
+import type { AmbiguousMarkResolution } from "@/db/dal";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
@@ -143,7 +144,7 @@ markRouter.post("/resolve-ambiguous", async c => {
         });
     }
 
-    const resolutions = [];
+    const resolutions: AmbiguousMarkResolution[] = [];
 
     for (let i = 0; i < count; i++) {
         const markUrl = body[`markUrl_${i}`];
@@ -158,13 +159,29 @@ markRouter.post("/resolve-ambiguous", async c => {
         }
 
         const parsedUrl = markFieldsValidators.url.safeParse(markUrl);
+
+        if (!parsedUrl.success) {
+            return errorRedirect(c, {
+                path: HOME_PAGE_URL,
+                message: "The ambiguous Marks could not be resolved.",
+            });
+        }
+
+        if (seriesId === "") {
+            resolutions.push({
+                type: "no_match",
+                markUrl: parsedUrl.data,
+            });
+            continue;
+        }
+
         const parsedSeriesId = z.coerce
             .number()
             .int()
             .positive()
             .safeParse(seriesId);
 
-        if (!parsedUrl.success || !parsedSeriesId.success) {
+        if (!parsedSeriesId.success) {
             return errorRedirect(c, {
                 path: HOME_PAGE_URL,
                 message: "The ambiguous Marks could not be resolved.",
@@ -172,6 +189,7 @@ markRouter.post("/resolve-ambiguous", async c => {
         }
 
         resolutions.push({
+            type: "series",
             markUrl: parsedUrl.data,
             seriesId: parsedSeriesId.data,
             episode:

@@ -66,16 +66,22 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
         getPendingAmbiguousMarks(),
         getUncategorizedMarks(),
     ])
-        .map(([categorizedMarks, pendingAmbiguousMarks, uncategorizedMarks]) => ({
-            categorizedMarks: categorizedMarks.map(category => ({
-                ...category,
-                marks: category.marks.map(createMarkWithIndicators),
-            })),
-            pendingAmbiguousMarks,
-            uncategorizedMarks: uncategorizedMarks.map(
-                createMarkWithIndicators,
-            ),
-        }))
+        .map(
+            ([
+                categorizedMarks,
+                pendingAmbiguousMarks,
+                uncategorizedMarks,
+            ]) => ({
+                categorizedMarks: categorizedMarks.map(category => ({
+                    ...category,
+                    marks: category.marks.map(createMarkWithIndicators),
+                })),
+                pendingAmbiguousMarks,
+                uncategorizedMarks: uncategorizedMarks.map(
+                    createMarkWithIndicators,
+                ),
+            }),
+        )
         .mapErr(serverError);
 }
 
@@ -210,6 +216,7 @@ function ResolveAmbiguousMarksDialog({
                                     name={`seriesId_${index}`}
                                     required
                                 >
+                                    <option value="">No match</option>
                                     {mark.candidates.map(candidate => (
                                         <option value={candidate.seriesId}>
                                             {candidate.seriesTitle}

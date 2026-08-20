@@ -19,7 +19,10 @@ export {
     replaceMarkSeriesCandidates,
     resolveAmbiguousMarks,
 } from "./markSeriesCandidates";
-export type { PendingAmbiguousMark } from "./markSeriesCandidates";
+export type {
+    AmbiguousMarkResolution,
+    PendingAmbiguousMark,
+} from "./markSeriesCandidates";
 export {
     deleteMark,
     isDuplicateMarkUrlError,

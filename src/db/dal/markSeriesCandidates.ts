@@ -65,10 +65,7 @@ async function _getPendingAmbiguousMarks(): Promise<PendingAmbiguousMark[]> {
                 schema.series,
                 eq(schema.series.id, schema.markSeriesCandidates.seriesId),
             )
-            .leftJoin(
-                schema.marks,
-                eq(schema.marks.url, schema.series.markUrl),
-            )
+            .leftJoin(schema.marks, eq(schema.marks.url, schema.series.markUrl))
             .orderBy(
                 asc(schema.markSeriesCandidates.markUrl),
                 desc(schema.marks.lastClickedAt),
@@ -102,16 +99,34 @@ export function getPendingAmbiguousMarks(): ResultAsync<
     return ResultAsync.fromPromise(_getPendingAmbiguousMarks(), unknownDbError);
 }
 
-type AmbiguousMarkResolution = {
-    markUrl: string;
-    seriesId: number;
-    episode: string | null;
-};
+export type AmbiguousMarkResolution =
+    | {
+          type: "series";
+          markUrl: string;
+          seriesId: number;
+          episode: string | null;
+      }
+    | {
+          type: "no_match";
+          markUrl: string;
+      };
 
 async function _resolveAmbiguousMarks(resolutions: AmbiguousMarkResolution[]) {
     return await dbQuery("resolve ambiguous marks", db =>
         db.transaction(async tx => {
             for (const resolution of resolutions) {
+                if (resolution.type === "no_match") {
+                    await tx
+                        .delete(schema.markSeriesCandidates)
+                        .where(
+                            eq(
+                                schema.markSeriesCandidates.markUrl,
+                                resolution.markUrl,
+                            ),
+                        );
+                    continue;
+                }
+
                 const candidate = await tx.query.markSeriesCandidates.findFirst(
                     {
                         where: (candidate, { and, eq }) =>
@@ -136,10 +151,7 @@ async function _resolveAmbiguousMarks(resolutions: AmbiguousMarkResolution[]) {
 
                 let carriedCategoryId: number | null = null;
 
-                if (
-                    current.markUrl &&
-                    current.markUrl !== resolution.markUrl
-                ) {
+                if (current.markUrl && current.markUrl !== resolution.markUrl) {
                     const oldMarks = await tx
                         .delete(schema.marks)
                         .where(eq(schema.marks.url, current.markUrl))
