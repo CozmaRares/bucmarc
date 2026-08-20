@@ -221,8 +221,7 @@ function ResolveAmbiguousMarksDialog({
                                             value={candidate.seriesId}
                                             data-candidate-episode={
                                                 candidate.manualEpisode
-                                                    ? candidate.manualEpisode +
-                                                      1
+                                                    ? candidate.manualEpisode
                                                     : ""
                                             }
                                         >
