@@ -45,13 +45,18 @@ type SeriesDisplay = Pick<Series, "title"> & { episode: string };
 export type MarkWithSeries = Mark & { series: SeriesDisplay | null };
 
 function createSeriesTitleWithEpisode(
-    markWithSeries: Mark & { series: Pick<Series, "title" | "pattern"> | null },
+    markWithSeries: Mark & {
+        series: Pick<Series, "title" | "pattern" | "manualEpisode"> | null;
+    },
 ): MarkWithSeries {
     const { series, ...mark } = markWithSeries;
     const returned: MarkWithSeries = { ...mark, series: null };
 
     if (series) {
-        const episode = getEpisodeIdentity(series.pattern, mark.url) ?? "";
+        const episode =
+            series.manualEpisode ??
+            getEpisodeIdentity(series.pattern, mark.url) ??
+            "";
         returned.series = {
             title: series.title,
             episode,
@@ -69,6 +74,7 @@ function createMarkWithSeries(row: {
     createdAt: Date;
     seriesTitle: string | null;
     seriesPattern: string | null;
+    seriesManualEpisode: string | null;
 }) {
     return createSeriesTitleWithEpisode({
         url: row.url,
@@ -81,6 +87,7 @@ function createMarkWithSeries(row: {
                 ? {
                       title: row.seriesTitle,
                       pattern: row.seriesPattern,
+                      manualEpisode: row.seriesManualEpisode,
                   }
                 : null,
     });
@@ -113,6 +120,7 @@ async function _getCategorizedMarks() {
                     createdAt: schema.marks.createdAt,
                     seriesTitle: schema.series.title,
                     seriesPattern: schema.series.pattern,
+                    seriesManualEpisode: schema.series.manualEpisode,
                 })
                 .from(schema.marks)
                 .leftJoin(
@@ -159,6 +167,7 @@ function _getUncategorizedMarks() {
                 createdAt: schema.marks.createdAt,
                 seriesTitle: schema.series.title,
                 seriesPattern: schema.series.pattern,
+                seriesManualEpisode: schema.series.manualEpisode,
             })
             .from(schema.marks)
             .leftJoin(
