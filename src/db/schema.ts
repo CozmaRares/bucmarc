@@ -52,12 +52,13 @@ export const marks = sqliteTable(
     table => [uniqueIndex("mark_title_unique").on(table.title)],
 );
 
-export const marksRelations = relations(marks, ({ one }) => ({
+export const marksRelations = relations(marks, ({ one, many }) => ({
     category: one(categories, {
         fields: [marks.categoryId],
         references: [categories.id],
     }),
     series: one(series),
+    seriesCandidates: many(markSeriesCandidates),
 }));
 
 export const series = sqliteTable(
@@ -85,12 +86,50 @@ export const series = sqliteTable(
     ],
 );
 
-export const seriesRelations = relations(series, ({ one }) => ({
+export const seriesRelations = relations(series, ({ one, many }) => ({
     mark: one(marks, {
         fields: [series.markUrl],
         references: [marks.url],
     }),
+    candidates: many(markSeriesCandidates),
 }));
+
+export const markSeriesCandidates = sqliteTable(
+    "mark_series_candidates",
+    {
+        id: helpers.id(),
+        markUrl: text()
+            .notNull()
+            .references(() => marks.url, { onDelete: "cascade" }),
+        seriesId: integer({ mode: "number" })
+            .notNull()
+            .references(() => series.id, { onDelete: "cascade" }),
+        episode: text(),
+        createdAt: helpers.timestamp(),
+    },
+    table => [
+        uniqueIndex("mark_series_candidates_mark_url_series_id_unique").on(
+            table.markUrl,
+            table.seriesId,
+        ),
+        index("mark_series_candidates_mark_url_index").on(table.markUrl),
+        index("mark_series_candidates_series_id_index").on(table.seriesId),
+    ],
+);
+
+export const markSeriesCandidatesRelations = relations(
+    markSeriesCandidates,
+    ({ one }) => ({
+        mark: one(marks, {
+            fields: [markSeriesCandidates.markUrl],
+            references: [marks.url],
+        }),
+        series: one(series, {
+            fields: [markSeriesCandidates.seriesId],
+            references: [series.id],
+        }),
+    }),
+);
 
 const JOB_STATUSES = Object.freeze(["pending", "running", "done"] as const);
 export type JobStatus = (typeof JOB_STATUSES)[number];
@@ -107,3 +146,6 @@ type WithoutUpdatedAt<T extends Table> = Omit<InferSelectModel<T>, "updatedAt">;
 export type Category = WithoutUpdatedAt<typeof categories>;
 export type Mark = InferSelectModel<typeof marks>;
 export type Series = WithoutUpdatedAt<typeof series>;
+export type MarkSeriesCandidate = InferSelectModel<
+    typeof markSeriesCandidates
+>;

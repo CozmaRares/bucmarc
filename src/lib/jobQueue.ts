@@ -7,6 +7,7 @@ import {
     cleanQueue,
     completeJob,
     takeAllPendingJobs,
+    replaceMarkSeriesCandidates,
 } from "@/db/dal";
 import { createLogger } from "./logger";
 import { okAsync, ResultAsync } from "neverthrow";
@@ -36,28 +37,43 @@ class JobQueue {
                     job,
                 ): ResultAsync<void, DbError> {
                     return acc.andThen(() => {
-                        const matched = seriesArr.find(series =>
-                            new RegExp(series.pattern).test(job.markUrl),
-                        );
+                        const ambiguousSeriesIds: number[] = [];
 
-                        if (!matched) {
+                        for (const series of seriesArr) {
+                            if (!new RegExp(series.pattern).test(job.markUrl)) {
+                                continue;
+                            }
+
+                            if (series.matchType === "deterministic") {
+                                return assignMarkToSeries(job.markUrl, series.id)
+                                    .andThen(markUrl =>
+                                        markUrl
+                                            ? deleteMark(markUrl)
+                                            : okAsync(null),
+                                    )
+                                    .andThen(deleted =>
+                                        deleted?.categoryId != null
+                                            ? updateMark(
+                                                  job.markUrl,
+                                                  undefined,
+                                                  deleted.categoryId,
+                                              )
+                                            : okAsync(),
+                                    )
+                                    .andThen(() => completeJob(job.id));
+                            }
+
+                            ambiguousSeriesIds.push(series.id);
+                        }
+
+                        if (ambiguousSeriesIds.length === 0) {
                             return completeJob(job.id);
                         }
 
-                        return assignMarkToSeries(job.markUrl, matched.id)
-                            .andThen(markUrl =>
-                                markUrl ? deleteMark(markUrl) : okAsync(null),
-                            )
-                            .andThen(deleted =>
-                                deleted?.categoryId != null
-                                    ? updateMark(
-                                          job.markUrl,
-                                          undefined,
-                                          deleted.categoryId,
-                                      )
-                                    : okAsync(),
-                            )
-                            .andThen(() => completeJob(job.id));
+                        return replaceMarkSeriesCandidates(
+                            job.markUrl,
+                            ambiguousSeriesIds,
+                        ).andThen(() => completeJob(job.id));
                     });
                 }, okAsync());
             })

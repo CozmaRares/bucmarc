@@ -14,6 +14,7 @@ export type {
 } from "./categories";
 export { cleanQueue, completeJob, createJob, takeAllPendingJobs } from "./jobs";
 export type { NotFoundJobError } from "./jobs";
+export { replaceMarkSeriesCandidates } from "./markSeriesCandidates";
 export {
     deleteMark,
     isDuplicateMarkUrlError,
@@ -39,4 +40,10 @@ export type {
 } from "./series";
 export { isCategoryFKError, isUniqueConstraintError } from "./utils";
 export type { CategoryFKError, DbError, UnknownDbError } from "./utils";
-export type { Category, JobStatus, Mark, Series } from "../schema";
+export type {
+    Category,
+    JobStatus,
+    Mark,
+    MarkSeriesCandidate,
+    Series,
+} from "../schema";
