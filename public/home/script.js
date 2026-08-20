@@ -191,7 +191,26 @@ function setupResolveAmbiguousMarksDialog() {
         resolveAmbiguousMarksDialog.hidden = true;
     });
 
+    resolveAmbiguousMarksDialog
+        .querySelectorAll(".ambiguous-mark select")
+        .forEach(select => {
+            setAmbiguousMarkEpisode(select);
+            select.addEventListener("change", () =>
+                setAmbiguousMarkEpisode(select),
+            );
+        });
+
     resolveAmbiguousMarksDialog.hidden = false;
+}
+
+function setAmbiguousMarkEpisode(select) {
+    const mark = select.closest(".ambiguous-mark");
+    const episodeInput = mark.querySelector(
+        "[data-resolve-ambiguous-mark-episode]",
+    );
+    const selectedOption = select.selectedOptions[0];
+
+    episodeInput.value = selectedOption?.dataset.candidateEpisode ?? "";
 }
 
 function setupDeleteMarkForms() {

@@ -43,6 +43,7 @@ export function replaceMarkSeriesCandidates(
 type PendingCandidate = {
     seriesId: number;
     seriesTitle: string;
+    manualEpisode: string | null;
     lastClickedAt: Date | null;
 };
 
@@ -58,6 +59,7 @@ async function _getPendingAmbiguousMarks(): Promise<PendingAmbiguousMark[]> {
                 markUrl: schema.markSeriesCandidates.markUrl,
                 seriesId: schema.series.id,
                 seriesTitle: schema.series.title,
+                manualEpisode: schema.series.manualEpisode,
                 lastClickedAt: schema.marks.lastClickedAt,
             })
             .from(schema.markSeriesCandidates)
@@ -84,6 +86,7 @@ async function _getPendingAmbiguousMarks(): Promise<PendingAmbiguousMark[]> {
         mark.candidates.push({
             seriesId: row.seriesId,
             seriesTitle: row.seriesTitle,
+            manualEpisode: row.manualEpisode,
             lastClickedAt: row.lastClickedAt,
         });
         marks.set(row.markUrl, mark);

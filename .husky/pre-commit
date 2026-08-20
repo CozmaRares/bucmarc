@@ -5,3 +5,4 @@ cat > src/lib/assetVersion.ts <<EOF
 export const ASSET_VERSION = "$TIMESTAMP";
 EOF
 git add src/lib/assetVersion.ts
+bun check

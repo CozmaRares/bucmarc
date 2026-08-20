@@ -216,12 +216,20 @@ function ResolveAmbiguousMarksDialog({
                                     name={`seriesId_${index}`}
                                     required
                                 >
-                                    <option value="">No match</option>
                                     {mark.candidates.map(candidate => (
-                                        <option value={candidate.seriesId}>
+                                        <option
+                                            value={candidate.seriesId}
+                                            data-candidate-episode={
+                                                candidate.manualEpisode
+                                                    ? candidate.manualEpisode +
+                                                      1
+                                                    : ""
+                                            }
+                                        >
                                             {candidate.seriesTitle}
                                         </option>
                                     ))}
+                                    <option value="">No match</option>
                                 </select>
                             </label>
                             <label>
@@ -230,6 +238,7 @@ function ResolveAmbiguousMarksDialog({
                                     name={`episode_${index}`}
                                     type="number"
                                     step="any"
+                                    data-resolve-ambiguous-mark-episode
                                 />
                             </label>
                         </fieldset>
