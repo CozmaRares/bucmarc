@@ -31,7 +31,7 @@ export function isInvalidSeriesPatternError(error: {
     return error.type === "invalid_series_pattern";
 }
 
-const notFoundSeriesError = (): NotFoundSeriesError => ({
+export const notFoundSeriesError = (): NotFoundSeriesError => ({
     type: "not_found_series",
 });
 export function isNotFoundSeriesError(error: {

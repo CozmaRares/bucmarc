@@ -14,7 +14,12 @@ export type {
 } from "./categories";
 export { cleanQueue, completeJob, createJob, takeAllPendingJobs } from "./jobs";
 export type { NotFoundJobError } from "./jobs";
-export { replaceMarkSeriesCandidates } from "./markSeriesCandidates";
+export {
+    getPendingAmbiguousMarks,
+    replaceMarkSeriesCandidates,
+    resolveAmbiguousMarks,
+} from "./markSeriesCandidates";
+export type { PendingAmbiguousMark } from "./markSeriesCandidates";
 export {
     deleteMark,
     isDuplicateMarkUrlError,

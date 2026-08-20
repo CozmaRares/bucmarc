@@ -150,3 +150,16 @@ button {
         }
     }
 }
+
+.ambiguous-marks-form {
+    gap: 1rem;
+}
+
+.ambiguous-mark {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--secondary);
+    border-radius: 0.25rem;
+}

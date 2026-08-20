@@ -1,5 +1,9 @@
-import { getCategorizedMarks, getUncategorizedMarks } from "@/db/dal";
-import type { Category, MarkWithSeries } from "@/db/dal";
+import {
+    getCategorizedMarks,
+    getPendingAmbiguousMarks,
+    getUncategorizedMarks,
+} from "@/db/dal";
+import type { Category, MarkWithSeries, PendingAmbiguousMark } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
 import {
     CATEGORY_CREATE_URL,
@@ -9,6 +13,7 @@ import {
 import {
     MARK_DELETE_URL,
     MARK_OPEN_URL,
+    MARK_RESOLVE_AMBIGUOUS_URL,
     MARK_UPDATE_URL,
 } from "@/routers/api/mark";
 import { serverError, type Page, type PageLoadError } from "./types";
@@ -23,6 +28,7 @@ type MarkWithIndicators = MarkWithSeries & {
 
 type Props = {
     categorizedMarks: Array<Category & { marks: MarkWithIndicators[] }>;
+    pendingAmbiguousMarks: PendingAmbiguousMark[];
     uncategorizedMarks: MarkWithIndicators[];
 };
 
@@ -57,13 +63,15 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
 
     return ResultAsync.combineWithAllErrors([
         getCategorizedMarks(),
+        getPendingAmbiguousMarks(),
         getUncategorizedMarks(),
     ])
-        .map(([categorizedMarks, uncategorizedMarks]) => ({
+        .map(([categorizedMarks, pendingAmbiguousMarks, uncategorizedMarks]) => ({
             categorizedMarks: categorizedMarks.map(category => ({
                 ...category,
                 marks: category.marks.map(createMarkWithIndicators),
             })),
+            pendingAmbiguousMarks,
             uncategorizedMarks: uncategorizedMarks.map(
                 createMarkWithIndicators,
             ),
@@ -71,7 +79,11 @@ function dataLoader(): ResultAsync<Props, PageLoadError> {
         .mapErr(serverError);
 }
 
-function component({ categorizedMarks, uncategorizedMarks }: Props) {
+function component({
+    categorizedMarks,
+    pendingAmbiguousMarks,
+    uncategorizedMarks,
+}: Props) {
     return (
         <>
             {uncategorizedMarks.length > 0 && (
@@ -135,6 +147,9 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
             <CreateCategoryDialog />
             <EditCategoryDialog />
             <EditMarkDialog categories={categorizedMarks} />
+            <ResolveAmbiguousMarksDialog
+                pendingAmbiguousMarks={pendingAmbiguousMarks}
+            />
             <link
                 rel="stylesheet"
                 href={assetPath("/home/style.css")}
@@ -144,6 +159,92 @@ function component({ categorizedMarks, uncategorizedMarks }: Props) {
                 defer
             />
         </>
+    );
+}
+
+type ResolveAmbiguousMarksDialogProps = {
+    pendingAmbiguousMarks: PendingAmbiguousMark[];
+};
+
+function ResolveAmbiguousMarksDialog({
+    pendingAmbiguousMarks,
+}: ResolveAmbiguousMarksDialogProps) {
+    if (pendingAmbiguousMarks.length === 0) {
+        return null;
+    }
+
+    return (
+        <div
+            class="dialog"
+            data-resolve-ambiguous-marks-dialog
+            hidden
+        >
+            <div
+                class="dialog-content"
+                data-resolve-ambiguous-marks-dialog-content
+            >
+                <div class="dialog-header">
+                    <h2 class="dialog-title">Resolve Marks</h2>
+                </div>
+                <form
+                    class="dialog-form ambiguous-marks-form"
+                    action={MARK_RESOLVE_AMBIGUOUS_URL}
+                    method="post"
+                >
+                    <input
+                        name="count"
+                        type="hidden"
+                        value={pendingAmbiguousMarks.length}
+                    />
+                    {pendingAmbiguousMarks.map((mark, index) => (
+                        <fieldset class="ambiguous-mark">
+                            <legend class="break">{mark.markUrl}</legend>
+                            <input
+                                name={`markUrl_${index}`}
+                                type="hidden"
+                                value={mark.markUrl}
+                            />
+                            <label>
+                                Series
+                                <select
+                                    name={`seriesId_${index}`}
+                                    required
+                                >
+                                    {mark.candidates.map(candidate => (
+                                        <option value={candidate.seriesId}>
+                                            {candidate.seriesTitle}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>
+                                Episode
+                                <input
+                                    name={`episode_${index}`}
+                                    type="number"
+                                    step="any"
+                                />
+                            </label>
+                        </fieldset>
+                    ))}
+                    <div class="dialog-actions">
+                        <button
+                            class="dialog-cancel"
+                            type="button"
+                            data-resolve-ambiguous-marks-dialog-cancel
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            class="dialog-submit"
+                            type="submit"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 }
 

@@ -1,6 +1,7 @@
 setupCreateCategoryDialog();
 setupEditCategoryDialog();
 setupEditMarkDialog();
+setupResolveAmbiguousMarksDialog();
 setupDeleteMarkForms();
 setupDeleteCategoryForms();
 
@@ -158,6 +159,39 @@ function openEditMarkDialog(button) {
     categoryInput.value = categoryId;
 
     editMarkDialog.hidden = false;
+}
+
+function setupResolveAmbiguousMarksDialog() {
+    const resolveAmbiguousMarksDialog = document.querySelector(
+        "[data-resolve-ambiguous-marks-dialog]",
+    );
+
+    if (!resolveAmbiguousMarksDialog) {
+        return;
+    }
+
+    const resolveAmbiguousMarksDialogContent =
+        resolveAmbiguousMarksDialog.querySelector(
+            "[data-resolve-ambiguous-marks-dialog-content]",
+        );
+    const resolveAmbiguousMarksCancelButton =
+        resolveAmbiguousMarksDialog.querySelector(
+            "[data-resolve-ambiguous-marks-dialog-cancel]",
+        );
+
+    resolveAmbiguousMarksDialogContent.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    resolveAmbiguousMarksDialog.addEventListener("click", () => {
+        resolveAmbiguousMarksDialog.hidden = true;
+    });
+
+    resolveAmbiguousMarksCancelButton.addEventListener("click", () => {
+        resolveAmbiguousMarksDialog.hidden = true;
+    });
+
+    resolveAmbiguousMarksDialog.hidden = false;
 }
 
 function setupDeleteMarkForms() {

@@ -1,4 +1,10 @@
-import { deleteMark, recordMarkClick, saveMark, updateMark } from "@/db/dal";
+import {
+    deleteMark,
+    recordMarkClick,
+    resolveAmbiguousMarks,
+    saveMark,
+    updateMark,
+} from "@/db/dal";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
@@ -7,6 +13,7 @@ import {
     isCategoryFKError,
     isDuplicateMarkUrlError,
     isNotFoundMarkError,
+    isNotFoundSeriesError,
 } from "@/db/dal";
 import { jobQueue } from "@/lib/jobQueue";
 import { HOME_PAGE_URL } from "../pagePaths";
@@ -119,6 +126,81 @@ markRouter.post("/update", zValidator("form", markUpdateSchema), c => {
             return errorRedirect(c, {
                 path: HOME_PAGE_URL,
                 message: "The Mark could not be updated.",
+            });
+        },
+    );
+});
+
+export const MARK_RESOLVE_AMBIGUOUS_URL = "/api/mark/resolve-ambiguous";
+markRouter.post("/resolve-ambiguous", async c => {
+    const body = await c.req.parseBody();
+    const count = Number(body.count);
+
+    if (!Number.isInteger(count) || count < 0) {
+        return errorRedirect(c, {
+            path: HOME_PAGE_URL,
+            message: "The ambiguous Marks could not be resolved.",
+        });
+    }
+
+    const resolutions = [];
+
+    for (let i = 0; i < count; i++) {
+        const markUrl = body[`markUrl_${i}`];
+        const seriesId = body[`seriesId_${i}`];
+        const episode = body[`episode_${i}`];
+
+        if (typeof markUrl !== "string" || typeof seriesId !== "string") {
+            return errorRedirect(c, {
+                path: HOME_PAGE_URL,
+                message: "The ambiguous Marks could not be resolved.",
+            });
+        }
+
+        const parsedUrl = markFieldsValidators.url.safeParse(markUrl);
+        const parsedSeriesId = z.coerce
+            .number()
+            .int()
+            .positive()
+            .safeParse(seriesId);
+
+        if (!parsedUrl.success || !parsedSeriesId.success) {
+            return errorRedirect(c, {
+                path: HOME_PAGE_URL,
+                message: "The ambiguous Marks could not be resolved.",
+            });
+        }
+
+        resolutions.push({
+            markUrl: parsedUrl.data,
+            seriesId: parsedSeriesId.data,
+            episode:
+                typeof episode === "string" && episode.trim() !== ""
+                    ? episode.trim()
+                    : null,
+        });
+    }
+
+    return await resolveAmbiguousMarks(resolutions).match(
+        () => successRedirect(c, { path: HOME_PAGE_URL }),
+        error => {
+            if (isNotFoundMarkError(error)) {
+                return errorRedirect(c, {
+                    path: HOME_PAGE_URL,
+                    message: "Mark not found",
+                });
+            }
+
+            if (isNotFoundSeriesError(error)) {
+                return errorRedirect(c, {
+                    path: HOME_PAGE_URL,
+                    message: "Series not found.",
+                });
+            }
+
+            return errorRedirect(c, {
+                path: HOME_PAGE_URL,
+                message: "The ambiguous Marks could not be resolved.",
             });
         },
     );
