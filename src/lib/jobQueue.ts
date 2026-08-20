@@ -4,8 +4,10 @@ import {
     deleteMark,
     updateMark,
     type DbError,
+    cleanQueue,
+    completeJob,
+    takeAllPendingJobs,
 } from "@/db/dal";
-import { cleanQueue, completeJob, takeAllPendingJobs } from "@/db/dal/jobs";
 import { createLogger } from "./logger";
 import { okAsync, ResultAsync } from "neverthrow";
 

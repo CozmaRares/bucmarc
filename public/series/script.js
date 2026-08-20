@@ -79,6 +79,9 @@ function openEditSeriesDialog(button) {
     const patternInput = editSeriesDialog.querySelector(
         "[data-edit-series-dialog-input-pattern]",
     );
+    const matchTypeInput = editSeriesDialog.querySelector(
+        "[data-edit-series-dialog-input-match-type]",
+    );
     const series = button.closest("[data-series]");
     const title = series.dataset.seriesTitle;
 
@@ -87,6 +90,7 @@ function openEditSeriesDialog(button) {
     titleInput.value = title;
     titleDisplay.textContent = title;
     patternInput.value = series.dataset.seriesPattern;
+    matchTypeInput.value = series.dataset.seriesMatchType;
 
     editSeriesDialog.dataset.seriesTitle = title;
     editSeriesDialog.hidden = false;

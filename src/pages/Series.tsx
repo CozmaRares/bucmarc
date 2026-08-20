@@ -76,6 +76,7 @@ function SeriesItem({ series }: SeriesItemProps) {
             data-series-id={series.id}
             data-series-title={series.title}
             data-series-pattern={series.pattern}
+            data-series-match-type={series.matchType}
         >
             <div
                 class="series-link-indicator"
@@ -114,6 +115,18 @@ function CreateSeriesDialog() {
                             type="text"
                             required
                         />
+                    </label>
+                    <label>
+                        Match Type
+                        <select
+                            name="matchType"
+                            required
+                        >
+                            <option value="deterministic">
+                                Deterministic
+                            </option>
+                            <option value="ambiguous">Ambiguous</option>
+                        </select>
                     </label>
                     <label>
                         Pattern
@@ -174,6 +187,19 @@ function EditSeriesDialog() {
                             data-edit-series-dialog-input-title
                             required
                         />
+                    </label>
+                    <label>
+                        Match Type
+                        <select
+                            name="matchType"
+                            data-edit-series-dialog-input-match-type
+                            required
+                        >
+                            <option value="deterministic">
+                                Deterministic
+                            </option>
+                            <option value="ambiguous">Ambiguous</option>
+                        </select>
                     </label>
                     <label>
                         Pattern

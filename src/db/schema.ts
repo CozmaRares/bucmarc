@@ -1,6 +1,8 @@
 import { relations, Table, type InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { SERIES_MATCH_TYPES } from "@/lib/constants";
 import {
+    check,
     index,
     integer,
     sqliteTable,
@@ -64,13 +66,20 @@ export const series = sqliteTable(
         id: helpers.id(),
         title: text().notNull(),
         pattern: text().notNull(),
+        matchType: text({ enum: SERIES_MATCH_TYPES })
+            .default("deterministic")
+            .notNull(),
+        manualEpisode: text(),
         markUrl: text().references(() => marks.url, {
             onDelete: "set null",
         }),
         updatedAt: helpers.updatedAt(),
     },
     table => [
-        uniqueIndex("series_pattern_unique").on(table.pattern),
+        check(
+            "series_deterministic_manual_episode_null",
+            sql`${table.matchType} <> 'deterministic' OR ${table.manualEpisode} IS NULL`,
+        ),
         uniqueIndex("series_mark_url_unique").on(table.markUrl),
         index("series_mark_url_unique_id_index").on(table.markUrl),
     ],

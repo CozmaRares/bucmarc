@@ -5,6 +5,7 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
 import { validateSeriesPattern } from "@/lib/seriesPattern";
 import type { Series } from "../schema";
+import type { SeriesMatchType } from "@/lib/constants";
 import { notFoundMarkError, type NotFoundMarkError } from "./marks";
 
 type PatternError = Exclude<
@@ -46,6 +47,8 @@ function _getSeries() {
                 id: schema.series.id,
                 title: schema.series.title,
                 pattern: schema.series.pattern,
+                matchType: schema.series.matchType,
+                manualEpisode: schema.series.manualEpisode,
                 markUrl: schema.series.markUrl,
             })
             .from(schema.series)
@@ -56,15 +59,19 @@ export function getSeries(): ResultAsync<Series[], UnknownDbError> {
     return ResultAsync.fromPromise(_getSeries(), unknownDbError);
 }
 
-async function _createSeries(title: string, pattern: string) {
-    const error = validateSeriesPattern(pattern);
+async function _createSeries(
+    title: string,
+    pattern: string,
+    matchType: SeriesMatchType,
+) {
+    const error = validateSeriesPattern(pattern, matchType);
 
     if (error) {
         return { type: "invalid_pattern", error } as const;
     }
 
     await dbQuery("create series", db =>
-        db.insert(schema.series).values({ title, pattern }),
+        db.insert(schema.series).values({ title, pattern, matchType }),
     );
 
     return { type: "created" } as const;
@@ -72,9 +79,10 @@ async function _createSeries(title: string, pattern: string) {
 export function createSeries(
     title: string,
     pattern: string,
+    matchType: SeriesMatchType,
 ): ResultAsync<void, UnknownDbError | InvalidSeriesPatternError> {
     return ResultAsync.fromPromise(
-        _createSeries(title, pattern),
+        _createSeries(title, pattern, matchType),
         unknownDbError,
     ).andThen(outcome => {
         switch (outcome.type) {
@@ -86,8 +94,13 @@ export function createSeries(
     });
 }
 
-async function _updateSeries(id: number, title: string, pattern: string) {
-    const error = validateSeriesPattern(pattern);
+async function _updateSeries(
+    id: number,
+    title: string,
+    pattern: string,
+    matchType: SeriesMatchType,
+) {
+    const error = validateSeriesPattern(pattern, matchType);
 
     if (error) {
         return { type: "invalid_pattern", error } as const;
@@ -96,7 +109,7 @@ async function _updateSeries(id: number, title: string, pattern: string) {
     const updated = await dbQuery("update series", db =>
         db
             .update(schema.series)
-            .set({ title, pattern })
+            .set({ title, pattern, matchType })
             .where(eq(schema.series.id, id))
             .returning({ id: schema.series.id }),
     );
@@ -109,12 +122,13 @@ export function updateSeries(
     id: number,
     title: string,
     pattern: string,
+    matchType: SeriesMatchType,
 ): ResultAsync<
     void,
     UnknownDbError | NotFoundSeriesError | InvalidSeriesPatternError
 > {
     return ResultAsync.fromPromise(
-        _updateSeries(id, title, pattern),
+        _updateSeries(id, title, pattern, matchType),
         unknownDbError,
     ).andThen(outcome => {
         switch (outcome.type) {

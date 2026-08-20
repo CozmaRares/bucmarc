@@ -58,24 +58,23 @@ const dbQueryConciseCallback = {
     },
 };
 
-const connectionImports = new Set([
-    "../connection",
-    "../connection.ts",
-    "@/db/connection",
-    "@/db/connection.ts",
+const allowedDbImportsOutsideDal = new Set([
+    "@/db/dal",
+    "@/db/dal/index",
+    "@/db/dal/index.ts",
 ]);
 
-const noConnectionImportOutsideDal = {
+const noPrivateDbImportOutsideDal = {
     meta: {
         type: "problem",
         docs: {
             description:
-                "Disallow importing the database connection outside the DAL.",
+                "Disallow importing private database modules outside the DAL.",
         },
         schema: [],
         messages: {
-            outsideDal:
-                "Database connection imports are only allowed from src/db/dal files.",
+            privateDbImport:
+                "Database imports outside src/db/dal must go through @/db/dal.",
         },
     },
     create(context) {
@@ -91,13 +90,18 @@ const noConnectionImportOutsideDal = {
                     return;
                 }
 
-                if (
-                    typeof node.source.value === "string" &&
-                    connectionImports.has(node.source.value)
-                ) {
+                if (typeof node.source.value !== "string") {
+                    return;
+                }
+
+                if (!node.source.value.startsWith("@/db/")) {
+                    return;
+                }
+
+                if (!allowedDbImportsOutsideDal.has(node.source.value)) {
                     context.report({
                         node,
-                        messageId: "outsideDal",
+                        messageId: "privateDbImport",
                     });
                 }
             },
@@ -122,14 +126,14 @@ export default [
             local: {
                 rules: {
                     "db-query-concise-callback": dbQueryConciseCallback,
-                    "no-connection-import-outside-dal":
-                        noConnectionImportOutsideDal,
+                    "no-private-db-import-outside-dal":
+                        noPrivateDbImportOutsideDal,
                 },
             },
         },
         rules: {
             "local/db-query-concise-callback": "error",
-            "local/no-connection-import-outside-dal": "error",
+            "local/no-private-db-import-outside-dal": "error",
         },
     },
 ];

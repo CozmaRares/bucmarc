@@ -1,10 +1,17 @@
 const namedCapturePattern = /\(\?<([A-Za-z0-9_]*)>/g;
 
-export function validateSeriesPattern(pattern: string) {
+export function validateSeriesPattern(
+    pattern: string,
+    matchType: "deterministic" | "ambiguous",
+) {
     try {
         new RegExp(pattern);
     } catch {
         return "The Series Pattern must be a valid regex.";
+    }
+
+    if (matchType === "ambiguous") {
+        return;
     }
 
     const namedCaptures = [...pattern.matchAll(namedCapturePattern)].map(
