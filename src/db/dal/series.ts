@@ -144,7 +144,7 @@ export function updateSeries(
 
 // return the previous mark url for later deletion
 function _assignMarkToSeries(markUrl: string, seriesId: number) {
-    return dbQuery("transaction to assign mark to series", db =>
+    return dbQuery("tx assign mark to series", db =>
         db.transaction(async tx => {
             const current = await tx.query.series.findFirst({
                 where: eq(schema.series.id, seriesId),

@@ -10,7 +10,7 @@ async function _replaceMarkSeriesCandidates(
     markUrl: string,
     seriesIds: number[],
 ) {
-    await dbQuery("replace mark series candidates", db =>
+    await dbQuery("tx replace mark series candidates", db =>
         db.transaction(async tx => {
             await tx
                 .delete(schema.markSeriesCandidates)
@@ -112,7 +112,7 @@ export type AmbiguousMarkResolution =
       };
 
 async function _resolveAmbiguousMarks(resolutions: AmbiguousMarkResolution[]) {
-    return await dbQuery("resolve ambiguous marks", db =>
+    return await dbQuery("tx resolve ambiguous marks", db =>
         db.transaction(async tx => {
             for (const resolution of resolutions) {
                 if (resolution.type === "no_match") {
