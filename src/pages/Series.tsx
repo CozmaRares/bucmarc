@@ -50,6 +50,7 @@ function component({ series }: Props) {
             <link
                 rel="stylesheet"
                 href={assetPath("/series/style.css")}
+                precedence="page"
             />
             <script
                 src={assetPath("/series/script.js")}

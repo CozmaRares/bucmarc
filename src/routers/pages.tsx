@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { FC } from "hono/jsx";
+import { jsxRenderer, useRequestContext } from "hono/jsx-renderer";
 import type { Page } from "@/pages/types";
 import { HomePage } from "@/pages/Home";
 import { SeriesPage } from "@/pages/Series";
@@ -15,16 +16,16 @@ const pages = [
     [HOME_PAGE_URL, HomePage],
     [SERIES_PAGE_URL, SeriesPage],
 ] as const;
-pages.forEach(([path, page]) => registerPage(path, page));
 
 type Path = (typeof pages)[number][0];
 
 type LayoutProps = {
     children: any;
-    currentPath: Path;
 };
 
-const Layout: FC<LayoutProps> = ({ children, currentPath }) => {
+const Layout: FC<LayoutProps> = ({ children }) => {
+    const c = useRequestContext();
+    const currentPath = c.req.path;
     const bookmarkletSave = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href);})();`;
     const bookmarkletSaveOpen = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href)+'?no-redirect';})();`;
 
@@ -113,17 +114,18 @@ const Layout: FC<LayoutProps> = ({ children, currentPath }) => {
     );
 };
 
+pageRouter.use(
+    "*",
+    jsxRenderer(({ children }) => <Layout>{children}</Layout>),
+);
+pages.forEach(([path, page]) => registerPage(path, page));
+
 function registerPage(path: Path, page: Page<any>) {
     const { component: Component, dataLoader } = page;
 
     pageRouter.get(path, c =>
         dataLoader(c).match(
-            data =>
-                c.html(
-                    <Layout currentPath={path}>
-                        <Component {...data} />
-                    </Layout>,
-                ),
+            data => c.render(<Component {...data} />),
             error => c.text(error.message, error.httpStatusCode),
         ),
     );

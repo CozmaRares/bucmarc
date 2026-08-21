@@ -159,6 +159,7 @@ function component({
             <link
                 rel="stylesheet"
                 href={assetPath("/home/style.css")}
+                precedence="page"
             />
             <script
                 src={assetPath("/home/script.js")}
