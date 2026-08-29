@@ -129,8 +129,8 @@ async function _getCategorizedMarks() {
                 )
                 .where(isNotNull(schema.marks.categoryId))
                 .orderBy(
-                    asc(schema.series.updatedAt),
                     asc(schema.marks.createdAt),
+                    asc(schema.series.updatedAt),
                 ),
     );
 

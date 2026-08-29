@@ -77,7 +77,7 @@ class JobQueue {
         const ambiguousSeriesIds: number[] = [];
 
         for (const series of seriesArr) {
-            if (!new RegExp(series.pattern).test(job.markUrl)) {
+            if (!new RegExp(series.pattern, "i").test(job.markUrl)) {
                 continue;
             }
 
