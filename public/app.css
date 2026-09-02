@@ -16,7 +16,6 @@
 
     color: var(--text);
     background-color: var(--background);
-    background-color: red !important;
 }
 
 body {
