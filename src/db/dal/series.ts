@@ -142,7 +142,6 @@ export function updateSeries(
     });
 }
 
-// return the previous mark url for later deletion
 function _assignMarkToSeries(markUrl: string, seriesId: number) {
     return dbQuery("tx assign mark to series", db =>
         db.transaction(async tx => {
@@ -154,6 +153,31 @@ function _assignMarkToSeries(markUrl: string, seriesId: number) {
                 return { error: "not_found_series" } as const;
             }
 
+            const nextMark = await tx.query.marks.findFirst({
+                where: eq(schema.marks.url, markUrl),
+            });
+
+            if (!nextMark) {
+                return { error: "not_found_mark" } as const;
+            }
+
+            if (current.markUrl) {
+                if (current.markUrl === markUrl) {
+                    return { success: true } as const;
+                }
+
+                const previousMark = await tx.query.marks.findFirst({
+                    where: eq(schema.marks.url, current.markUrl),
+                });
+
+                if (previousMark?.categoryId != null) {
+                    await tx
+                        .update(schema.marks)
+                        .set({ categoryId: previousMark.categoryId })
+                        .where(eq(schema.marks.url, markUrl));
+                }
+            }
+
             const updated = await tx
                 .update(schema.series)
                 .set({ markUrl })
@@ -161,20 +185,23 @@ function _assignMarkToSeries(markUrl: string, seriesId: number) {
                 .returning({ id: schema.series.id });
 
             if (updated.length === 0) {
-                return { error: "not_found_mark" } as const;
+                return { error: "not_found_series" } as const;
             }
 
-            return { success: current.markUrl };
+            if (current.markUrl) {
+                await tx
+                    .delete(schema.marks)
+                    .where(eq(schema.marks.url, current.markUrl));
+            }
+
+            return { success: true } as const;
         }),
     );
 }
 export function assignMarkToSeries(
     markUrl: string,
     seriesId: number,
-): ResultAsync<
-    string | null,
-    UnknownDbError | NotFoundSeriesError | NotFoundMarkError
-> {
+): ResultAsync<void, UnknownDbError | NotFoundSeriesError | NotFoundMarkError> {
     return ResultAsync.fromPromise(
         _assignMarkToSeries(markUrl, seriesId),
         unknownDbError,
@@ -185,7 +212,7 @@ export function assignMarkToSeries(
             case "not_found_mark":
                 return errAsync(notFoundMarkError());
             default:
-                return okAsync(result.success);
+                return okAsync();
         }
     });
 }

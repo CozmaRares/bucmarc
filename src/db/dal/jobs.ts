@@ -10,17 +10,8 @@ const notFoundJobError = (): NotFoundJobError => ({
     type: "not_found_job",
 });
 
-async function _createJob(markUrl: string) {
-    await dbQuery("create job", db =>
-        db.insert(schema.jobs).values({ markUrl, status: "pending" }),
-    );
-}
-export function createJob(markUrl: string) {
-    return ResultAsync.fromPromise(_createJob(markUrl), unknownDbError);
-}
-
-function _takeAllPendingJobs() {
-    return dbQuery("take all pending jobs", db =>
+async function _takeNextPendingJob() {
+    const jobs = await dbQuery("take next pending job", db =>
         db
             .update(schema.jobs)
             .set({ status: "running" })
@@ -31,14 +22,17 @@ function _takeAllPendingJobs() {
                         .select({ id: schema.jobs.id })
                         .from(schema.jobs)
                         .where(eq(schema.jobs.status, "pending"))
-                        .orderBy(asc(schema.jobs.id)),
+                        .orderBy(asc(schema.jobs.id))
+                        .limit(1),
                 ),
             )
             .returning(),
     );
+
+    return jobs[0] ?? null;
 }
-export function takeAllPendingJobs() {
-    return ResultAsync.fromPromise(_takeAllPendingJobs(), unknownDbError);
+export function takeNextPendingJob() {
+    return ResultAsync.fromPromise(_takeNextPendingJob(), unknownDbError);
 }
 
 async function _completeJob(id: number) {

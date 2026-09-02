@@ -10,7 +10,6 @@ import {
     isUniqueConstraintError,
     logErrorAndCreate,
 } from "./utils";
-import { createJob } from "./jobs";
 
 export type DuplicateMarkUrlError = { type: "duplicate_mark_url" };
 export type NotFoundMarkError = { type: "not_found_mark" };
@@ -37,16 +36,20 @@ export function isNotFoundMarkError(error: {
 }
 
 async function _saveMark(url: string) {
-    await dbQuery("insert mark", db => db.insert(schema.marks).values({ url }));
+    await dbQuery("tx insert mark and job", db =>
+        db.transaction(async tx => {
+            await tx.insert(schema.marks).values({ url });
+            await tx
+                .insert(schema.jobs)
+                .values({ markUrl: url, status: "pending" });
+        }),
+    );
 }
 
 export function saveMark(
     url: string,
 ): ResultAsync<void, DuplicateMarkUrlError | UnknownDbError> {
-    return ResultAsync.fromPromise(
-        _saveMark(url),
-        maybeDuplicateMarkUrlError,
-    ).andThen(() => createJob(url));
+    return ResultAsync.fromPromise(_saveMark(url), maybeDuplicateMarkUrlError);
 }
 
 async function _deleteMark(url: string) {

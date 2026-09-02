@@ -6,26 +6,36 @@ import { unknownDbError, type UnknownDbError } from "./utils";
 import { notFoundMarkError, type NotFoundMarkError } from "./marks";
 import { notFoundSeriesError, type NotFoundSeriesError } from "./series";
 
-async function _replaceMarkSeriesCandidates(
-    markUrl: string,
-    seriesIds: number[],
-) {
-    await dbQuery("tx replace mark series candidates", db =>
+function _replaceMarkSeriesCandidates(markUrl: string, seriesIds: number[]) {
+    return dbQuery("tx replace mark series candidates", db =>
         db.transaction(async tx => {
+            const mark = await tx.query.marks.findFirst({
+                where: eq(schema.marks.url, markUrl),
+            });
+
+            if (!mark) {
+                return false;
+            }
+
             await tx
                 .delete(schema.markSeriesCandidates)
                 .where(eq(schema.markSeriesCandidates.markUrl, markUrl));
 
             if (seriesIds.length === 0) {
-                return;
+                return true;
             }
 
-            await tx.insert(schema.markSeriesCandidates).values(
-                seriesIds.map(seriesId => ({
-                    markUrl,
-                    seriesId,
-                })),
-            );
+            const inserted = await tx
+                .insert(schema.markSeriesCandidates)
+                .values(
+                    seriesIds.map(seriesId => ({
+                        markUrl,
+                        seriesId,
+                    })),
+                )
+                .returning();
+
+            return inserted.length > 0;
         }),
     );
 }
@@ -33,10 +43,12 @@ async function _replaceMarkSeriesCandidates(
 export function replaceMarkSeriesCandidates(
     markUrl: string,
     seriesIds: number[],
-): ResultAsync<void, UnknownDbError> {
+): ResultAsync<void, UnknownDbError | NotFoundMarkError> {
     return ResultAsync.fromPromise(
         _replaceMarkSeriesCandidates(markUrl, seriesIds),
         unknownDbError,
+    ).andThen(replaced =>
+        replaced ? okAsync() : errAsync(notFoundMarkError()),
     );
 }
 

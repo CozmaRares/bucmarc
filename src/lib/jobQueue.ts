@@ -1,13 +1,12 @@
 import {
     getSeries,
     assignMarkToSeries,
-    deleteMark,
-    updateMark,
     type DbError,
     cleanQueue,
     completeJob,
-    takeAllPendingJobs,
+    takeNextPendingJob,
     replaceMarkSeriesCandidates,
+    isNotFoundMarkError,
 } from "@/db/dal";
 import type { Series } from "@/db/dal";
 import { createLogger } from "./logger";
@@ -17,10 +16,13 @@ const logger = createLogger("job queue");
 
 class JobQueue {
     private runningPromise: Promise<void> | null = null;
+    private runRequested = false;
 
     start(): Promise<void> {
+        this.runRequested = true;
+
         if (!this.runningPromise) {
-            this.runningPromise = this.run().finally(() => {
+            this.runningPromise = this.runRequestedWork().finally(() => {
                 this.runningPromise = null;
             });
         }
@@ -28,33 +30,37 @@ class JobQueue {
         return this.runningPromise;
     }
 
-    private async run() {
-        while (true) {
-            const shouldContinue = await ResultAsync.combine([
-                getSeries(),
-                takeAllPendingJobs(),
-            ])
-                .andThen(([seriesArr, jobs]) => {
-                    logger.info(`Found ${jobs.length} pending jobs`);
+    private async runRequestedWork() {
+        do {
+            this.runRequested = false;
 
-                    if (jobs.length === 0) {
+            try {
+                await this.run();
+            } finally {
+                await cleanQueue();
+            }
+        } while (this.runRequested);
+    }
+
+    private async run() {
+        let shouldContinue = true;
+
+        while (shouldContinue) {
+            shouldContinue = await ResultAsync.combine([
+                getSeries(),
+                takeNextPendingJob(),
+            ])
+                .andThen(([seriesArr, job]) => {
+                    logger.info(
+                        job ? `Processing job ${job.id}` : "Queue empty",
+                    );
+
+                    if (!job) {
                         return okAsync(false);
                     }
 
-                    return jobs
-                        .reduce((acc: ResultAsync<void, DbError>, job) => {
-                            return acc.andThen(() =>
-                                this.processJob(seriesArr, job),
-                            );
-                        }, okAsync())
-                        .map(() => true);
+                    return this.processJob(seriesArr, job).map(() => true);
                 })
-                .andThen(() =>
-                    ResultAsync.fromPromise(cleanQueue(), error => ({
-                        type: "unknown_db_error",
-                        error,
-                    })),
-                )
                 .orElse(error => {
                     logger.error(error);
                     return errAsync(error);
@@ -63,10 +69,6 @@ class JobQueue {
                     shouldContinue => shouldContinue,
                     () => false,
                 );
-
-            if (!shouldContinue) {
-                break;
-            }
         }
     }
 
@@ -83,17 +85,10 @@ class JobQueue {
 
             if (series.matchType === "deterministic") {
                 return assignMarkToSeries(job.markUrl, series.id)
-                    .andThen(markUrl =>
-                        markUrl ? deleteMark(markUrl) : okAsync(null),
-                    )
-                    .andThen(deleted =>
-                        deleted?.categoryId != null
-                            ? updateMark(
-                                  job.markUrl,
-                                  undefined,
-                                  deleted.categoryId,
-                              )
-                            : okAsync(),
+                    .orElse(error =>
+                        isNotFoundMarkError(error)
+                            ? okAsync()
+                            : errAsync(error),
                     )
                     .andThen(() => completeJob(job.id));
             }
@@ -105,10 +100,11 @@ class JobQueue {
             return completeJob(job.id);
         }
 
-        return replaceMarkSeriesCandidates(
-            job.markUrl,
-            ambiguousSeriesIds,
-        ).andThen(() => completeJob(job.id));
+        return replaceMarkSeriesCandidates(job.markUrl, ambiguousSeriesIds)
+            .orElse(error =>
+                isNotFoundMarkError(error) ? okAsync() : errAsync(error),
+            )
+            .andThen(() => completeJob(job.id));
     }
 }
 

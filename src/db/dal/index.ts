@@ -8,7 +8,7 @@ export {
     updateCategory,
 } from "./categories";
 export type { MarkWithSeries } from "./categories";
-export { cleanQueue, completeJob, takeAllPendingJobs } from "./jobs";
+export { cleanQueue, completeJob, takeNextPendingJob } from "./jobs";
 export {
     getPendingAmbiguousMarks,
     replaceMarkSeriesCandidates,
