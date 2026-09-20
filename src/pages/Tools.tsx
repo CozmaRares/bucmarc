@@ -97,18 +97,77 @@ function component({ snippets, providerPatterns }: Props) {
             </section>
             <section class="tools-section">
                 <h1>Provider patterns</h1>
-                <ProviderPatternForm
+                <form
                     action={PROVIDER_PATTERN_CREATE_URL}
-                    submitLabel="Add"
-                />
+                    method="post"
+                    class="tools-provider-form tools-create-form"
+                >
+                    <label>
+                        Pattern
+                        <textarea
+                            name="pattern"
+                            required
+                        />
+                    </label>
+                    <label>
+                        Match type
+                        <select
+                            name="matchType"
+                            required
+                        >
+                            {SERIES_MATCH_TYPES.map(matchType => (
+                                <option
+                                    value={matchType}
+                                    selected={matchType === "deterministic"}
+                                >
+                                    {matchType === "deterministic"
+                                        ? "Deterministic"
+                                        : "Ambiguous"}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <button type="submit">Add</button>
+                </form>
                 <ul class="tools-list">
                     {providerPatterns.map(providerPattern => (
                         <li>
-                            <ProviderPatternForm
+                            <form
                                 action={PROVIDER_PATTERN_UPDATE_URL}
-                                submitLabel="Save"
-                                providerPattern={providerPattern}
-                            />
+                                method="post"
+                                class="tools-provider-form"
+                            >
+                                <textarea
+                                    name="pattern"
+                                    required
+                                >
+                                    {providerPattern.pattern}
+                                </textarea>
+                                <select
+                                    name="matchType"
+                                    required
+                                >
+                                    {SERIES_MATCH_TYPES.map(matchType => (
+                                        <option
+                                            value={matchType}
+                                            selected={
+                                                providerPattern.matchType ===
+                                                matchType
+                                            }
+                                        >
+                                            {matchType === "deterministic"
+                                                ? "Deterministic"
+                                                : "Ambiguous"}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button type="submit">Save</button>
+                                <input
+                                    name="oldPattern"
+                                    type="hidden"
+                                    value={providerPattern.pattern}
+                                />
+                            </form>
                             <form
                                 action={PROVIDER_PATTERN_DELETE_URL}
                                 method="post"
@@ -125,7 +184,7 @@ function component({ snippets, providerPatterns }: Props) {
                 </ul>
             </section>
             <section class="tools-section">
-                <h1>Bookmarklets (Mobile)</h1>
+                <h1>Bookmarklets</h1>
                 <div class="tools-bookmarklet-item">
                     <button
                         class="tools-copy-button"
@@ -163,66 +222,6 @@ function component({ snippets, providerPatterns }: Props) {
                 precedence="page"
             />
         </>
-    );
-}
-
-type ProviderPatternFormProps = {
-    action: string;
-    submitLabel: string;
-    providerPattern?: ProviderPattern;
-};
-
-function ProviderPatternForm({
-    action,
-    submitLabel,
-    providerPattern,
-}: ProviderPatternFormProps) {
-    return (
-        <form
-            action={action}
-            method="post"
-            class={`tools-provider-form${providerPattern ? "" : " tools-create-form"}`}
-        >
-            {providerPattern && (
-                <input
-                    name="oldPattern"
-                    type="hidden"
-                    value={providerPattern.pattern}
-                />
-            )}
-            <label>
-                Pattern
-                <textarea
-                    name="pattern"
-                    required
-                >
-                    {providerPattern?.pattern}
-                </textarea>
-            </label>
-            <label>
-                Match type
-                <select
-                    name="matchType"
-                    required
-                >
-                    {SERIES_MATCH_TYPES.map(matchType => (
-                        <option
-                            value={matchType}
-                            selected={
-                                providerPattern?.matchType === matchType ||
-                                (!providerPattern &&
-                                    matchType === "deterministic")
-                            }
-                        >
-                            {matchType === "deterministic"
-                                ? "Deterministic"
-                                : "Ambiguous"}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <button type="submit">{submitLabel}</button>
-        </form>
     );
 }
 

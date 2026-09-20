@@ -5,7 +5,7 @@
 }
 
 .tools-section {
-    width: min(100%, 52rem);
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -13,6 +13,8 @@
 
 .tools-section h1 {
     margin-bottom: 0.75rem;
+    font-size: 2rem;
+    line-height: 1em;
 }
 
 .tools-section form {
@@ -28,8 +30,9 @@
 
 .tools-section textarea {
     width: 100%;
-    min-height: 4rem;
-    padding: 0.5rem;
+    height: 2.5rem;
+    min-height: 0;
+    padding: 0.25rem 0.5rem;
     border: 1px solid rgb(var(--primary-base) / 0.5);
     border-radius: 0.25rem;
     background-color: rgb(var(--background-base) / 0.5);
@@ -45,6 +48,7 @@
 }
 
 .tools-section button {
+    cursor: pointer;
     padding: 0.5rem 0.75rem;
     border-radius: 0.25rem;
     color: var(--background);
@@ -54,6 +58,29 @@
 .tools-create-form {
     flex-direction: column;
     align-items: stretch;
+}
+
+.tools-provider-form {
+    align-items: end;
+}
+
+.tools-list .tools-provider-form > *:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.tools-list .tools-provider-form > select {
+    flex: 0 0 10rem;
+    width: 10rem;
+}
+
+.tools-provider-form.tools-create-form {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.tools-provider-form.tools-create-form label {
+    width: 100%;
 }
 
 .tools-create-form button[type="submit"] {
@@ -81,6 +108,14 @@
 
 .tools-list li > form:not(.tools-provider-form) textarea {
     flex: 1;
+}
+
+.tools-list li > form + form {
+    align-self: end;
+}
+
+.tools-list li + li {
+    padding-top: 0.75rem;
 }
 
 .tools-bookmarklets {
