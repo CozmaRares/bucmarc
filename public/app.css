@@ -1,5 +1,5 @@
 :root {
-    background-color: red !important;
+    background-color: blue !important;
 
     --text-base: 247 227 253;
     --text: rgb(var(--text-base));
