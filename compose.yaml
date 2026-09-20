@@ -13,7 +13,7 @@ services:
         command:
             - bun
             - run
-            - ${DRIZZLE_UDATE_DB_COMMAND}
+            - db:migrate
         logging:
             driver: json-file
             options:
