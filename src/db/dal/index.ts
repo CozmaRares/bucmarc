@@ -35,9 +35,24 @@ export {
     isNotFoundSeriesError,
     updateSeries,
 } from "./series";
+export {
+    createProviderPattern,
+    createRegexSnippet,
+    deleteProviderPattern,
+    deleteRegexSnippet,
+    detectProviderPattern,
+    getProviderPatterns,
+    getRegexSnippets,
+    isInvalidProviderPatternError,
+    updateProviderPattern,
+    updateRegexSnippet,
+} from "./patternTools";
 export { isCategoryFKError } from "./utils";
 export type { DbError } from "./utils";
+export { withDatabaseConnection } from "../connection";
 export type {
     Category,
     Series,
+    ProviderPattern,
+    RegexSnippet,
 } from "../schema";

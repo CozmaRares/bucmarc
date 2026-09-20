@@ -1,0 +1,108 @@
+.tools-patterns {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.tools-section {
+    width: min(100%, 52rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tools-section h1 {
+    margin-bottom: 0.75rem;
+}
+
+.tools-section form {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tools-section label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tools-section textarea {
+    width: 100%;
+    min-height: 4rem;
+    padding: 0.5rem;
+    border: 1px solid rgb(var(--primary-base) / 0.5);
+    border-radius: 0.25rem;
+    background-color: rgb(var(--background-base) / 0.5);
+}
+
+.tools-section select {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem;
+    border: 1px solid rgb(var(--primary-base) / 0.5);
+    border-radius: 0.25rem;
+    background-color: var(--background);
+}
+
+.tools-section button {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    color: var(--background);
+    background-color: var(--primary);
+}
+
+.tools-create-form {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.tools-create-form button[type="submit"] {
+    align-self: start;
+}
+
+.tools-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0;
+    list-style: none;
+}
+
+.tools-list li {
+    display: flex;
+    align-items: end;
+    gap: 0.5rem;
+}
+
+.tools-list li > form:first-child {
+    flex: 1;
+}
+
+.tools-list li > form:not(.tools-provider-form) textarea {
+    flex: 1;
+}
+
+.tools-bookmarklets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.tools-bookmarklet-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.tools-copy-button {
+    min-width: 4rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.tools-copy-button:hover,
+.tools-copy-button.copied {
+    background-color: var(--secondary);
+}

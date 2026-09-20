@@ -83,6 +83,26 @@ body > * {
     }
 }
 
+.page-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin: auto;
+    text-align: center;
+
+    & h1 {
+        font-size: 1.5rem;
+    }
+
+    & a {
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.25rem;
+        color: var(--background);
+        background-color: var(--primary);
+    }
+}
+
 main {
     padding: 1rem var(--gutter);
     flex: 1;
@@ -91,55 +111,8 @@ main {
     }
 }
 
-.footer {
-    padding-inline: var(--gutter);
-    padding-block: 1.5rem;
-    border-top: 1px solid rgb(var(--primary-base) / 0.5);
-    margin-top: 2rem;
-    font-size: 0.875rem;
-
-    & .footer-bookmarklets {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    & .footer-label {
-        color: rgb(var(--text-base) / 0.7);
-        font-weight: bold;
-        margin-bottom: 0.25rem;
-    }
-
-    & .footer-bookmarklet-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    & .footer-copy-button {
-        background-color: var(--primary);
-        color: var(--background);
-        border: none;
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        min-width: 4rem;
-
-        &:hover {
-            background-color: var(--secondary);
-        }
-
-        &.copied {
-            background-color: var(--secondary);
-        }
-    }
-
-    & .footer-bookmarklet-name {
-        color: var(--text);
-    }
+main:has(.page-error) {
+    display: flex;
 }
 
 .dialog {

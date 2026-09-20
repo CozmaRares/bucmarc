@@ -8,24 +8,26 @@ import { notFoundSeriesError, type NotFoundSeriesError } from "./series";
 
 function _replaceMarkSeriesCandidates(markUrl: string, seriesIds: number[]) {
     return dbQuery("tx replace mark series candidates", db =>
-        db.transaction(async tx => {
-            const mark = await tx.query.marks.findFirst({
-                where: eq(schema.marks.url, markUrl),
-            });
+        db.transaction(tx => {
+            const mark = tx.query.marks
+                .findFirst({
+                    where: eq(schema.marks.url, markUrl),
+                })
+                .sync();
 
             if (!mark) {
                 return false;
             }
 
-            await tx
-                .delete(schema.markSeriesCandidates)
-                .where(eq(schema.markSeriesCandidates.markUrl, markUrl));
+            tx.delete(schema.markSeriesCandidates)
+                .where(eq(schema.markSeriesCandidates.markUrl, markUrl))
+                .run();
 
             if (seriesIds.length === 0) {
                 return true;
             }
 
-            const inserted = await tx
+            const inserted = tx
                 .insert(schema.markSeriesCandidates)
                 .values(
                     seriesIds.map(seriesId => ({
@@ -33,7 +35,8 @@ function _replaceMarkSeriesCandidates(markUrl: string, seriesIds: number[]) {
                         seriesId,
                     })),
                 )
-                .returning();
+                .returning()
+                .all();
 
             return inserted.length > 0;
         }),
@@ -128,37 +131,39 @@ export type AmbiguousMarkResolution =
 
 async function _resolveAmbiguousMarks(resolutions: AmbiguousMarkResolution[]) {
     return await dbQuery("tx resolve ambiguous marks", db =>
-        db.transaction(async tx => {
+        db.transaction(tx => {
             for (const resolution of resolutions) {
                 if (resolution.type === "no_match") {
-                    await tx
-                        .delete(schema.markSeriesCandidates)
+                    tx.delete(schema.markSeriesCandidates)
                         .where(
                             eq(
                                 schema.markSeriesCandidates.markUrl,
                                 resolution.markUrl,
                             ),
-                        );
+                        )
+                        .run();
                     continue;
                 }
 
-                const candidate = await tx.query.markSeriesCandidates.findFirst(
-                    {
+                const candidate = tx.query.markSeriesCandidates
+                    .findFirst({
                         where: (candidate, { and, eq }) =>
                             and(
                                 eq(candidate.markUrl, resolution.markUrl),
                                 eq(candidate.seriesId, resolution.seriesId),
                             ),
-                    },
-                );
+                    })
+                    .sync();
 
                 if (!candidate) {
                     return { error: "not_found_mark" } as const;
                 }
 
-                const current = await tx.query.series.findFirst({
-                    where: eq(schema.series.id, resolution.seriesId),
-                });
+                const current = tx.query.series
+                    .findFirst({
+                        where: eq(schema.series.id, resolution.seriesId),
+                    })
+                    .sync();
 
                 if (!current) {
                     return { error: "not_found_series" } as const;
@@ -167,47 +172,50 @@ async function _resolveAmbiguousMarks(resolutions: AmbiguousMarkResolution[]) {
                 let carriedCategoryId: number | null = null;
 
                 if (current.markUrl && current.markUrl !== resolution.markUrl) {
-                    const oldMarks = await tx
+                    const oldMarks = tx
                         .delete(schema.marks)
                         .where(eq(schema.marks.url, current.markUrl))
-                        .returning({ categoryId: schema.marks.categoryId });
+                        .returning({ categoryId: schema.marks.categoryId })
+                        .all();
 
                     carriedCategoryId = oldMarks[0]?.categoryId ?? null;
                 }
 
-                const updated = await tx
+                const updated = tx
                     .update(schema.series)
                     .set({
                         markUrl: resolution.markUrl,
                         manualEpisode: resolution.episode,
                     })
                     .where(eq(schema.series.id, resolution.seriesId))
-                    .returning({ id: schema.series.id });
+                    .returning({ id: schema.series.id })
+                    .all();
 
                 if (updated.length === 0) {
                     return { error: "not_found_series" } as const;
                 }
 
                 if (carriedCategoryId != null) {
-                    const marks = await tx
+                    const marks = tx
                         .update(schema.marks)
                         .set({ categoryId: carriedCategoryId })
                         .where(eq(schema.marks.url, resolution.markUrl))
-                        .returning({ url: schema.marks.url });
+                        .returning({ url: schema.marks.url })
+                        .all();
 
                     if (marks.length === 0) {
                         return { error: "not_found_mark" } as const;
                     }
                 }
 
-                await tx
-                    .delete(schema.markSeriesCandidates)
+                tx.delete(schema.markSeriesCandidates)
                     .where(
                         eq(
                             schema.markSeriesCandidates.markUrl,
                             resolution.markUrl,
                         ),
-                    );
+                    )
+                    .run();
             }
 
             return { success: true } as const;

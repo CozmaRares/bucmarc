@@ -37,11 +37,11 @@ export function isNotFoundMarkError(error: {
 
 async function _saveMark(url: string) {
     await dbQuery("tx insert mark and job", db =>
-        db.transaction(async tx => {
-            await tx.insert(schema.marks).values({ url });
-            await tx
-                .insert(schema.jobs)
-                .values({ markUrl: url, status: "pending" });
+        db.transaction(tx => {
+            tx.insert(schema.marks).values({ url }).run();
+            tx.insert(schema.jobs)
+                .values({ markUrl: url, status: "pending" })
+                .run();
         }),
     );
 }

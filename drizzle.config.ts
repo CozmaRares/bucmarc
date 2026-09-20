@@ -7,6 +7,6 @@ export default defineConfig({
     dialect: "sqlite",
     casing: "snake_case",
     dbCredentials: {
-        url: env.DB_FILE_NAME,
+        url: env.DRIZZLE_KIT_DB_FILE,
     },
 });

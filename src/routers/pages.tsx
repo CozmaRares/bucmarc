@@ -4,10 +4,10 @@ import { jsxRenderer, useRequestContext } from "hono/jsx-renderer";
 import type { Page } from "@/pages/types";
 import { HomePage } from "@/pages/Home";
 import { SeriesPage } from "@/pages/Series";
-import { env } from "@/env";
+import { ToolsPage } from "@/pages/Tools";
+import { PageError } from "@/pages/Error";
 import { assetPath } from "@/lib/assets";
-import { MARK_SAVE_URL_PREFIX } from "./api/mark";
-import { HOME_PAGE_URL, SERIES_PAGE_URL } from "./pagePaths";
+import { HOME_PAGE_URL, SERIES_PAGE_URL, TOOLS_PAGE_URL } from "./pagePaths";
 
 const pageRouter = new Hono();
 export default pageRouter;
@@ -15,6 +15,7 @@ export default pageRouter;
 const pages = [
     [HOME_PAGE_URL, HomePage],
     [SERIES_PAGE_URL, SeriesPage],
+    [TOOLS_PAGE_URL, ToolsPage],
 ] as const;
 
 type Path = (typeof pages)[number][0];
@@ -26,8 +27,6 @@ type LayoutProps = {
 const Layout: FC<LayoutProps> = ({ children }) => {
     const c = useRequestContext();
     const currentPath = c.req.path;
-    const bookmarkletSave = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href);})();`;
-    const bookmarkletSaveOpen = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href)+'?no-redirect';})();`;
 
     return (
         <html>
@@ -82,33 +81,6 @@ const Layout: FC<LayoutProps> = ({ children }) => {
                     hidden={true}
                 />
                 <main>{children}</main>
-                <footer class="footer">
-                    <div class="footer-bookmarklets">
-                        <span class="footer-label">Bookmarklets (Mobile):</span>
-                        <div class="footer-bookmarklet-item">
-                            <button
-                                class="footer-copy-button"
-                                data-copy={bookmarkletSave}
-                                title="Copy bookmarklet code"
-                            >
-                                Copy
-                            </button>
-                            <span class="footer-bookmarklet-name">Save</span>
-                        </div>
-                        <div class="footer-bookmarklet-item">
-                            <button
-                                class="footer-copy-button"
-                                data-copy={bookmarkletSaveOpen}
-                                title="Copy bookmarklet code"
-                            >
-                                Copy
-                            </button>
-                            <span class="footer-bookmarklet-name">
-                                Save & Open
-                            </span>
-                        </div>
-                    </div>
-                </footer>
             </body>
         </html>
     );
@@ -126,7 +98,10 @@ function registerPage(path: Path, page: Page<any>) {
     pageRouter.get(path, c =>
         dataLoader(c).match(
             data => c.render(<Component {...data} />),
-            error => c.text(error.message, error.httpStatusCode),
+            error => {
+                c.status(error.httpStatusCode);
+                return c.render(<PageError {...error} />);
+            },
         ),
     );
 }

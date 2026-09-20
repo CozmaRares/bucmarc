@@ -131,6 +131,15 @@ export const markSeriesCandidatesRelations = relations(
     }),
 );
 
+export const regexSnippets = sqliteTable("regex_snippets", {
+    pattern: text().primaryKey(),
+});
+
+export const providerPatterns = sqliteTable("provider_patterns", {
+    pattern: text().primaryKey(),
+    matchType: text({ enum: SERIES_MATCH_TYPES }).notNull(),
+});
+
 const JOB_STATUSES = Object.freeze(["pending", "running", "done"] as const);
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
@@ -147,3 +156,5 @@ export type Category = WithoutUpdatedAt<typeof categories>;
 export type Mark = InferSelectModel<typeof marks>;
 export type Series = WithoutUpdatedAt<typeof series>;
 export type MarkSeriesCandidate = InferSelectModel<typeof markSeriesCandidates>;
+export type RegexSnippet = InferSelectModel<typeof regexSnippets>;
+export type ProviderPattern = InferSelectModel<typeof providerPatterns>;

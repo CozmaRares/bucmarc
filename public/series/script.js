@@ -12,9 +12,109 @@ function setupCreateSeriesDialog() {
     const createSeriesCancelButton = createSeriesDialog.querySelector(
         "[data-create-series-dialog-cancel]",
     );
+    const patternInput = createSeriesDialog.querySelector(
+        "[data-create-series-dialog-input-pattern]",
+    );
+    const titleInput = createSeriesDialog.querySelector(
+        "[data-create-series-dialog-input-title]",
+    );
+    const matchTypeInput =
+        createSeriesDialog.querySelector('[name="matchType"]');
+    const detectButton = createSeriesDialog.querySelector(
+        "[data-provider-detect]",
+    );
+    const pageBanner = document.querySelector("[data-page-banner]");
+    const snippetButtons = createSeriesDialog.querySelectorAll(
+        "[data-regex-snippet]",
+    );
+    let lastPatternCursor;
+
+    function rememberPatternCursor() {
+        lastPatternCursor = patternInput.selectionStart;
+        snippetButtons.forEach(button => {
+            button.disabled = false;
+        });
+    }
+
+    function showDetectMessage(message) {
+        pageBanner.textContent = message;
+        pageBanner.dataset.pageStatus = "error";
+        pageBanner.hidden = false;
+    }
+
     createSeriesButton?.addEventListener("click", () => {
         createSeriesDialog.hidden = false;
     });
+
+    ["focus", "click", "keyup", "input", "select"].forEach(eventName => {
+        patternInput.addEventListener(eventName, rememberPatternCursor);
+    });
+
+    snippetButtons.forEach(button => {
+        button.addEventListener("mousedown", event => event.preventDefault());
+        button.addEventListener("click", () => {
+            if (lastPatternCursor === undefined) return;
+
+            const snippet = button.dataset.regexSnippet;
+            patternInput.setRangeText(
+                snippet,
+                lastPatternCursor,
+                lastPatternCursor,
+                "end",
+            );
+            lastPatternCursor = patternInput.selectionStart;
+            patternInput.focus();
+        });
+    });
+
+    async function detectProvider({ focusTitle = false } = {}) {
+        detectButton.disabled = true;
+
+        try {
+            const response = await fetch(
+                detectButton.dataset.providerDetectUrl,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ value: patternInput.value }),
+                },
+            );
+            const result = await response.json();
+
+            if (!response.ok) {
+                showDetectMessage(
+                    result.message ?? "Provider detection failed.",
+                );
+                return;
+            }
+
+            patternInput.value = result.pattern;
+            matchTypeInput.value = result.matchType;
+            patternInput.focus();
+            patternInput.setSelectionRange(
+                patternInput.value.length,
+                patternInput.value.length,
+            );
+            rememberPatternCursor();
+            if (focusTitle) titleInput.focus();
+        } catch {
+            showDetectMessage("Provider detection failed.");
+        } finally {
+            detectButton.disabled = false;
+        }
+    }
+
+    detectButton?.addEventListener("click", () => detectProvider());
+
+    const createUrl = createSeriesDialog.dataset.createSeriesDialogUrl;
+    if (createUrl) {
+        createSeriesDialog.hidden = false;
+        patternInput.value = createUrl;
+        patternInput.focus();
+        patternInput.setSelectionRange(createUrl.length, createUrl.length);
+        rememberPatternCursor();
+        void detectProvider({ focusTitle: true });
+    }
 
     createSeriesDialogContent.addEventListener("click", event => {
         event.stopPropagation();

@@ -3,7 +3,11 @@ import { serveStatic } from "hono/bun";
 import { createLogger } from "@/lib/logger";
 import { env } from "@/env";
 import apiRouter from "./routers/api";
-import { clerkMiddleware, requireAuth } from "./middleware";
+import {
+    clerkMiddleware,
+    openDatabaseConnection,
+    requireAuth,
+} from "./middleware";
 import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
 import chalk from "chalk";
@@ -66,6 +70,8 @@ app.use(
         },
     }),
 );
+
+app.use(openDatabaseConnection);
 
 app.route("/api", apiRouter);
 app.route("/", pageRouter);

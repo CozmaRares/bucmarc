@@ -1,30 +1,37 @@
-import { getSeries } from "@/db/dal";
-import type { Series } from "@/db/dal";
+import { getRegexSnippets, getSeries } from "@/db/dal";
+import type { RegexSnippet, Series } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
 import {
     SERIES_CREATE_URL,
     SERIES_DELETE_URL,
     SERIES_UPDATE_URL,
 } from "@/routers/api/series";
+import { PROVIDER_DETECT_URL } from "@/routers/api/patternTools";
 import { serverError, type Page, type PageLoadError } from "./types";
 import type { Context } from "hono";
 import { ResultAsync } from "neverthrow";
 
 type Props = {
     series: Series[];
+    snippets: RegexSnippet[];
+    createUrl: string | undefined;
 };
 
 function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
     return getSeries()
-        .map(series => ({
-            pageMessage: c.req.query("message"),
-            pageStatus: c.req.query("status"),
-            series,
-        }))
+        .andThen(series =>
+            getRegexSnippets().map(snippets => ({
+                pageMessage: c.req.query("message"),
+                pageStatus: c.req.query("status"),
+                series,
+                snippets,
+                createUrl: c.req.query("createUrl"),
+            })),
+        )
         .mapErr(serverError);
 }
 
-function component({ series }: Props) {
+function component({ series, snippets, createUrl }: Props) {
     return (
         <>
             <button
@@ -45,7 +52,10 @@ function component({ series }: Props) {
             ) : (
                 <p>No Series yet.</p>
             )}
-            <CreateSeriesDialog />
+            <CreateSeriesDialog
+                snippets={snippets}
+                createUrl={createUrl}
+            />
             <EditSeriesDialog />
             <link
                 rel="stylesheet"
@@ -95,11 +105,18 @@ function SeriesItem({ series }: SeriesItemProps) {
     );
 }
 
-function CreateSeriesDialog() {
+function CreateSeriesDialog({
+    snippets,
+    createUrl,
+}: {
+    snippets: RegexSnippet[];
+    createUrl: string | undefined;
+}) {
     return (
         <div
             class="dialog"
             data-create-series-dialog
+            data-create-series-dialog-url={createUrl}
             hidden
         >
             <div class="dialog-content">
@@ -114,6 +131,7 @@ function CreateSeriesDialog() {
                         <input
                             name="title"
                             type="text"
+                            data-create-series-dialog-input-title
                             required
                         />
                     </label>
@@ -131,9 +149,28 @@ function CreateSeriesDialog() {
                         Pattern
                         <textarea
                             name="pattern"
+                            data-create-series-dialog-input-pattern
                             required
                         />
                     </label>
+                    <div class="series-pattern-tools">
+                        <button
+                            type="button"
+                            data-provider-detect
+                            data-provider-detect-url={PROVIDER_DETECT_URL}
+                        >
+                            Detect provider
+                        </button>
+                        {snippets.map(snippet => (
+                            <button
+                                type="button"
+                                data-regex-snippet={snippet.pattern}
+                                disabled
+                            >
+                                {snippet.pattern}
+                            </button>
+                        ))}
+                    </div>
                     <div class="dialog-actions">
                         <button
                             class="dialog-cancel"

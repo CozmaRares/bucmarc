@@ -7,6 +7,7 @@ import {
     takeNextPendingJob,
     replaceMarkSeriesCandidates,
     isNotFoundMarkError,
+    withDatabaseConnection,
 } from "@/db/dal";
 import type { Series } from "@/db/dal";
 import { createLogger } from "./logger";
@@ -22,7 +23,10 @@ class JobQueue {
         this.runRequested = true;
 
         if (!this.runningPromise) {
-            this.runningPromise = this.runRequestedWork().finally(() => {
+            this.runningPromise = withDatabaseConnection(
+                () => this.runRequestedWork(),
+                { isolated: true },
+            ).finally(() => {
                 this.runningPromise = null;
             });
         }

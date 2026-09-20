@@ -11,6 +11,12 @@ button {
     color: var(--background);
 }
 
+.series-pattern-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 .series-list {
     display: flex;
     flex-direction: column;

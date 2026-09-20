@@ -144,18 +144,22 @@ export function updateSeries(
 
 function _assignMarkToSeries(markUrl: string, seriesId: number) {
     return dbQuery("tx assign mark to series", db =>
-        db.transaction(async tx => {
-            const current = await tx.query.series.findFirst({
-                where: eq(schema.series.id, seriesId),
-            });
+        db.transaction(tx => {
+            const current = tx.query.series
+                .findFirst({
+                    where: eq(schema.series.id, seriesId),
+                })
+                .sync();
 
             if (!current) {
                 return { error: "not_found_series" } as const;
             }
 
-            const nextMark = await tx.query.marks.findFirst({
-                where: eq(schema.marks.url, markUrl),
-            });
+            const nextMark = tx.query.marks
+                .findFirst({
+                    where: eq(schema.marks.url, markUrl),
+                })
+                .sync();
 
             if (!nextMark) {
                 return { error: "not_found_mark" } as const;
@@ -166,32 +170,35 @@ function _assignMarkToSeries(markUrl: string, seriesId: number) {
                     return { success: true } as const;
                 }
 
-                const previousMark = await tx.query.marks.findFirst({
-                    where: eq(schema.marks.url, current.markUrl),
-                });
+                const previousMark = tx.query.marks
+                    .findFirst({
+                        where: eq(schema.marks.url, current.markUrl),
+                    })
+                    .sync();
 
                 if (previousMark?.categoryId != null) {
-                    await tx
-                        .update(schema.marks)
+                    tx.update(schema.marks)
                         .set({ categoryId: previousMark.categoryId })
-                        .where(eq(schema.marks.url, markUrl));
+                        .where(eq(schema.marks.url, markUrl))
+                        .run();
                 }
             }
 
-            const updated = await tx
+            const updated = tx
                 .update(schema.series)
                 .set({ markUrl })
                 .where(eq(schema.series.id, seriesId))
-                .returning({ id: schema.series.id });
+                .returning({ id: schema.series.id })
+                .all();
 
             if (updated.length === 0) {
                 return { error: "not_found_series" } as const;
             }
 
             if (current.markUrl) {
-                await tx
-                    .delete(schema.marks)
-                    .where(eq(schema.marks.url, current.markUrl));
+                tx.delete(schema.marks)
+                    .where(eq(schema.marks.url, current.markUrl))
+                    .run();
             }
 
             return { success: true } as const;
