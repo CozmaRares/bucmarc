@@ -63,7 +63,7 @@ function component({
                         <h2 class="home-section-title">
                             {category.name}
                             {category.showCount && category.marks.length > 0
-                                ? `(${category.marks.length})`
+                                ? ` (${category.marks.length})`
                                 : null}
                         </h2>
                         <button
