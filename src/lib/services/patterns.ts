@@ -1,7 +1,7 @@
 import { getProviderPatterns, type UnknownDbError } from "@/db/dal";
 import type { ResultAsync } from "neverthrow";
-import type { SeriesMatchType } from "../constants";
-import { createProviderSeriesPattern } from "../patterns";
+import type { SeriesMatchType } from "@/lib/constants";
+import { createProviderSeriesPattern } from "@/lib/patterns";
 
 type ProviderDetection = {
     pattern: string;

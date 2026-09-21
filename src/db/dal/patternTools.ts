@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
-import { dbQuery } from "../connection";
-import * as schema from "../schema";
-import type { ProviderPattern, RegexSnippet } from "../schema";
+import { dbQuery } from "@/db/connection";
+import * as schema from "@/db/schema";
+import type { ProviderPattern, RegexSnippet } from "@/db/schema";
 import { validateAndWrite, validateProviderPattern } from "@/lib/patterns";
 import type { SeriesMatchType } from "@/lib/constants";
 import { unknownDbError, type UnknownDbError } from "./utils";

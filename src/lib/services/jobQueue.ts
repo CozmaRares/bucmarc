@@ -10,7 +10,7 @@ import {
     withDatabaseConnection,
 } from "@/db/dal";
 import type { Series } from "@/db/dal";
-import { createLogger } from "../logger";
+import { createLogger } from "@/lib/logger";
 import { okAsync, ResultAsync, errAsync } from "neverthrow";
 
 const logger = createLogger("job queue");

@@ -1,6 +1,6 @@
-import { dbQuery } from "../connection";
+import { dbQuery } from "@/db/connection";
 import { and, asc, desc, eq, ne, isNotNull, isNull, sql } from "drizzle-orm";
-import * as schema from "../schema";
+import * as schema from "@/db/schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
     unknownDbError,
@@ -12,7 +12,7 @@ import {
     createSeriesTitleWithEpisode,
     type MarkWithSeries,
 } from "@/lib/markWithSeries";
-import type { Category } from "../schema";
+import type { Category } from "@/db/schema";
 
 export type DuplicateCategoryNameError = { type: "duplicate_category_name" };
 export type NotFoundCategoryError = { type: "not_found_category" };

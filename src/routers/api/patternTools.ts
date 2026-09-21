@@ -13,7 +13,7 @@ import { errorRedirect, HTTPStatus, successRedirect } from "@/honoHelpers";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
-import { TOOLS_PAGE_URL } from "../pagePaths";
+import { TOOLS_PAGE_URL } from "@/routers/pagePaths";
 
 export const patternToolsRouter = new Hono();
 

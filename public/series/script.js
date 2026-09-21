@@ -79,7 +79,7 @@ function setupCreateSeriesDialog() {
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ value: patternInput.value }),
+                    body: JSON.stringify({ pattern: patternInput.value }),
                 },
             );
             const result = await response.json();

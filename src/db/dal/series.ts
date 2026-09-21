@@ -1,6 +1,6 @@
-import { dbQuery } from "../connection";
+import { dbQuery } from "@/db/connection";
 import { desc, eq } from "drizzle-orm";
-import * as schema from "../schema";
+import * as schema from "@/db/schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
 import {
@@ -8,7 +8,7 @@ import {
     validateSeriesPattern,
     type PatternError,
 } from "@/lib/patterns";
-import type { Series } from "../schema";
+import type { Series } from "@/db/schema";
 import type { SeriesMatchType } from "@/lib/constants";
 import { notFoundMarkError, type NotFoundMarkError } from "./marks";
 

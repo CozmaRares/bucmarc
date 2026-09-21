@@ -9,7 +9,7 @@ import { errorRedirect, successRedirect } from "@/honoHelpers";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
-import { SERIES_PAGE_URL } from "../pagePaths";
+import { SERIES_PAGE_URL } from "@/routers/pagePaths";
 import { SERIES_MATCH_TYPES } from "@/lib/constants";
 
 export const seriesRouter = new Hono();

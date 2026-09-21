@@ -109,6 +109,38 @@ const noPrivateDbImportOutsideDal = {
     },
 };
 
+const noParentImport = {
+    meta: {
+        type: "problem",
+        docs: {
+            description:
+                "Disallow parent-directory imports; use the @/ alias for src modules.",
+        },
+        schema: [],
+        messages: {
+            parentImport:
+                "Do not import from a parent directory. Use an @/ path for src modules.",
+        },
+    },
+    create(context) {
+        const reportParentImport = node => {
+            if (
+                typeof node.source?.value === "string" &&
+                (node.source.value === ".." ||
+                    node.source.value.startsWith("../"))
+            ) {
+                context.report({ node, messageId: "parentImport" });
+            }
+        };
+
+        return {
+            ImportDeclaration: reportParentImport,
+            ExportNamedDeclaration: reportParentImport,
+            ExportAllDeclaration: reportParentImport,
+        };
+    },
+};
+
 const noLayerInversion = {
     meta: {
         type: "problem",
@@ -218,6 +250,7 @@ export default [
                     "db-query-concise-callback": dbQueryConciseCallback,
                     "no-private-db-import-outside-dal":
                         noPrivateDbImportOutsideDal,
+                    "no-parent-import": noParentImport,
                     "no-layer-inversion": noLayerInversion,
                 },
             },
@@ -225,6 +258,7 @@ export default [
         rules: {
             "local/db-query-concise-callback": "error",
             "local/no-private-db-import-outside-dal": "error",
+            "local/no-parent-import": "error",
             "local/no-layer-inversion": "error",
         },
     },

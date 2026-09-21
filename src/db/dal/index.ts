@@ -47,11 +47,11 @@ export {
 } from "./patternTools";
 export { isCategoryFKError } from "./utils";
 export type { DbError, UnknownDbError } from "./utils";
-export { withDatabaseConnection } from "../connection";
+export { withDatabaseConnection } from "@/db/connection";
 export type {
     Category,
     Mark,
     Series,
     ProviderPattern,
     RegexSnippet,
-} from "../schema";
+} from "@/db/schema";

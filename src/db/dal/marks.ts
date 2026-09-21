@@ -1,6 +1,6 @@
-import { dbQuery } from "../connection";
+import { dbQuery } from "@/db/connection";
 import { eq } from "drizzle-orm";
-import * as schema from "../schema";
+import * as schema from "@/db/schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import {
     unknownDbError,

@@ -17,7 +17,7 @@ import {
     isNotFoundSeriesError,
 } from "@/db/dal";
 import { jobQueue } from "@/lib/services/jobQueue";
-import { HOME_PAGE_URL } from "../pagePaths";
+import { HOME_PAGE_URL } from "@/routers/pagePaths";
 
 export const markRouter = new Hono();
 

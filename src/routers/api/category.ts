@@ -7,7 +7,7 @@ import {
     isDuplicateCategoryNameError,
     isNotFoundCategoryError,
 } from "@/db/dal";
-import { HOME_PAGE_URL } from "../pagePaths";
+import { HOME_PAGE_URL } from "@/routers/pagePaths";
 
 export const categoryRouter = new Hono();
 
