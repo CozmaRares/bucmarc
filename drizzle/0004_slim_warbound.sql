@@ -1,0 +1,1 @@
+ALTER TABLE `categories` ADD `show_count` integer DEFAULT false NOT NULL;

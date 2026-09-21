@@ -29,6 +29,13 @@
       "when": 1789911712152,
       "tag": "0003_smooth_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790033270322,
+      "tag": "0004_slim_warbound",
+      "breakpoints": true
     }
   ]
 }

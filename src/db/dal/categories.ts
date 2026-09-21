@@ -78,6 +78,7 @@ async function _getCategorizedMarks() {
                 id: true,
                 name: true,
                 sortOrder: true,
+                showCount: true,
             },
             orderBy: [
                 desc(schema.categories.sortOrder),
@@ -209,7 +210,12 @@ export function createCategory(
     );
 }
 
-async function _updateCategory(id: number, name: string, sortOrder: number) {
+async function _updateCategory(
+    id: number,
+    name: string,
+    sortOrder: number,
+    showCount: boolean,
+) {
     const duplicate = await _getCategoryByNormalizedName(name, id);
 
     if (duplicate) {
@@ -219,7 +225,7 @@ async function _updateCategory(id: number, name: string, sortOrder: number) {
     const categories = await dbQuery("update category", db =>
         db
             .update(schema.categories)
-            .set({ name, sortOrder })
+            .set({ name, sortOrder, showCount })
             .where(eq(schema.categories.id, id))
             .returning({ id: schema.categories.id }),
     );
@@ -232,12 +238,13 @@ export function updateCategory(
     id: number,
     name: string,
     sortOrder: number,
+    showCount: boolean,
 ): ResultAsync<
     void,
     DuplicateCategoryNameError | UnknownDbError | NotFoundCategoryError
 > {
     return ResultAsync.fromPromise(
-        _updateCategory(id, name, sortOrder),
+        _updateCategory(id, name, sortOrder, showCount),
         maybeDuplicateCategoryNameError,
     ).andThen(outcome => {
         switch (outcome) {

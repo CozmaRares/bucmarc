@@ -57,9 +57,15 @@ function component({
                     data-category-id={category.id}
                     data-category-name={category.name}
                     data-category-sort-order={category.sortOrder}
+                    data-category-show-count={category.showCount}
                 >
                     <div class="home-section-header">
-                        <h2 class="home-section-title">{category.name}</h2>
+                        <h2 class="home-section-title">
+                            {category.name}
+                            {category.showCount && category.marks.length > 0
+                                ? `(${category.marks.length})`
+                                : null}
+                        </h2>
                         <button
                             class="home-edit-category-button"
                             type="button"
@@ -342,6 +348,14 @@ function EditCategoryDialog() {
                             type="number"
                             data-edit-category-dialog-input-sort-order
                             required
+                        />
+                    </label>
+                    <label>
+                        Show Count
+                        <input
+                            name="showCount"
+                            type="checkbox"
+                            data-edit-category-dialog-input-show-count
                         />
                     </label>
                     <div class="dialog-actions">

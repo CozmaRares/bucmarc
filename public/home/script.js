@@ -94,16 +94,21 @@ function openEditCategoryDialog(button) {
     const editCategorySortOrderInput = editCategoryDialog.querySelector(
         "[data-edit-category-dialog-input-sort-order]",
     );
+    const editCategoryShowCountInput = editCategoryDialog.querySelector(
+        "[data-edit-category-dialog-input-show-count]",
+    );
     const category = button.closest("[data-category]");
     const id = category.dataset.categoryId;
     const name = category.dataset.categoryName;
     const sortOrder = category.dataset.categorySortOrder;
+    const showCount = category.dataset.categoryShowCount;
 
     editCategoryNameOutput.textContent = name;
     editCategoryNameInput.value = name;
     editCategoryUpdateIdInput.value = id;
     editCategoryDeleteIdInput.value = id;
     editCategorySortOrderInput.value = sortOrder;
+    editCategoryShowCountInput.checked = showCount === "true";
     editCategoryDialog.dataset.categoryName = name;
     editCategoryDialog.hidden = false;
 }

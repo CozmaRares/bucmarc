@@ -14,6 +14,8 @@ export const categoryRouter = new Hono();
 const categoryFieldsValidators = {
     id: z.coerce.number().int().positive(),
     name: z.string().trim().min(1),
+    sortOrder: z.coerce.number().int().default(0),
+    showCount: z.coerce.boolean().default(false),
 };
 
 const categoryCreateSchema = z.object({
@@ -44,13 +46,14 @@ categoryRouter.post("/create", zValidator("form", categoryCreateSchema), c => {
 const categoryUpdateSchema = z.object({
     id: categoryFieldsValidators.id,
     name: categoryFieldsValidators.name,
-    sortOrder: z.coerce.number().int().default(0),
+    sortOrder: categoryFieldsValidators.sortOrder,
+    showCount: categoryFieldsValidators.showCount,
 });
 
 export const CATEGORY_UPDATE_URL = "/api/category/update";
 categoryRouter.post("/update", zValidator("form", categoryUpdateSchema), c => {
     const input = c.req.valid("form");
-    return updateCategory(input.id, input.name, input.sortOrder).match(
+    return updateCategory(input.id, input.name, input.sortOrder, input.showCount).match(
         () => successRedirect(c, { path: HOME_PAGE_URL }),
         error => {
             if (isDuplicateCategoryNameError(error)) {
