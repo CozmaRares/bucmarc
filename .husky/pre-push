@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+
+echo "Pre-push checks will run here."

@@ -1,11 +1,6 @@
-import {
-    getProviderPatterns,
-    getRegexSnippets,
-    type ProviderPattern,
-    type RegexSnippet,
-} from "@/db/dal";
 import { assetPath } from "@/lib/assets";
 import { SERIES_MATCH_TYPES } from "@/lib/constants";
+import type { ToolsPageProps as Props } from "@/lib/services/loaders/Tools";
 import { env } from "@/env";
 import {
     PROVIDER_PATTERN_CREATE_URL,
@@ -17,29 +12,11 @@ import {
 } from "@/routers/api/patternTools";
 import { MARK_SAVE_URL_PREFIX } from "@/routers/api/mark";
 import { SERIES_PAGE_URL } from "@/routers/pagePaths";
-import type { Context } from "hono";
-import { ResultAsync } from "neverthrow";
-import { serverError, type Page, type PageLoadError } from "./types";
-
-type Props = {
-    snippets: RegexSnippet[];
-    providerPatterns: ProviderPattern[];
-};
+import type { Page } from "./types";
 
 const bookmarkletSave = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href);})();`;
 const bookmarkletSaveOpen = `javascript:(function(){location.href='${env.APP_URL}${MARK_SAVE_URL_PREFIX}'+encodeURIComponent(location.href)+'?no-redirect';})();`;
 const bookmarkletCreateSeries = `javascript:(function(){location.href='${env.APP_URL}${SERIES_PAGE_URL}?createUrl='+encodeURIComponent(location.href);})();`;
-
-function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
-    return ResultAsync.combine([getRegexSnippets(), getProviderPatterns()])
-        .map(([snippets, providerPatterns]) => ({
-            pageMessage: c.req.query("message"),
-            pageStatus: c.req.query("status"),
-            snippets,
-            providerPatterns,
-        }))
-        .mapErr(serverError);
-}
 
 function component({ snippets, providerPatterns }: Props) {
     return (
@@ -228,5 +205,4 @@ function component({ snippets, providerPatterns }: Props) {
 export const ToolsPage: Page<Props> = {
     name: "Tools",
     component,
-    dataLoader,
 };

@@ -1,10 +1,10 @@
-import {
-    getCategorizedMarks,
-    getPendingAmbiguousMarks,
-    getUncategorizedMarks,
-} from "@/db/dal";
-import type { Category, MarkWithSeries, PendingAmbiguousMark } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
+import type {
+    Category,
+    HomePageProps as Props,
+    MarkWithIndicators,
+    PendingAmbiguousMark,
+} from "@/lib/services/loaders/Home";
 import {
     CATEGORY_CREATE_URL,
     CATEGORY_DELETE_URL,
@@ -16,74 +16,7 @@ import {
     MARK_RESOLVE_AMBIGUOUS_URL,
     MARK_UPDATE_URL,
 } from "@/routers/api/mark";
-import { serverError, type Page, type PageLoadError } from "./types";
-import { ResultAsync } from "neverthrow";
-
-type IndicatorStatus = "fresh" | "aging" | "stale" | "very-stale" | "ancient";
-
-type MarkWithIndicators = MarkWithSeries & {
-    ageIndicatorStatus: IndicatorStatus;
-    lastClickedIndicatorStatus: IndicatorStatus;
-};
-
-type Props = {
-    categorizedMarks: Array<Category & { marks: MarkWithIndicators[] }>;
-    pendingAmbiguousMarks: PendingAmbiguousMark[];
-    uncategorizedMarks: MarkWithIndicators[];
-};
-
-function dataLoader(): ResultAsync<Props, PageLoadError> {
-    const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-    const THRESHOLDS = [
-        [7, "fresh"],
-        [30, "aging"],
-        [60, "stale"],
-        [90, "very-stale"],
-        [Infinity, "ancient"],
-    ] as const;
-
-    const now = Date.now();
-
-    const getIndicatorStatus = (date: Date): IndicatorStatus => {
-        const days = (now - date.getTime()) / MS_PER_DAY;
-        const [, indicatorStatus] = THRESHOLDS.find(
-            ([threshold]) => days < threshold,
-        )!;
-        return indicatorStatus;
-    };
-
-    const createMarkWithIndicators = (mark: MarkWithSeries) => {
-        return {
-            ...mark,
-            ageIndicatorStatus: getIndicatorStatus(mark.createdAt),
-            lastClickedIndicatorStatus: getIndicatorStatus(mark.lastClickedAt),
-        };
-    };
-
-    return ResultAsync.combineWithAllErrors([
-        getCategorizedMarks(),
-        getPendingAmbiguousMarks(),
-        getUncategorizedMarks(),
-    ])
-        .map(
-            ([
-                categorizedMarks,
-                pendingAmbiguousMarks,
-                uncategorizedMarks,
-            ]) => ({
-                categorizedMarks: categorizedMarks.map(category => ({
-                    ...category,
-                    marks: category.marks.map(createMarkWithIndicators),
-                })),
-                pendingAmbiguousMarks,
-                uncategorizedMarks: uncategorizedMarks.map(
-                    createMarkWithIndicators,
-                ),
-            }),
-        )
-        .mapErr(serverError);
-}
+import type { Page } from "./types";
 
 function component({
     categorizedMarks,
@@ -523,5 +456,4 @@ function EditMarkDialog({ categories }: EditMarkDialogProps) {
 export const HomePage: Page<Props> = {
     name: "Home",
     component,
-    dataLoader,
 };

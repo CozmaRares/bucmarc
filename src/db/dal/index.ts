@@ -7,7 +7,6 @@ export {
     isNotFoundCategoryError,
     updateCategory,
 } from "./categories";
-export type { MarkWithSeries } from "./categories";
 export { cleanQueue, completeJob, takeNextPendingJob } from "./jobs";
 export {
     getPendingAmbiguousMarks,
@@ -40,7 +39,6 @@ export {
     createRegexSnippet,
     deleteProviderPattern,
     deleteRegexSnippet,
-    detectProviderPattern,
     getProviderPatterns,
     getRegexSnippets,
     isInvalidProviderPatternError,
@@ -48,10 +46,11 @@ export {
     updateRegexSnippet,
 } from "./patternTools";
 export { isCategoryFKError } from "./utils";
-export type { DbError } from "./utils";
+export type { DbError, UnknownDbError } from "./utils";
 export { withDatabaseConnection } from "../connection";
 export type {
     Category,
+    Mark,
     Series,
     ProviderPattern,
     RegexSnippet,

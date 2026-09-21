@@ -1,35 +1,16 @@
-import { getRegexSnippets, getSeries } from "@/db/dal";
-import type { RegexSnippet, Series } from "@/db/dal";
 import { assetPath } from "@/lib/assets";
+import type {
+    RegexSnippet,
+    Series,
+    SeriesPageProps as Props,
+} from "@/lib/services/loaders/Series";
 import {
     SERIES_CREATE_URL,
     SERIES_DELETE_URL,
     SERIES_UPDATE_URL,
 } from "@/routers/api/series";
 import { PROVIDER_DETECT_URL } from "@/routers/api/patternTools";
-import { serverError, type Page, type PageLoadError } from "./types";
-import type { Context } from "hono";
-import { ResultAsync } from "neverthrow";
-
-type Props = {
-    series: Series[];
-    snippets: RegexSnippet[];
-    createUrl: string | undefined;
-};
-
-function dataLoader(c: Context): ResultAsync<Props, PageLoadError> {
-    return getSeries()
-        .andThen(series =>
-            getRegexSnippets().map(snippets => ({
-                pageMessage: c.req.query("message"),
-                pageStatus: c.req.query("status"),
-                series,
-                snippets,
-                createUrl: c.req.query("createUrl"),
-            })),
-        )
-        .mapErr(serverError);
-}
+import type { Page } from "./types";
 
 function component({ series, snippets, createUrl }: Props) {
     return (
@@ -287,5 +268,4 @@ function EditSeriesDialog() {
 export const SeriesPage: Page<Props> = {
     name: "Series",
     component,
-    dataLoader,
 };

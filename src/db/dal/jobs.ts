@@ -51,8 +51,7 @@ export function completeJob(id: number) {
     );
 }
 
-export async function cleanQueue() {
-    const deleteCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 1 day ago
+export async function cleanQueue(deleteCutoff: Date) {
     await Promise.all([
         dbQuery("reset failed jobs to pending", db =>
             db

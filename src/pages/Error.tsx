@@ -1,5 +1,5 @@
 import { HOME_PAGE_URL } from "@/routers/pagePaths";
-import type { PageLoadError } from "./types";
+import type { PageLoadError } from "@/lib/services/loaders/types";
 
 type Props = PageLoadError;
 

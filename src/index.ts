@@ -11,7 +11,7 @@ import {
 import { HTTPStatus } from "./honoHelpers";
 import pageRouter from "./routers/pages";
 import chalk from "chalk";
-import { jobQueue } from "@/lib/jobQueue";
+import { jobQueue } from "@/lib/services/jobQueue";
 
 const logger = createLogger("server");
 

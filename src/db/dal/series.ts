@@ -3,15 +3,14 @@ import { desc, eq } from "drizzle-orm";
 import * as schema from "../schema";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { unknownDbError, type UnknownDbError } from "./utils";
-import { validateSeriesPattern } from "@/lib/seriesPattern";
+import {
+    validateAndWrite,
+    validateSeriesPattern,
+    type PatternError,
+} from "@/lib/patterns";
 import type { Series } from "../schema";
 import type { SeriesMatchType } from "@/lib/constants";
 import { notFoundMarkError, type NotFoundMarkError } from "./marks";
-
-type PatternError = Exclude<
-    ReturnType<typeof validateSeriesPattern>,
-    undefined
->;
 
 export type NotFoundSeriesError = { type: "not_found_series" };
 export type InvalidSeriesPatternError = {
@@ -64,17 +63,15 @@ async function _createSeries(
     pattern: string,
     matchType: SeriesMatchType,
 ) {
-    const error = validateSeriesPattern(pattern, matchType);
-
-    if (error) {
-        return { type: "invalid_pattern", error } as const;
-    }
-
-    await dbQuery("create series", db =>
-        db.insert(schema.series).values({ title, pattern, matchType }),
+    return validateAndWrite(
+        () => validateSeriesPattern(pattern, matchType),
+        async () => {
+            await dbQuery("create series", db =>
+                db.insert(schema.series).values({ title, pattern, matchType }),
+            );
+            return { type: "created" } as const;
+        },
     );
-
-    return { type: "created" } as const;
 }
 export function createSeries(
     title: string,
@@ -88,7 +85,7 @@ export function createSeries(
         switch (outcome.type) {
             case "created":
                 return okAsync();
-            case "invalid_pattern":
+            case "invalid":
                 return errAsync(invalidSeriesPatternError(outcome.error));
         }
     });
@@ -100,23 +97,22 @@ async function _updateSeries(
     pattern: string,
     matchType: SeriesMatchType,
 ) {
-    const error = validateSeriesPattern(pattern, matchType);
+    return validateAndWrite(
+        () => validateSeriesPattern(pattern, matchType),
+        async () => {
+            const updated = await dbQuery("update series", db =>
+                db
+                    .update(schema.series)
+                    .set({ title, pattern, matchType })
+                    .where(eq(schema.series.id, id))
+                    .returning({ id: schema.series.id }),
+            );
 
-    if (error) {
-        return { type: "invalid_pattern", error } as const;
-    }
-
-    const updated = await dbQuery("update series", db =>
-        db
-            .update(schema.series)
-            .set({ title, pattern, matchType })
-            .where(eq(schema.series.id, id))
-            .returning({ id: schema.series.id }),
+            return {
+                type: updated.length > 0 ? "updated" : "not_found",
+            } as const;
+        },
     );
-
-    return {
-        type: updated.length > 0 ? "updated" : "not_found",
-    } as const;
 }
 export function updateSeries(
     id: number,
@@ -136,7 +132,7 @@ export function updateSeries(
                 return okAsync();
             case "not_found":
                 return errAsync(notFoundSeriesError());
-            case "invalid_pattern":
+            case "invalid":
                 return errAsync(invalidSeriesPatternError(outcome.error));
         }
     });

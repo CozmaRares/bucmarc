@@ -3,12 +3,12 @@ import {
     createRegexSnippet,
     deleteProviderPattern,
     deleteRegexSnippet,
-    detectProviderPattern,
     isInvalidProviderPatternError,
     updateProviderPattern,
     updateRegexSnippet,
 } from "@/db/dal";
 import { SERIES_MATCH_TYPES } from "@/lib/constants";
+import { detectProviderPattern } from "@/lib/services/patterns";
 import { errorRedirect, HTTPStatus, successRedirect } from "@/honoHelpers";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";

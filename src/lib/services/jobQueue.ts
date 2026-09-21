@@ -10,10 +10,11 @@ import {
     withDatabaseConnection,
 } from "@/db/dal";
 import type { Series } from "@/db/dal";
-import { createLogger } from "./logger";
+import { createLogger } from "../logger";
 import { okAsync, ResultAsync, errAsync } from "neverthrow";
 
 const logger = createLogger("job queue");
+const COMPLETED_JOB_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 class JobQueue {
     private runningPromise: Promise<void> | null = null;
@@ -41,7 +42,9 @@ class JobQueue {
             try {
                 await this.run();
             } finally {
-                await cleanQueue();
+                await cleanQueue(
+                    new Date(Date.now() - COMPLETED_JOB_RETENTION_MS),
+                );
             }
         } while (this.runRequested);
     }

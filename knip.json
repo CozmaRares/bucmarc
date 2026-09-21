@@ -1,6 +1,5 @@
 {
     "$schema": "https://unpkg.com/knip@latest/schema.json",
     "ignore": ["public/**/*.js"],
-    "ignoreBinaries": ["dist/index.js"],
-    "ignoreDependencies": ["@typescript/native"]
+    "ignoreDependencies": ["@typescript/native", "dependency-cruiser"]
 }

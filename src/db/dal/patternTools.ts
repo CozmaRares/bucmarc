@@ -3,10 +3,7 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { dbQuery } from "../connection";
 import * as schema from "../schema";
 import type { ProviderPattern, RegexSnippet } from "../schema";
-import {
-    createProviderSeriesPattern,
-    validateProviderPattern,
-} from "@/lib/seriesPattern";
+import { validateAndWrite, validateProviderPattern } from "@/lib/patterns";
 import type { SeriesMatchType } from "@/lib/constants";
 import { unknownDbError, type UnknownDbError } from "./utils";
 
@@ -14,10 +11,6 @@ type PatternError = string;
 export type InvalidProviderPatternError = {
     type: "invalid_provider_pattern";
     error: PatternError;
-};
-export type ProviderDetection = {
-    pattern: string;
-    matchType: SeriesMatchType;
 };
 
 export function isInvalidProviderPatternError(error: {
@@ -95,25 +88,19 @@ export function getProviderPatterns(): ResultAsync<
     );
 }
 
-async function writeProviderPattern(
-    write: () => Promise<unknown>,
-    pattern: string,
-    matchType: SeriesMatchType,
-) {
-    const error = validateProviderPattern(pattern, matchType);
-    if (error) return { type: "invalid", error } as const;
-
-    await write();
-    return { type: "saved" } as const;
-}
-
 function saveProviderPattern(
     write: () => Promise<unknown>,
     pattern: string,
     matchType: SeriesMatchType,
 ): ResultAsync<void, UnknownDbError | InvalidProviderPatternError> {
     return ResultAsync.fromPromise(
-        writeProviderPattern(write, pattern, matchType),
+        validateAndWrite(
+            () => validateProviderPattern(pattern, matchType),
+            async () => {
+                await write();
+                return { type: "saved" } as const;
+            },
+        ),
         unknownDbError,
     ).andThen(result => {
         if (result.type === "saved") {
@@ -173,25 +160,4 @@ export function deleteProviderPattern(
         ),
         unknownDbError,
     ).map(() => undefined);
-}
-
-export function detectProviderPattern(
-    url: string,
-): ResultAsync<ProviderDetection | null, UnknownDbError> {
-    return getProviderPatterns().map(providerPatterns => {
-        for (const providerPattern of providerPatterns) {
-            const match = new RegExp(providerPattern.pattern, "i").exec(url);
-            if (!match) continue;
-
-            return {
-                pattern: createProviderSeriesPattern(
-                    providerPattern.pattern,
-                    match.groups?.title ?? "",
-                ),
-                matchType: providerPattern.matchType,
-            };
-        }
-
-        return null;
-    });
 }

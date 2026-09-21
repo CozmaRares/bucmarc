@@ -8,8 +8,11 @@ import {
     isUniqueConstraintError,
     logErrorAndCreate,
 } from "./utils";
-import { getEpisodeIdentity } from "@/lib/seriesPattern";
-import type { Category, Mark, Series } from "../schema";
+import {
+    createSeriesTitleWithEpisode,
+    type MarkWithSeries,
+} from "@/lib/markWithSeries";
+import type { Category } from "../schema";
 
 export type DuplicateCategoryNameError = { type: "duplicate_category_name" };
 export type NotFoundCategoryError = { type: "not_found_category" };
@@ -39,31 +42,6 @@ export function isNotFoundCategoryError(error: {
     type: string;
 }): error is NotFoundCategoryError {
     return error.type === "not_found_category";
-}
-
-type SeriesDisplay = Pick<Series, "title"> & { episode: string };
-export type MarkWithSeries = Mark & { series: SeriesDisplay | null };
-
-function createSeriesTitleWithEpisode(
-    markWithSeries: Mark & {
-        series: Pick<Series, "title" | "pattern" | "manualEpisode"> | null;
-    },
-): MarkWithSeries {
-    const { series, ...mark } = markWithSeries;
-    const returned: MarkWithSeries = { ...mark, series: null };
-
-    if (series) {
-        const episode =
-            series.manualEpisode ??
-            getEpisodeIdentity(series.pattern, mark.url) ??
-            "";
-        returned.series = {
-            title: series.title,
-            episode,
-        };
-    }
-
-    return returned;
 }
 
 function createMarkWithSeries(row: {
@@ -128,10 +106,7 @@ async function _getCategorizedMarks() {
                     eq(schema.series.markUrl, schema.marks.url),
                 )
                 .where(isNotNull(schema.marks.categoryId))
-                .orderBy(
-                    asc(schema.marks.createdAt),
-                    asc(schema.series.updatedAt),
-                ),
+                .orderBy(asc(schema.marks.createdAt)),
     );
 
     const marksByCategoryId = new Map<number, MarkWithSeries[]>();
@@ -175,7 +150,7 @@ function _getUncategorizedMarks() {
                 eq(schema.series.markUrl, schema.marks.url),
             )
             .where(isNull(schema.marks.categoryId))
-            .orderBy(asc(schema.series.updatedAt), asc(schema.marks.createdAt)),
+            .orderBy(asc(schema.marks.createdAt)),
     );
 }
 export function getUncategorizedMarks(): ResultAsync<

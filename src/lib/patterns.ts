@@ -1,6 +1,7 @@
 import type { SeriesMatchType } from "./constants";
 
 const namedCapturePattern = /\(\?<([A-Za-z0-9_]*)>/g;
+export type PatternError = string;
 
 function getNamedCaptures(pattern: string) {
     return [...pattern.matchAll(namedCapturePattern)].map(match => match[1]);
@@ -38,8 +39,7 @@ export function validateSeriesPattern(
 export function getEpisodeIdentity(pattern: string, url: string) {
     const regex = new RegExp(pattern, "i");
     const match = regex.exec(url);
-    const episode = match?.groups?.episode;
-    return episode;
+    return match?.groups?.episode;
 }
 
 function escapeRegexLiteral(value: string) {
@@ -154,4 +154,16 @@ function findCaptureEnd(pattern: string, start: number) {
             if (depth === 0) return { start, end: index + 1 };
         }
     }
+}
+
+export async function validateAndWrite<ValidationError, WriteResult>(
+    validate: () => ValidationError | undefined,
+    write: () => Promise<WriteResult>,
+): Promise<{ type: "invalid"; error: ValidationError } | WriteResult> {
+    const error = validate();
+    if (error !== undefined) {
+        return { type: "invalid", error };
+    }
+
+    return write();
 }
