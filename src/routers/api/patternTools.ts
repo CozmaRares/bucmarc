@@ -17,21 +17,18 @@ import { TOOLS_PAGE_URL } from "../pagePaths";
 
 export const patternToolsRouter = new Hono();
 
-const snippetSchema = z.object({ pattern: z.string().trim().min(1) });
-const snippetUpdateSchema = snippetSchema.extend({
-    oldPattern: z.string().trim().min(1),
-});
-const providerSchema = z.object({
+const patternToolsValidators = {
     pattern: z.string().trim().min(1),
     matchType: z.enum(SERIES_MATCH_TYPES),
-});
-const providerUpdateSchema = providerSchema.extend({
-    oldPattern: z.string().trim().min(1),
-});
+};
 
 function toolsError(c: Parameters<typeof errorRedirect>[0], message: string) {
     return errorRedirect(c, { path: TOOLS_PAGE_URL, message });
 }
+
+const snippetSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+});
 
 export const REGEX_SNIPPET_CREATE_URL = "/api/pattern-tools/snippet/create";
 patternToolsRouter.post(
@@ -43,6 +40,11 @@ patternToolsRouter.post(
             () => toolsError(c, "The regex snippet could not be saved."),
         ),
 );
+
+const snippetUpdateSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+    oldPattern: patternToolsValidators.pattern,
+});
 
 export const REGEX_SNIPPET_UPDATE_URL = "/api/pattern-tools/snippet/update";
 patternToolsRouter.post(
@@ -85,6 +87,11 @@ function saveProvider(
     );
 }
 
+const providerSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+    matchType: patternToolsValidators.matchType,
+});
+
 export const PROVIDER_PATTERN_CREATE_URL = "/api/pattern-tools/provider/create";
 patternToolsRouter.post(
     "/provider/create",
@@ -98,6 +105,12 @@ patternToolsRouter.post(
         );
     },
 );
+
+const providerUpdateSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+    matchType: patternToolsValidators.matchType,
+    oldPattern: patternToolsValidators.pattern,
+});
 
 export const PROVIDER_PATTERN_UPDATE_URL = "/api/pattern-tools/provider/update";
 patternToolsRouter.post(
@@ -117,10 +130,14 @@ patternToolsRouter.post(
     },
 );
 
+const providerDeleteSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+});
+
 export const PROVIDER_PATTERN_DELETE_URL = "/api/pattern-tools/provider/delete";
 patternToolsRouter.post(
     "/provider/delete",
-    zValidator("form", z.object({ pattern: z.string().min(1) })),
+    zValidator("form", providerDeleteSchema),
     c =>
         deleteProviderPattern(c.req.valid("form").pattern).match(
             () => successRedirect(c, { path: TOOLS_PAGE_URL }),
@@ -128,12 +145,16 @@ patternToolsRouter.post(
         ),
 );
 
+const providerDetectSchema = z.object({
+    pattern: patternToolsValidators.pattern,
+});
+
 export const PROVIDER_DETECT_URL = "/api/pattern-tools/provider/detect";
 patternToolsRouter.post(
     "/provider/detect",
-    zValidator("json", z.object({ value: z.string() })),
+    zValidator("json", providerDetectSchema),
     async c => {
-        const result = await detectProviderPattern(c.req.valid("json").value);
+        const result = await detectProviderPattern(c.req.valid("json").pattern);
         return result.match(
             detection =>
                 detection
