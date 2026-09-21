@@ -23,7 +23,9 @@ function setupCreateSeriesDialog() {
     const detectButton = createSeriesDialog.querySelector(
         "[data-provider-detect]",
     );
-    const pageBanner = document.querySelector("[data-page-banner]");
+    const detectMessage = createSeriesDialog.querySelector(
+        "[data-provider-detect-message]",
+    );
     const snippetButtons = createSeriesDialog.querySelectorAll(
         "[data-regex-snippet]",
     );
@@ -37,12 +39,12 @@ function setupCreateSeriesDialog() {
     }
 
     function showDetectMessage(message) {
-        pageBanner.textContent = message;
-        pageBanner.dataset.pageStatus = "error";
-        pageBanner.hidden = false;
+        detectMessage.textContent = message;
+        detectMessage.hidden = !message;
     }
 
     createSeriesButton?.addEventListener("click", () => {
+        showDetectMessage("");
         createSeriesDialog.hidden = false;
     });
 
@@ -68,6 +70,7 @@ function setupCreateSeriesDialog() {
     });
 
     async function detectProvider({ focusTitle = false } = {}) {
+        showDetectMessage("");
         detectButton.disabled = true;
 
         try {

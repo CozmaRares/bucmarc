@@ -171,6 +171,12 @@ function CreateSeriesDialog({
                             </button>
                         ))}
                     </div>
+                    <p
+                        class="series-provider-message"
+                        data-provider-detect-message
+                        role="alert"
+                        hidden
+                    />
                     <div class="dialog-actions">
                         <button
                             class="dialog-cancel"
