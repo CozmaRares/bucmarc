@@ -8,9 +8,12 @@ import chalk from "chalk";
 
 const logger = createLogger("db");
 
+const connectionSetupQueries = Object.freeze(["PRAGMA foreign_keys = ON"]);
+
 function createDatabaseState() {
     const queryPurpose = new AsyncLocalStorage<string>();
     const client = new Database(env.DB_FILE_NAME);
+    client.run(connectionSetupQueries.join(";\n"));
     const db = drizzle(client, {
         schema,
         casing: "snake_case",

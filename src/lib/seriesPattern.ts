@@ -42,13 +42,18 @@ export function getEpisodeIdentity(pattern: string, url: string) {
     return episode;
 }
 
+function escapeRegexLiteral(value: string) {
+    // Escape regex operators while keeping URL slugs readable.
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function createProviderSeriesPattern(pattern: string, title: string) {
     const titleCapture = findNamedCapture(pattern, "title");
     if (!titleCapture) return pattern;
 
     return (
         pattern.slice(0, titleCapture.start) +
-        RegExp.escape(title) +
+        escapeRegexLiteral(title) +
         pattern.slice(titleCapture.end)
     );
 }
